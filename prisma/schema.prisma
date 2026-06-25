@@ -1,0 +1,802 @@
+// FriendIntro - Prisma schema
+// The User.id matches the auth.users.id from Supabase.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum StoryStatus {
+  draft
+  published
+  expired
+}
+
+enum MediaType {
+  image
+  video
+}
+
+enum InviteMethod {
+  email
+  whatsapp
+  sms
+  imessage
+}
+
+enum DiscoveriesVisibility {
+  network
+  public
+}
+
+enum ConversationOrigin {
+  story
+  discoveries
+  direct
+}
+
+enum IntroductionVisibilityMode {
+  specific_people_only
+  mutual_introduction_network
+  everyone_i_have_introduced
+}
+
+enum NotificationDigestFrequency {
+  instant
+  daily
+  weekly
+}
+
+enum ReportStatus {
+  pending
+  reviewed
+  dismissed
+  action_taken
+}
+
+enum ReportTargetType {
+  user
+  story
+  discoveries_post
+  message
+}
+
+enum VerificationLevel {
+  none
+  phone
+  email
+  identity
+  trusted
+}
+
+enum BackgroundJobStatus {
+  pending
+  processing
+  completed
+  failed
+  dead
+}
+
+enum TrustRankTier {
+  bronze
+  silver
+  gold
+  platinum
+  diamond
+}
+
+enum TrustRiskLevel {
+  low
+  medium
+  high
+  critical
+}
+
+enum SecurityEventSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum JobPriority {
+  low
+  normal
+  high
+  critical
+}
+
+model User {
+  id                      String    @id @db.Uuid
+  name                    String
+  email                   String    @unique
+  profilePicture          String?   @map("profile_picture")
+  invitesSent             Int       @default(0) @map("invites_sent")
+  invitesRegistered       Int       @default(0) @map("invites_registered")
+  lastIntroductionsSeenAt DateTime? @map("last_introductions_seen_at")
+  phoneVerified           Boolean   @default(false) @map("phone_verified")
+  emailVerified           Boolean   @default(false) @map("email_verified")
+  identityVerified        Boolean   @default(false) @map("identity_verified")
+  verificationLevel       VerificationLevel @default(none) @map("verification_level")
+  verifiedAt              DateTime? @map("verified_at")
+  trustedUser             Boolean   @default(false) @map("trusted_user")
+  phone                   String?   @map("phone")
+  suspendedAt             DateTime? @map("suspended_at")
+  bannedAt                DateTime? @map("banned_at")
+  trustRiskScore          Int       @default(0) @map("trust_risk_score")
+  trustRiskLevel          TrustRiskLevel @default(low) @map("trust_risk_level")
+  trustRiskReviewedAt     DateTime? @map("trust_risk_reviewed_at")
+  trustRiskFalsePositive  Boolean   @default(false) @map("trust_risk_false_positive")
+  createdAt               DateTime  @default(now()) @map("created_at")
+
+  stories              Story[]               @relation("AuthorStories")
+  storyTags            StoryTag[]            @relation("TaggedStoryTags")
+  invitesIssued        Invitation[]          @relation("InvitedBy")
+  sentMessages         Message[]             @relation("SentMessages")
+  receivedMessages     Message[]             @relation("ReceivedMessages")
+  conversationContextsA ConversationContext[] @relation("ConversationUserA")
+  conversationContextsB ConversationContext[] @relation("ConversationUserB")
+  posts                Post[]
+  discoveriesPosts     DiscoveriesPost[]
+  discoveriesLikes     DiscoveriesLike[]
+  discoveriesComments  DiscoveriesComment[]
+  discoveriesBookmarks DiscoveriesBookmark[]
+  discoveriesShares    DiscoveriesShare[]
+  consents             UserConsent[]
+  connectionsFrom      UserConnection[] @relation("ConnectionSource")
+  connectionsTo        UserConnection[] @relation("ConnectionTarget")
+  createdCategories    IntroductionCategory[] @relation("CategoryCreator")
+  sharedIntroducerRowsA SharedIntroducerRelationship[] @relation("SharedIntroUserA")
+  sharedIntroducerRowsB SharedIntroducerRelationship[] @relation("SharedIntroUserB")
+  sharedIntroducerAs    SharedIntroducerRelationship[] @relation("SharedIntroducer")
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsSent     Notification[] @relation("NotificationActor")
+  notificationPreferences NotificationPreferences?
+  pushSubscriptions     PushSubscription[]
+  analyticsEvents       AnalyticsEvent[]
+  blocksGiven           UserBlock[] @relation("Blocker")
+  blocksReceived        UserBlock[] @relation("Blocked")
+  reportsMade           ContentReport[] @relation("Reporter")
+  reportsReviewed       ContentReport[] @relation("ReportReviewer")
+  phoneVerificationChallenges PhoneVerificationChallenge[]
+  userRoles                   UserRole[] @relation("UserRoles")
+  rolesGranted                UserRole[] @relation("RoleGranter")
+  adminAuditLogs              AdminAuditLog[] @relation("AdminAuditActor")
+  securityEvents              SecurityEvent[]
+
+  @@map("users")
+  @@index([email])
+  @@index([phone])
+  @@index([verificationLevel])
+  @@index([trustedUser])
+}
+
+model Story {
+  id           String      @id @default(uuid()) @db.Uuid
+  userId       String      @map("user_id") @db.Uuid
+  mediaUrl     String      @map("media_url")
+  mediaType    MediaType   @map("media_type")
+  voiceNoteUrl String?     @map("voice_note_url")
+  text         String?
+  status       StoryStatus @default(draft)
+  createdAt    DateTime    @default(now()) @map("created_at")
+  expiresAt    DateTime    @map("expires_at")
+  publishedAt  DateTime?   @map("published_at")
+  introductionCategoryId String? @map("introduction_category_id") @db.Uuid
+  visibilityMode IntroductionVisibilityMode @default(mutual_introduction_network) @map("visibility_mode")
+
+  user     User       @relation("AuthorStories", fields: [userId], references: [id], onDelete: Cascade)
+  category IntroductionCategory? @relation(fields: [introductionCategoryId], references: [id], onDelete: SetNull)
+  tags                 StoryTag[]
+  messages             Message[]
+  conversationContexts ConversationContext[]
+  userConnections      UserConnection[]
+  sharedIntroFirst     SharedIntroducerRelationship[] @relation("SharedIntroFirstStory")
+  sharedIntroSecond    SharedIntroducerRelationship[] @relation("SharedIntroSecondStory")
+
+  @@map("stories")
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([introductionCategoryId])
+}
+
+model StoryTag {
+  id                  String  @id @default(uuid()) @db.Uuid
+  storyId             String  @map("story_id") @db.Uuid
+  taggedUserId        String? @map("tagged_user_id") @db.Uuid
+  taggedExternalEmail String? @map("tagged_external_email")
+  taggedExternalPhone String? @map("tagged_external_phone")
+  invitationId        String? @unique @map("invitation_id") @db.Uuid
+
+  story      Story       @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  taggedUser User?       @relation("TaggedStoryTags", fields: [taggedUserId], references: [id], onDelete: SetNull)
+  invitation Invitation? @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("story_tags")
+  @@index([storyId])
+  @@index([taggedUserId])
+  @@index([taggedExternalEmail])
+  @@index([taggedExternalPhone])
+  @@unique([storyId, taggedUserId])
+  @@unique([storyId, taggedExternalEmail])
+  @@unique([storyId, taggedExternalPhone])
+}
+
+model Invitation {
+  id                 String       @id @default(uuid()) @db.Uuid
+  email              String?
+  phoneNumber        String?      @map("phone_number")
+  inviteMethod       InviteMethod @default(email) @map("invite_method")
+  invitedById        String       @map("invited_by") @db.Uuid
+  inviteToken        String       @unique @map("invite_token")
+  registered         Boolean      @default(false)
+  registeredUserId   String?      @map("registered_user_id") @db.Uuid
+  createdAt          DateTime     @default(now()) @map("created_at")
+  expiresAt          DateTime     @map("expires_at")
+  invitationOpenedAt DateTime?    @map("invitation_opened_at")
+  acceptedAt         DateTime?    @map("accepted_at")
+
+  invitedBy User       @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+  storyTags StoryTag[]
+
+  @@map("invitations")
+  @@index([email])
+  @@index([phoneNumber])
+  @@index([invitedById])
+  @@index([inviteToken])
+}
+
+model Message {
+  id                       String              @id @default(uuid()) @db.Uuid
+  senderId                 String              @map("sender_id") @db.Uuid
+  receiverId               String              @map("receiver_id") @db.Uuid
+  storyReference           String?             @map("story_reference") @db.Uuid
+  discoveriesPostReference String?             @map("discoveries_post_reference") @db.Uuid
+  conversationOrigin       ConversationOrigin? @map("conversation_origin")
+  message                  String
+  createdAt                DateTime            @default(now()) @map("created_at")
+  readAt                   DateTime?           @map("read_at")
+
+  sender          User             @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver        User             @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  story           Story?           @relation(fields: [storyReference], references: [id], onDelete: SetNull)
+  discoveriesPost DiscoveriesPost? @relation(fields: [discoveriesPostReference], references: [id], onDelete: SetNull)
+
+  @@map("messages")
+  @@index([senderId, receiverId, createdAt])
+  @@index([receiverId, senderId, createdAt])
+  @@index([storyReference])
+  @@index([discoveriesPostReference])
+}
+
+model ConversationContext {
+  id                       String             @id @default(uuid()) @db.Uuid
+  userAId                  String             @map("user_a_id") @db.Uuid
+  userBId                  String             @map("user_b_id") @db.Uuid
+  origin                   ConversationOrigin @default(direct)
+  storyReference           String?            @map("story_reference") @db.Uuid
+  discoveriesPostReference String?            @map("discoveries_post_reference") @db.Uuid
+  createdAt                DateTime           @default(now()) @map("created_at")
+
+  userA           User             @relation("ConversationUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB           User             @relation("ConversationUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  story           Story?           @relation(fields: [storyReference], references: [id], onDelete: SetNull)
+  discoveriesPost DiscoveriesPost? @relation(fields: [discoveriesPostReference], references: [id], onDelete: SetNull)
+
+  @@unique([userAId, userBId])
+  @@map("conversation_contexts")
+  @@index([userAId])
+  @@index([userBId])
+}
+
+model Post {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  content   String?
+  media     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  expiresAt DateTime? @map("expires_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("posts")
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model DiscoveriesPost {
+  id         String                @id @default(uuid()) @db.Uuid
+  userId     String                @map("user_id") @db.Uuid
+  content    String?
+  mediaUrl   String?               @map("media_url")
+  mediaType  MediaType?            @map("media_type")
+  visibility DiscoveriesVisibility @default(network)
+  introductionCategoryId String? @map("introduction_category_id") @db.Uuid
+  visibilityMode IntroductionVisibilityMode @default(mutual_introduction_network) @map("visibility_mode")
+  createdAt  DateTime              @default(now()) @map("created_at")
+  expiresAt  DateTime?             @map("expires_at")
+
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  IntroductionCategory? @relation(fields: [introductionCategoryId], references: [id], onDelete: SetNull)
+  likes     DiscoveriesLike[]
+  comments  DiscoveriesComment[]
+  bookmarks            DiscoveriesBookmark[]
+  shares               DiscoveriesShare[]
+  conversationContexts ConversationContext[]
+  messages             Message[]
+
+  @@map("discoveries_posts")
+  @@index([userId])
+  @@index([visibility, createdAt])
+  @@index([expiresAt])
+}
+
+model DiscoveriesLike {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post DiscoveriesPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("discoveries_likes")
+}
+
+model DiscoveriesComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post DiscoveriesPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("discoveries_comments")
+  @@index([postId, createdAt])
+}
+
+model DiscoveriesBookmark {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post DiscoveriesPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("discoveries_bookmarks")
+}
+
+model DiscoveriesShare {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post DiscoveriesPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("discoveries_shares")
+  @@index([postId])
+}
+
+model UserConsent {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  privacyVersion String   @map("privacy_version")
+  termsVersion   String   @map("terms_version")
+  cookieVersion  String?  @map("cookie_version")
+  acceptedAt     DateTime @default(now()) @map("accepted_at")
+  ipAddress      String?  @map("ip_address")
+  country        String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_consents")
+  @@index([userId])
+}
+
+model AdminSettings {
+  id                       Int      @id @default(1)
+  inviteGateEnabled        Boolean  @default(false) @map("invite_gate_enabled")
+  requiredInvites          Int      @default(2) @map("required_invites")
+  storyExpiryHours         Int      @default(24) @map("story_expiry_hours")
+  postExpiryHours          Int      @default(48) @map("post_expiry_hours")
+  discoveriesEnabled       Boolean  @default(true) @map("discoveries_enabled")
+  discoveriesExpiryHours   Int?     @map("discoveries_expiry_hours")
+  discoveriesPublicEnabled Boolean  @default(false) @map("discoveries_public_enabled")
+  introductionsNeverExpire Boolean  @default(false) @map("introductions_never_expire")
+  discoveriesNetworkDepth  Int      @default(2) @map("discoveries_network_depth")
+  showConnectionReasons    Boolean  @default(true) @map("show_connection_reasons")
+  enableIntroductionGraph  Boolean  @default(true) @map("enable_introduction_graph")
+  allowFirstDegreeDiscovery  Boolean @default(true) @map("allow_first_degree_discovery")
+  allowSecondDegreeDiscovery Boolean @default(true) @map("allow_second_degree_discovery")
+  allowThirdDegreeDiscovery  Boolean @default(false) @map("allow_third_degree_discovery")
+  allowFourthDegreeDiscovery Boolean @default(false) @map("allow_fourth_degree_discovery")
+  maxDiscoveryDepth        Int      @default(2) @map("max_discovery_depth")
+  showConnectionPaths      Boolean  @default(true) @map("show_connection_paths")
+  enableTrustScores        Boolean  @default(true) @map("enable_trust_scores")
+  enableVerificationLayer  Boolean  @default(true) @map("enable_verification_layer")
+  enableIntroductionCategories Boolean @default(true) @map("enable_introduction_categories")
+  allowUserCreatedCategories Boolean @default(false) @map("allow_user_created_categories")
+  allowCategoryEditing     Boolean  @default(true) @map("allow_category_editing")
+  requirePhoneVerification Boolean  @default(false) @map("require_phone_verification")
+  requireIdentityVerification Boolean @default(false) @map("require_identity_verification")
+  showTrustScores          Boolean  @default(true) @map("show_trust_scores")
+  showSharedIntroducers    Boolean  @default(true) @map("show_shared_introducers")
+  enableSharedIntroducerTrust Boolean @default(true) @map("enable_shared_introducer_trust")
+  showSharedIntroducerCounts Boolean @default(true) @map("show_shared_introducer_counts")
+  sharedIntroducerWeight   Int      @default(70) @map("shared_introducer_weight")
+  minimumSharedIntroducersForMessaging Int @default(0) @map("minimum_shared_introducers_for_messaging")
+  minimumSharedIntroducersForDiscovery Int @default(0) @map("minimum_shared_introducers_for_discovery")
+  enableNotifications              Boolean @default(true) @map("enable_notifications")
+  enableInAppNotifications         Boolean @default(true) @map("enable_in_app_notifications")
+  enablePushNotifications          Boolean @default(true) @map("enable_push_notifications")
+  enableEmailNotifications         Boolean @default(true) @map("enable_email_notifications")
+  enableIntroductionNotifications  Boolean @default(true) @map("enable_introduction_notifications")
+  enableDiscoveryNotifications     Boolean @default(true) @map("enable_discovery_notifications")
+  enableMessageNotifications       Boolean @default(true) @map("enable_message_notifications")
+  enableTrustNotifications         Boolean @default(true) @map("enable_trust_notifications")
+  enableVerificationNotifications  Boolean @default(true) @map("enable_verification_notifications")
+  enableAnnouncementNotifications  Boolean @default(true) @map("enable_announcement_notifications")
+  enableIntroductionViewNotifications Boolean @default(false) @map("enable_introduction_view_notifications")
+  enableNotificationDigests        Boolean @default(false) @map("enable_notification_digests")
+  notificationDigestFrequency      NotificationDigestFrequency @default(instant) @map("notification_digest_frequency")
+  enableDiscoveryControls          Boolean @default(false) @map("enable_discovery_controls")
+  enableGranularVerificationGates  Boolean @default(false) @map("enable_granular_verification_gates")
+  enableBackgroundJobs             Boolean @default(false) @map("enable_background_jobs")
+  enableTrustRankings              Boolean @default(true) @map("enable_trust_rankings")
+  enableTrustRecommendations       Boolean @default(true) @map("enable_trust_recommendations")
+  allowCrossCategoryDiscovery      Boolean @default(true) @map("allow_cross_category_discovery")
+  allowDiscoveryMessaging          Boolean @default(true) @map("allow_discovery_messaging")
+  requireSharedIntroducerForDiscovery Boolean @default(false) @map("require_shared_introducer_for_discovery")
+  requireSharedIntroducerForMessaging Boolean @default(false) @map("require_shared_introducer_for_messaging")
+  hideDiscoveryFromUnverifiedUsers Boolean @default(false) @map("hide_discovery_from_unverified_users")
+  requireEmailVerification         Boolean @default(false) @map("require_email_verification")
+  messagingRequirePhone            Boolean @default(false) @map("messaging_require_phone")
+  messagingRequireEmail            Boolean @default(false) @map("messaging_require_email")
+  messagingRequireIdentity         Boolean @default(false) @map("messaging_require_identity")
+  discoveriesRequirePhone          Boolean @default(false) @map("discoveries_require_phone")
+  discoveriesRequireEmail          Boolean @default(false) @map("discoveries_require_email")
+  discoveriesRequireIdentity       Boolean @default(false) @map("discoveries_require_identity")
+  introductionsRequirePhone        Boolean @default(false) @map("introductions_require_phone")
+  introductionsRequireEmail        Boolean @default(false) @map("introductions_require_email")
+  introductionsRequireIdentity     Boolean @default(false) @map("introductions_require_identity")
+  enableSpecificPeopleVisibility Boolean @default(false) @map("enable_specific_people_visibility")
+  enableMutualIntroductionNetworkVisibility Boolean @default(true) @map("enable_mutual_introduction_network_visibility")
+  enableEveryoneIntroducedVisibility Boolean @default(false) @map("enable_everyone_introduced_visibility")
+  defaultStoryVisibilityMode IntroductionVisibilityMode @default(mutual_introduction_network) @map("default_story_visibility_mode")
+  allowUserVisibilitySelection Boolean @default(true) @map("allow_user_visibility_selection")
+  enableDiscoveriesHeroBanner Boolean @default(true) @map("enable_discoveries_hero_banner")
+  enableDiscoveryExpiryIndicators Boolean @default(true) @map("enable_discovery_expiry_indicators")
+  enableDiscoveryTrustContext Boolean @default(true) @map("enable_discovery_trust_context")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_settings")
+}
+
+model UserConnection {
+  id                   String   @id @default(uuid()) @db.Uuid
+  sourceUserId         String   @map("source_user_id") @db.Uuid
+  targetUserId         String   @map("target_user_id") @db.Uuid
+  degree               Int
+  introducedViaStoryId String?  @map("introduced_via_story_id") @db.Uuid
+  sharedIntroducerCount Int     @default(0) @map("shared_introducer_count")
+  trustScore           Int      @default(10) @map("trust_score")
+  trustRank            Int      @default(0) @map("trust_rank")
+  trustRankTier        TrustRankTier @default(bronze) @map("trust_rank_tier")
+  highestTrustPath     Boolean  @default(false) @map("highest_trust_path")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  sourceUser         User   @relation("ConnectionSource", fields: [sourceUserId], references: [id], onDelete: Cascade)
+  targetUser         User   @relation("ConnectionTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  introducedViaStory Story? @relation(fields: [introducedViaStoryId], references: [id], onDelete: SetNull)
+
+  @@unique([sourceUserId, targetUserId])
+  @@index([sourceUserId])
+  @@index([targetUserId])
+  @@index([degree])
+  @@index([sourceUserId, degree])
+  @@index([sourceUserId, sharedIntroducerCount])
+  @@index([sourceUserId, trustScore])
+  @@map("user_connections")
+}
+
+model IntroductionCategory {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  description     String?
+  icon            String?
+  color           String?
+  isSystem        Boolean  @default(false) @map("is_system")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdByUserId String?  @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  createdBy User? @relation("CategoryCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  stories   Story[]
+  discoveriesPosts DiscoveriesPost[]
+
+  @@unique([name])
+  @@map("introduction_categories")
+  @@index([isActive])
+}
+
+model SharedIntroducerRelationship {
+  id                      String   @id @default(uuid()) @db.Uuid
+  userAId                 String   @map("user_a_id") @db.Uuid
+  userBId                 String   @map("user_b_id") @db.Uuid
+  sharedIntroducerId      String   @map("shared_introducer_id") @db.Uuid
+  firstIntroductionStoryId  String? @map("first_introduction_story_id") @db.Uuid
+  secondIntroductionStoryId String? @map("second_introduction_story_id") @db.Uuid
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  userA            User  @relation("SharedIntroUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB            User  @relation("SharedIntroUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  sharedIntroducer User  @relation("SharedIntroducer", fields: [sharedIntroducerId], references: [id], onDelete: Cascade)
+  firstStory       Story? @relation("SharedIntroFirstStory", fields: [firstIntroductionStoryId], references: [id], onDelete: SetNull)
+  secondStory      Story? @relation("SharedIntroSecondStory", fields: [secondIntroductionStoryId], references: [id], onDelete: SetNull)
+
+  @@unique([userAId, userBId, sharedIntroducerId])
+  @@index([userAId, userBId])
+  @@index([sharedIntroducerId])
+  @@map("shared_introducer_relationships")
+}
+
+model Notification {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  actorId    String?   @map("actor_id") @db.Uuid
+  type       String
+  title      String
+  message    String
+  entityType String?   @map("entity_type")
+  entityId   String?   @map("entity_id") @db.Uuid
+  isRead     Boolean   @default(false) @map("is_read")
+  readAt     DateTime? @map("read_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user  User  @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@map("notifications")
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([userId, isRead, createdAt])
+  @@index([userId, createdAt])
+}
+
+model NotificationPreferences {
+  id                           String   @id @default(uuid()) @db.Uuid
+  userId                       String   @unique @map("user_id") @db.Uuid
+  enableNotifications          Boolean  @default(true) @map("enable_notifications")
+  enableIntroductionNotifications Boolean @default(true) @map("enable_introduction_notifications")
+  enableInvitationNotifications Boolean @default(true) @map("enable_invitation_notifications")
+  enableDiscoveryNotifications Boolean @default(true) @map("enable_discovery_notifications")
+  enableMessageNotifications   Boolean  @default(true) @map("enable_message_notifications")
+  enableTrustNotifications     Boolean  @default(true) @map("enable_trust_notifications")
+  enableVerificationNotifications Boolean @default(true) @map("enable_verification_notifications")
+  enableEmailNotifications     Boolean  @default(true) @map("enable_email_notifications")
+  enablePushNotifications      Boolean  @default(true) @map("enable_push_notifications")
+  enableInAppNotifications     Boolean  @default(true) @map("enable_in_app_notifications")
+  quietHoursEnabled            Boolean  @default(false) @map("quiet_hours_enabled")
+  quietHoursStart              String?  @map("quiet_hours_start")
+  quietHoursEnd                String?  @map("quiet_hours_end")
+  createdAt                    DateTime @default(now()) @map("created_at")
+  updatedAt                    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
+  @@index([userId])
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  eventType  String   @map("event_type")
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id") @db.Uuid
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("analytics_events")
+  @@index([eventType])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([eventType, createdAt])
+}
+
+model PhoneVerificationChallenge {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  phone     String
+  codeHash  String   @map("code_hash")
+  attempts  Int      @default(0)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("phone_verification_challenges")
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model UserBlock {
+  id        String   @id @default(uuid()) @db.Uuid
+  blockerId String   @map("blocker_id") @db.Uuid
+  blockedId String   @map("blocked_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@map("user_blocks")
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+model ContentReport {
+  id           String           @id @default(uuid()) @db.Uuid
+  reporterId   String           @map("reporter_id") @db.Uuid
+  targetType   ReportTargetType @map("target_type")
+  targetId     String           @map("target_id") @db.Uuid
+  reason       String
+  details      String?
+  status       ReportStatus     @default(pending)
+  reviewedById String?          @map("reviewed_by_id") @db.Uuid
+  reviewedAt   DateTime?        @map("reviewed_at")
+  resolution   String?
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  reporter   User  @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("ReportReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@map("content_reports")
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@index([reporterId])
+}
+
+model BackgroundJob {
+  id          String              @id @default(uuid()) @db.Uuid
+  queue       String
+  jobType     String              @map("job_type")
+  payload     Json                @default("{}")
+  status      BackgroundJobStatus @default(pending)
+  priority    JobPriority         @default(normal)
+  attempts    Int                 @default(0)
+  maxAttempts Int                 @default(3) @map("max_attempts")
+  runAt       DateTime            @default(now()) @map("run_at")
+  scheduledAt DateTime?           @map("scheduled_at")
+  lockedAt    DateTime?           @map("locked_at")
+  completedAt DateTime?           @map("completed_at")
+  lastError   String?             @map("last_error")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  @@map("background_jobs")
+  @@index([status, runAt])
+  @@index([status, priority, runAt])
+  @@index([queue, status])
+  @@index([jobType, createdAt])
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(uuid()) @db.Uuid
+  key         String  @unique
+  description String?
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  roleId      String   @map("role_id") @db.Uuid
+  grantedById String?  @map("granted_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user      User  @relation("UserRoles", fields: [userId], references: [id], onDelete: Cascade)
+  role      Role  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  grantedBy User? @relation("RoleGranter", fields: [grantedById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+  @@index([userId])
+  @@index([roleId])
+}
+
+model AdminAuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  adminId    String   @map("admin_id") @db.Uuid
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id") @db.Uuid
+  metadata   Json     @default("{}")
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  admin User @relation("AdminAuditActor", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("admin_audit_logs")
+  @@index([adminId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([targetType, targetId])
+}
+
+model SecurityEvent {
+  id        String                @id @default(uuid()) @db.Uuid
+  userId    String?               @map("user_id") @db.Uuid
+  eventType String                @map("event_type")
+  severity  SecurityEventSeverity
+  metadata  Json                  @default("{}")
+  createdAt DateTime              @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("security_events")
+  @@index([eventType])
+  @@index([severity])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+}
