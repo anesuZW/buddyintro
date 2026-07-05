@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: Semver bump type
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: release-approval
+
+    env:
+      DATABASE_URL: postgresql://user:pass@localhost:5432/buddyintro
+      DIRECT_URL: postgresql://user:pass@localhost:5432/buddyintro
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: placeholder-service-key
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Bump version
+        id: bump
+        run: |
+          VERSION=$(node -e "const v=require('./scripts/lib/version'); const c=v.readVersion(); const n=v.bumpVersion(c,'${{ inputs.version_bump }}'); v.writeVersion(n); console.log(n);")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install & verify
+        run: |
+          npm ci
+          npx prisma generate
+          npm run verify
+          npm run build
+
+      - name: Package & notes
+        run: |
+          node deployment/package.js --version=${{ steps.bump.outputs.version }}
+          node -e "require('./scripts/lib/release-notes').generateReleaseNotes('${{ steps.bump.outputs.version }}')"
+
+      - name: Create draft GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump.outputs.version }}
+          name: BuddyIntro v${{ steps.bump.outputs.version }}
+          body_path: deployment/releases/RELEASE_NOTES_v${{ steps.bump.outputs.version }}.md
+          files: deployment/releases/BuddyIntro-v${{ steps.bump.outputs.version }}.zip
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,53 @@
+name: Build
+
+on:
+  push:
+    branches: [main, release-engineering]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://user:pass@localhost:5432/buddyintro
+      DIRECT_URL: postgresql://user:pass@localhost:5432/buddyintro
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: placeholder-service-key
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Create deployment package
+        run: node deployment/package.js
+
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: buddyintro-deploy
+          path: deployment/releases/BuddyIntro-v*.zip
+          retention-days: 14

@@ -1,0 +1,27 @@
+-- Orphan cleanup SQL (REFERENCE ONLY — DO NOT AUTO-EXECUTE)
+--
+-- Status as of 2026-05-24: orphan-report.sql returned ZERO orphans for all checks.
+-- No cleanup is required before applying 2026_database_alignment foreign keys.
+--
+-- If future orphan checks return non-zero counts, review each section manually
+-- before running any DELETE. Never run this file unattended on production.
+--
+-- ---------------------------------------------------------------------------
+-- EXAMPLE: messages with invalid discoveries_post_reference
+-- Review rows first:
+--   SELECT id, discoveries_post_reference FROM messages m
+--   WHERE discoveries_post_reference IS NOT NULL
+--     AND NOT EXISTS (SELECT 1 FROM discoveries_posts p WHERE p.id = m.discoveries_post_reference);
+--
+-- Option A (preserve message, clear bad reference):
+--   UPDATE messages SET discoveries_post_reference = NULL
+--   WHERE discoveries_post_reference IS NOT NULL
+--     AND NOT EXISTS (SELECT 1 FROM discoveries_posts p WHERE p.id = messages.discoveries_post_reference);
+--
+-- Option B (delete orphaned rows — destructive):
+--   DELETE FROM messages m
+--   WHERE discoveries_post_reference IS NOT NULL
+--     AND NOT EXISTS (SELECT 1 FROM discoveries_posts p WHERE p.id = m.discoveries_post_reference);
+--
+-- Repeat similar REVIEW-then-UPDATE/DELETE patterns for each table listed in
+-- scripts/check-orphans.sql before adding foreign keys.

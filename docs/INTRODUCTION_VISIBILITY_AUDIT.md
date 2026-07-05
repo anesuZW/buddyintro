@@ -1,0 +1,271 @@
+# Introduction Visibility & Navigation Audit
+
+
+
+**Date:** 2026-05-24  
+
+**Status:** Complete — visibility architecture implemented, introduction routes verified, automated audit in place.
+
+
+
+---
+
+
+
+## Part 1 — Visibility architecture
+
+
+
+### Story visibility modes
+
+
+
+| Mode | DB enum | Behavior |
+
+|------|---------|----------|
+
+| Specific people only | `specific_people_only` | Only tagged users (+ author) can view |
+
+| Mutual introduction network | `mutual_introduction_network` | Tagged users + co-tagged mutual network (**trust-first default**) |
+
+| Everyone I have introduced | `everyone_i_have_introduced` | Anyone the author has ever introduced |
+
+
+
+### Admin controls (`/maindash` → Story visibility modes)
+
+
+
+| Setting | Default | Purpose |
+
+|---------|---------|---------|
+
+| `enableSpecificPeopleVisibility` | `false` | Show/hide mode in UI |
+
+| `enableMutualIntroductionNetworkVisibility` | `true` | Trust-first default enabled |
+
+| `enableEveryoneIntroducedVisibility` | `false` | Show/hide mode in UI |
+
+| `defaultStoryVisibilityMode` | `mutual_introduction_network` | Auto-selected when user cannot choose |
+
+| `allowUserVisibilitySelection` | `true` | Lock visibility to platform default when `false` |
+
+
+
+Disabled modes are hidden from `StoryUploader`. When `allowUserVisibilitySelection` is false, only the platform default is used (selection UI hidden).
+
+
+
+### Validation layers
+
+
+
+| Layer | Location | Behavior |
+
+|-------|----------|----------|
+
+| API | `POST /api/stories` | Zod enum + `resolveStoryVisibilityMode()` rejects disabled modes |
+
+| Service | `createStoryWithTags()` | Same resolution before persist |
+
+| Admin | `updateAdminSettings()` | `normalizeVisibilityAdminPatch()` ensures default ∈ enabled modes |
+
+| UI | `StoryUploader` | Loads `/api/introduction-visibility`; hides disabled modes |
+
+| UI | `StoryVisibilityAdmin` | Client validation before save |
+
+
+
+### Core modules
+
+
+
+- `lib/story-visibility-shared.ts` — mode resolution, admin normalization, config serialization
+
+- `lib/story-visibility.ts` — `storyPassesVisibilityGate()` for read access
+
+- `app/api/introduction-visibility/route.ts` — client config endpoint
+
+
+
+### Migration
+
+
+
+`prisma/migrations/202613_story_visibility_modes/` — enum replacement + admin columns  
+
+Legacy mapping: `all_mutual` → `mutual_introduction_network`, `same_category` → `specific_people_only`
+
+
+
+---
+
+
+
+## Part 2 — Introduction page navigation audit
+
+
+
+### Routes verified
+
+
+
+| Route | File | Status |
+
+|-------|------|--------|
+
+| `/introductions` | `app/(main)/introductions/page.tsx` | ✓ |
+
+| `/introductions/[id]` | `app/(main)/introductions/[id]/page.tsx` | ✓ |
+
+| `/introductions/network` | `app/(main)/introductions/network/page.tsx` | ✓ |
+
+| `/stories/view/[storyId]` | Media viewer (secondary) | ✓ |
+
+| `/stories/[userId]` | Story ring by author | ✓ |
+
+
+
+### Navigation sources audited
+
+
+
+| Source | Target | Status |
+
+|--------|--------|--------|
+
+| Introductions list (`IntroductionCard`) | `/introductions/{id}` | ✓ |
+
+| Home recent intros (`TrustNetworkDashboard`) | `introductionDetailHref(id)` | ✓ |
+
+| Trust recommendations | `/profile/{id}` or `/create-story` | ✓ (by design) |
+
+| Discoveries trust context | `/profile/{authorId}` | ✓ |
+
+| Shared introducers panel | `storyHref` → `/introductions/{id}` | ✓ |
+
+| Notifications (`notificationHref`) | `/introductions/{entityId}` for `story` | ✓ |
+
+| Messages context (`ChatWindow`, `StoryReferenceCard`) | `/introductions/{id}` | ✓ |
+
+| Connection reason / path graph | `/introductions/{id}` or network query | ✓ |
+
+| Trust profile timeline | `/introductions/{id}` | ✓ |
+
+
+
+### Canonical helpers
+
+
+
+`lib/introduction-routes.ts`:
+
+
+
+- `introductionDetailHref(storyId)` → `/introductions/{id}` (primary detail page)
+
+- `introductionStoryViewerHref(storyId)` → `/stories/view/{id}` (full-screen media)
+
+- `introductionNetworkHref(userIds)` → `/introductions/network?users=…`
+
+
+
+---
+
+
+
+## Part 3 — Automated verification
+
+
+
+```bash
+
+npm run audit:routes      # scans static + template + helper navigation; writes docs/ROUTE_AUDIT_REPORT.md
+
+npm test                  # includes tests/story-visibility.test.ts
+
+npm run build
+
+npm run verify-database
+
+npx prisma migrate deploy # applies 202613_story_visibility_modes if pending
+
+```
+
+
+
+---
+
+
+
+## Files created
+
+
+
+- `lib/story-visibility-shared.ts`
+
+- `lib/story-visibility.ts`
+
+- `lib/introduction-routes.ts`
+
+- `app/api/introduction-visibility/route.ts`
+
+- `components/admin/StoryVisibilityAdmin.tsx`
+
+- `prisma/migrations/202613_story_visibility_modes/migration.sql`
+
+- `scripts/audit-routes.ts`
+
+- `tests/story-visibility.test.ts`
+
+- `docs/INTRODUCTION_VISIBILITY_AUDIT.md`
+
+- `docs/ROUTE_AUDIT_REPORT.md` (generated by audit script)
+
+
+
+## Files modified
+
+
+
+- `prisma/schema.prisma`
+
+- `services/admin.ts`, `services/stories.ts`
+
+- `lib/category-visibility.ts`, `lib/connection-reason.ts`, `lib/copy.ts`, `lib/shared-introducers.ts`
+
+- `services/trust-profile.ts`
+
+- `app/api/stories/route.ts`, `app/api/admin/settings/route.ts`
+
+- `app/(main)/maindash/page.tsx`, `app/(main)/introductions/[id]/page.tsx`
+
+- `components/stories/StoryUploader.tsx`, `components/admin/StoryVisibilityAdmin.tsx`
+
+- `components/introductions/IntroductionCard.tsx`, `components/home/TrustNetworkDashboard.tsx`
+
+- `components/connections/ConnectionReasonLink.tsx`, `components/messages/*`, `components/profile/TrustNetworkSection.tsx`
+
+- `scripts/verify-database.ts`, `package.json`
+
+
+
+---
+
+
+
+## Verification steps
+
+
+
+1. **Admin:** Open `/maindash` → toggle visibility modes → confirm disabled modes disappear from create-story flow.
+
+2. **Create story:** With `allowUserVisibilitySelection=false`, confirm only default mode is used.
+
+3. **API:** POST `/api/stories` with a disabled `visibilityMode` → expect 400.
+
+4. **Navigation:** From introductions list, home, notifications, messages → open `/introductions/{storyId}` without 404.
+
+5. **Automation:** `npm run audit:routes` exits 0; review `docs/ROUTE_AUDIT_REPORT.md`.
+
+

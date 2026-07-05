@@ -1,111 +1,49 @@
-node_modules
-.next
-out
-dist
+# Dependencies & build
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+.eslintcache
+.cache/
+.turbo/
+.vercel/
+
+# Environment (never commit secrets)
 .env
 .env.local
 .env*.local
-.DS_Store
-*.log
-.vercel
-.turbo
-.cache
-.eslintcache
-coverage
-backups/
-docs/.*.json
-docs/.scale-progression/
-
-# Environment files
-.env
-.env.local
 .env.production
 
-# Node
-node_modules/
-
-# Next.js build output
-.next/
-out/
-
-# Logs
+# Logs & coverage
 *.log
+coverage/
 
-# Benchmark reports
-docs/.production-benchmark.json
-docs/.scale-progression-results.json
-docs/.load-investigation-results.json
-docs/.load-investigation-checkpoint.json
-docs/.middleware-auth-benchmark.json
-docs/.region-latency-audit.json
-
-# Backups
-backups/
-*.sql
-*.dump
-
-# Simulation exports
-simulation-exports/
-exports/
-seed-exports/
-
-# Local IDE files
-.vscode/
-.idea/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-lib/simulation/
-prisma/seed-simulation.ts
-tests/simulation-validation.test.ts
-
-
-load-tests/
-scripts/run-concurrency-test.ts
-scripts/run-load-investigation.ts
-scripts/run-scale-progression.ts
-
-
-scripts/profile-*
-scripts/audit-region-latency.ts
-
-docs/
-docs/BUDDYINTRO_1000_USER_READINESS.md
-docs/BUDDYINTRO_CAPACITY_REPORT.md
-docs/BUDDYINTRO_SCALE_ASSESSMENT.md
-docs/BUDDYINTRO_SCALE_READINESS.md
-docs/CAPACITY_LIMIT_REPORT.md
-docs/CONCURRENCY_TEST_REPORT.md
-docs/CRASH_ANALYSIS.md
-docs/DEPLOYMENT_TOPOLOGY_REGION_REPORT.md
-docs/MEMORY_LEAK_REPORT.md
-docs/SCALABILITY_1000_REPORT.md
-docs/SCALABILITY_REPORT.md
-docs/SCALABILITY_TEST_RESULTS.md
-docs/SIMULATION_AUDIT.md
-docs/SIMULATION_REPORT.md
-supabase/.temp/
-*.tsbuildinfo
-
-
-node_modules/
-
-backups/
-
-.env
-.env.local
-
-node_modules
-.next
-
+# Deployment artifacts (generated)
+deployment/releases/*.zip
+deployment/staging/
+!deployment/releases/.gitkeep
+!deployment/releases/RELEASE_NOTES_*.md
+deploy/
 *.zip
 app.zip
 
-docs/.production-benchmark.json
-docs/.scale-progression-results.json
-docs/.load-investigation-results.json
+# Database backups & dumps
+backups/
+*.dump
 
-*.sql
-*.bak
+# Local exports
+simulation-exports/
+exports/
+seed-exports/
+supabase/.temp/
+
+# Benchmark / investigation JSON (not source docs)
+docs/.*.json
+docs/.scale-progression/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

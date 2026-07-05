@@ -38,6 +38,14 @@
     "validate:samples": "tsx scripts/run-validation-samples.ts",
     "backup:database": "tsx scripts/backup-database.ts",
     "backup:verify": "tsx scripts/backup-verify.ts",
+    "clean": "node scripts/clean.js",
+    "verify": "node scripts/verify.js",
+    "package": "node scripts/package.js",
+    "release": "node scripts/release.js",
+    "publish": "node scripts/publish.js",
+    "health": "node scripts/healthcheck.js",
+    "deploy": "node scripts/deploy.js",
+    "rollback": "node scripts/rollback.js",
     "health-check": "tsx scripts/health-check.ts",
     "job-worker": "tsx scripts/job-worker.ts",
     "audit:db": "tsx scripts/audit-database.ts",
@@ -52,7 +60,10 @@
     "test:watch": "tsx --test --watch tests/**/*.test.ts",
     "rebuild-connections": "tsx scripts/rebuild-connections.ts",
     "orphan-check": "tsx scripts/run-orphan-check.ts",
-    "postinstall": "echo Prisma generation skipped"
+    "postinstall": "prisma generate"
+  },
+  "engines": {
+    "node": ">=18.17.0"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
