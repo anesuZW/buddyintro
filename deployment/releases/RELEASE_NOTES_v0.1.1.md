@@ -1,10 +1,4 @@
-# Changelog
-
-All notable changes to BuddyIntro are documented here.
-
-Release notes are auto-generated during `npm run publish`.
-
-## v0.1.1
+# BuddyIntro v0.1.1
 
 Released: 2026-07-07
 
