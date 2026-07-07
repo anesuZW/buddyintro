@@ -3,8 +3,8 @@
  * Production health verification.
  * Usage: npm run health [-- --url=https://buddyintro.com]
  */
-const { spawnSync } = require("child_process");
 const { existsSync, readFileSync } = require("fs");
+const { spawnCommand } = require("./lib/exec");
 
 function loadEnv() {
   for (const file of [".env.local", ".env"]) {
@@ -52,12 +52,10 @@ async function main() {
   });
 
   await check("Deep check (Prisma + Supabase storage)", () => {
-    const r = spawnSync("npx", ["tsx", "scripts/health-check.ts"], {
-      stdio: "pipe",
-      encoding: "utf8",
-      shell: true,
-    });
-    if (r.status !== 0) throw new Error(r.stderr || r.stdout || "health-check.ts failed");
+    const result = spawnCommand("npx", ["tsx", "scripts/health-check.ts"], { capture: true });
+    if (result.status !== 0) {
+      throw new Error(result.stderr || result.stdout || "health-check.ts failed");
+    }
   });
 
   await check("API /api/health", async () => {

@@ -1,10 +1,10 @@
 /**
  * Load deployment configuration from environment.
- * SSH key auth only — passwords are never used.
  */
 const { existsSync, readFileSync } = require("fs");
 const { resolve } = require("path");
 const { ROOT } = require("./paths");
+const { tryGitCapture } = require("./exec");
 
 function loadEnvFiles() {
   for (const file of [".env.local", ".env"]) {
@@ -38,6 +38,13 @@ function requireEnv(name) {
   return value;
 }
 
+function detectGithubRepo() {
+  const remote = tryGitCapture(["remote", "get-url", "origin"]);
+  if (!remote) return null;
+  const match = remote.match(/github\.com[:/](.+?)(?:\.git)?$/);
+  return match ? match[1] : null;
+}
+
 function getDeployConfig() {
   const sshKey = process.env.DEPLOY_SSH_KEY || process.env.SSH_KEY_PATH;
   if (!sshKey) {
@@ -64,17 +71,6 @@ function getDeployConfig() {
     passengerWaitMs: Number(process.env.DEPLOY_PASSENGER_WAIT_MS || 15000),
     githubRepo: process.env.GITHUB_REPOSITORY || detectGithubRepo(),
   };
-}
-
-function detectGithubRepo() {
-  try {
-    const { runCapture } = require("./exec");
-    const remote = runCapture("git", ["remote", "get-url", "origin"]);
-    const match = remote.match(/github\.com[:/](.+?)(?:\.git)?$/);
-    return match ? match[1] : null;
-  } catch {
-    return null;
-  }
 }
 
 module.exports = { getDeployConfig, loadEnvFiles };

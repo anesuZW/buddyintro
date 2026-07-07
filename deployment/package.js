@@ -13,13 +13,20 @@ const {
   statSync,
 } = require("fs");
 const { join } = require("path");
-const { spawnSync } = require("child_process");
 const {
   ROOT,
   RELEASES_DIR,
   STAGING_DIR,
   PRODUCTION_INCLUDES,
 } = require("../scripts/lib/paths");
+const { spawnCommand, CommandError } = require("../scripts/lib/exec");
+
+function sleepSync(ms) {
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline) {
+    /* wait */
+  }
+}
 
 function readVersion() {
   const arg = process.argv.find((a) => a.startsWith("--version="));
@@ -31,25 +38,42 @@ function fillTemplate(template, vars) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? "");
 }
 
-function createZip(sourceDir, zipPath) {
-  if (process.platform === "win32") {
-    for (let attempt = 1; attempt <= 3; attempt += 1) {
-      const ps = `Compress-Archive -Path '${sourceDir}\\*' -DestinationPath '${zipPath}' -Force`;
-      const r = spawnSync("powershell", ["-NoProfile", "-Command", ps], { stdio: "inherit" });
-      if (r.status === 0 && existsSync(zipPath) && statSync(zipPath).size > 100_000) return;
-      if (attempt < 3) {
-        console.warn(`  Zip attempt ${attempt} failed — retrying in 2s…`);
-        spawnSync("powershell", ["-Command", "Start-Sleep -Seconds 2"], { stdio: "ignore" });
-      }
+function createZipWithTar(sourceDir, zipPath) {
+  const tarCheck = spawnCommand("tar", ["--version"]);
+  if (tarCheck.status !== 0) return false;
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const result = spawnCommand("tar", ["-a", "-c", "-f", zipPath, "-C", sourceDir, "."]);
+    if (result.status === 0 && existsSync(zipPath) && statSync(zipPath).size > 100_000) {
+      return true;
     }
-    throw new Error("Compress-Archive failed after 3 attempts");
+    if (attempt < 3) {
+      console.warn(`  Zip attempt ${attempt} failed — retrying in 2s…`);
+      sleepSync(2000);
+    }
   }
-  if (spawnSync("zip", ["--version"], { stdio: "ignore" }).status === 0) {
-    const r = spawnSync("zip", ["-r", zipPath, "."], { cwd: sourceDir, stdio: "inherit" });
-    if (r.status !== 0) throw new Error("zip failed");
-    return;
-  }
-  throw new Error("No zip tool found (install zip on Linux/macOS)");
+  return false;
+}
+
+function createZipWithZip(sourceDir, zipPath) {
+  const zipCheck = spawnCommand("zip", ["--version"]);
+  if (zipCheck.status !== 0) return false;
+
+  const result = spawnCommand("zip", ["-r", zipPath, "."], { cwd: sourceDir });
+  return result.status === 0 && existsSync(zipPath) && statSync(zipPath).size > 100_000;
+}
+
+function createZip(sourceDir, zipPath) {
+  if (createZipWithTar(sourceDir, zipPath)) return;
+  if (createZipWithZip(sourceDir, zipPath)) return;
+
+  throw new CommandError({
+    command: "tar",
+    args: ["-a", "-c", "-f", zipPath, "-C", sourceDir, "."],
+    exitCode: 1,
+    stderr: "",
+    hint: "Install tar (Windows 10+) or zip for packaging.",
+  });
 }
 
 function main() {
@@ -100,6 +124,7 @@ function main() {
 try {
   main();
 } catch (err) {
-  console.error(err);
+  if (err instanceof CommandError) console.error(err.format());
+  else console.error(err);
   process.exit(1);
 }

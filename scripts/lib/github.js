@@ -2,31 +2,22 @@
  * GitHub Release creation via gh CLI.
  */
 const { existsSync } = require("fs");
-const { run, runCapture } = require("./exec");
+const { runGh, runGhCapture, tryGhCapture } = require("./exec");
 
 function assertGhInstalled() {
-  try {
-    runCapture("gh", ["--version"]);
-  } catch {
+  if (tryGhCapture(["--version"]) === null) {
     throw new Error("GitHub CLI (gh) is required. Install: https://cli.github.com/");
   }
 }
 
 function assertGhAuthenticated() {
-  try {
-    runCapture("gh", ["auth", "status"]);
-  } catch {
+  if (tryGhCapture(["auth", "status"]) === null) {
     throw new Error("gh is not authenticated. Run: gh auth login");
   }
 }
 
 function releaseExists(version) {
-  try {
-    runCapture("gh", ["release", "view", `v${version}`]);
-    return true;
-  } catch {
-    return false;
-  }
+  return tryGhCapture(["release", "view", `v${version}`]) !== null;
 }
 
 function createGitHubRelease({ version, zipPath, changelogPath, notesPath, repo }) {
@@ -59,7 +50,7 @@ function createGitHubRelease({ version, zipPath, changelogPath, notesPath, repo 
   if (repo) args.push("--repo", repo);
 
   console.log("\n→ Creating GitHub Release…");
-  run("gh", args);
+  runGh(args);
 }
 
 module.exports = {

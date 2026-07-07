@@ -9,8 +9,9 @@
  *
  * Usage: npm run deploy [-- --tag=v0.1.0]
  */
-const { sshExec } = require("./lib/ssh");
+const { sshExec, remoteScript } = require("./lib/ssh");
 const { getDeployConfig } = require("./lib/deploy-config");
+const { CommandError } = require("./lib/exec");
 
 const tagArg = process.argv.find((a) => a.startsWith("--tag="));
 const deployTag = tagArg ? tagArg.split("=")[1] : null;
@@ -70,20 +71,20 @@ async function main() {
     const tag = deployTag.startsWith("v") ? deployTag : `v${deployTag}`;
     steps.push({
       name: `Checkout tag ${tag}`,
-      cmd: `cd ${app} && git fetch --tags && git checkout ${tag}`,
+      cmd: remoteScript(app, ["git fetch --tags", `git checkout ${tag}`]),
     });
   } else {
     steps.push({
       name: "Git pull",
-      cmd: `cd ${app} && git pull`,
+      cmd: remoteScript(app, ["git pull"]),
     });
   }
 
   steps.push(
-    { name: "npm ci --omit=dev", cmd: `cd ${app} && npm ci --omit=dev` },
-    { name: "Prisma generate", cmd: `cd ${app} && npx prisma generate` },
-    { name: "Prisma migrate deploy", cmd: `cd ${app} && npx prisma migrate deploy` },
-    { name: "Restart Passenger", cmd: `cd ${app} && mkdir -p tmp && touch tmp/restart.txt` }
+    { name: "npm ci --omit=dev", cmd: remoteScript(app, ["npm ci --omit=dev"]) },
+    { name: "Prisma generate", cmd: remoteScript(app, ["npx prisma generate"]) },
+    { name: "Prisma migrate deploy", cmd: remoteScript(app, ["npx prisma migrate deploy"]) },
+    { name: "Restart Passenger", cmd: remoteScript(app, ["mkdir -p tmp", "touch tmp/restart.txt"]) }
   );
 
   for (const step of steps) {
@@ -92,9 +93,9 @@ async function main() {
       console.log(`  ✓ ${step.name}`);
     } catch (err) {
       console.error("\n✗ DEPLOYMENT FAILED");
-      console.error(`  Step:    ${err.step || step.name}`);
-      console.error(`  Command: ${err.command || step.cmd}`);
-      console.error(`  Error:   ${err.message}`);
+      console.error(`  Step: ${err.step || step.name}`);
+      if (err instanceof CommandError) console.error(err.format());
+      else console.error(`  Error: ${err.message}`);
       console.error("\nNo automatic rollback was performed.");
       process.exit(1);
     }
@@ -109,7 +110,7 @@ async function main() {
     console.log(`  ✓ /api/health → ${health.status}`);
   } catch (err) {
     console.error("\n✗ DEPLOYMENT FAILED");
-    console.error(`  Step:    Health verification`);
+    console.error("  Step:    Health verification");
     console.error(`  URL:     ${config.healthUrl}`);
     console.error(`  Error:   ${err.message}`);
     console.error("\nServer commands completed but health check failed.");

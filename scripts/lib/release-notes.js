@@ -3,23 +3,21 @@
  */
 const { existsSync, mkdirSync, writeFileSync } = require("fs");
 const { join } = require("path");
-const { runCapture } = require("./exec");
+const { runGitCapture, tryGitCapture } = require("./exec");
 const { ROOT } = require("./paths");
 
+/** Git format string — passed as a single argv element (no shell). */
+const LOG_FORMAT = "%s|%h|%an";
+
 function gitLogSince(ref) {
-  try {
-    return runCapture("git", ["log", `${ref}..HEAD`, "--pretty=format:%s|%h|%an"]);
-  } catch {
-    return runCapture("git", ["log", "-20", "--pretty=format:%s|%h|%an"]);
-  }
+  const range = `${ref}..HEAD`;
+  const out = tryGitCapture(["log", range, `--pretty=format:${LOG_FORMAT}`]);
+  if (out) return out;
+  return runGitCapture(["log", "-20", `--pretty=format:${LOG_FORMAT}`]);
 }
 
 function lastTag() {
-  try {
-    return runCapture("git", ["describe", "--tags", "--abbrev=0"]);
-  } catch {
-    return null;
-  }
+  return tryGitCapture(["describe", "--tags", "--abbrev=0"]);
 }
 
 function categorize(subject) {

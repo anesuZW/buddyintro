@@ -1,28 +1,44 @@
 /**
  * Git helpers for publish pipeline.
  */
-const { run, runCapture } = require("./exec");
+const { relative } = require("path");
+const { runGit, runGitCapture, tryGitCapture } = require("./exec");
 
 const RELEASE_ALLOWLIST = [
   /^package\.json$/,
   /^package-lock\.json$/,
   /^CHANGELOG\.md$/,
+  /^deployment\/package\.js$/,
   /^deployment\/releases\/RELEASE_NOTES_v[\d.]+\.md$/,
   /^deployment\/releases\/\.gitkeep$/,
+  /^scripts\/(clean|verify|package|release|publish|deploy|rollback|healthcheck)\.js$/,
+  /^scripts\/lib\/[\w-]+\.js$/,
 ];
 
 function gitStatusPorcelain() {
-  return runCapture("git", ["status", "--porcelain"]);
+  return runGitCapture(["status", "--porcelain"]);
+}
+
+function parseStatusLine(line) {
+  if (line.startsWith("?? ")) {
+    return line.slice(3);
+  }
+  if (line.startsWith("??")) {
+    return line.slice(2).trim();
+  }
+
+  const match = line.match(/^[ MADRCU.]{1,2} (.+)$/);
+  if (!match) return line.trim();
+
+  const entry = match[1];
+  return entry.includes(" -> ") ? entry.split(" -> ")[1] : entry;
 }
 
 function parseStatusLines(porcelain) {
   return porcelain
-    .split("\n")
+    .split(/\r?\n/)
     .filter(Boolean)
-    .map((line) => {
-      const entry = line.slice(3);
-      return entry.includes(" -> ") ? entry.split(" -> ")[1] : entry;
-    });
+    .map(parseStatusLine);
 }
 
 function assertReleaseReadyWorkingTree() {
@@ -51,52 +67,39 @@ function assertCleanWorkingTree() {
 }
 
 function tagExists(version) {
-  try {
-    runCapture("git", ["rev-parse", `v${version}`]);
-    return true;
-  } catch {
-    return false;
-  }
+  return tryGitCapture(["rev-parse", `v${version}`]) !== null;
 }
 
 function remoteTagExists(version) {
-  try {
-    const out = runCapture("git", ["ls-remote", "--tags", "origin", `refs/tags/v${version}`]);
-    return out.length > 0;
-  } catch {
-    return false;
-  }
+  const out = tryGitCapture(["ls-remote", "--tags", "origin", `refs/tags/v${version}`]);
+  return Boolean(out && out.length > 0);
 }
 
 function commitRelease(version, absolutePaths) {
-  const { relative } = require("path");
   const files = absolutePaths.map((p) => relative(process.cwd(), p).replace(/\\/g, "/"));
-  run("git", ["add", ...files]);
-  run("git", ["commit", "-m", `Release v${version}`]);
+  runGit(["add", ...files]);
+  runGit(["commit", "-m", `Release v${version}`]);
 }
 
 function tagRelease(version) {
   if (tagExists(version)) {
     throw new Error(`Tag v${version} already exists locally — refusing to overwrite.`);
   }
-  run("git", ["tag", "-a", `v${version}`, "-m", `BuddyIntro v${version}`]);
+  runGit(["tag", "-a", `v${version}`, "-m", `BuddyIntro v${version}`]);
 }
 
 function pushRelease() {
-  run("git", ["push"]);
-  run("git", ["push", "--tags"]);
+  runGit(["push"]);
+  runGit(["push", "--tags"]);
 }
 
 function listVersionTags() {
-  try {
-    const out = runCapture("git", ["tag", "--list", "v*", "--sort=-version:refname"]);
-    return out
-      .split("\n")
-      .filter(Boolean)
-      .map((t) => t.replace(/^v/, ""));
-  } catch {
-    return [];
-  }
+  const out = tryGitCapture(["tag", "--list", "v*", "--sort=-version:refname"]);
+  if (!out) return [];
+  return out
+    .split("\n")
+    .filter(Boolean)
+    .map((t) => t.replace(/^v/, ""));
 }
 
 module.exports = {

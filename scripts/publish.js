@@ -30,6 +30,7 @@ const {
   createGitHubRelease,
 } = require("./lib/github");
 const { getDeployConfig } = require("./lib/deploy-config");
+const { CommandError } = require("./lib/exec");
 
 function step(name, fn) {
   console.log(`\n[publish] ${name}`);
@@ -37,7 +38,11 @@ function step(name, fn) {
     return fn();
   } catch (err) {
     console.error(`\n✗ FAILED at: ${name}`);
-    console.error(`  ${err.message}`);
+    if (err instanceof CommandError) {
+      console.error(err.format());
+    } else {
+      console.error(`  ${err.message}`);
+    }
     process.exit(1);
   }
 }
@@ -99,7 +104,12 @@ function main() {
   });
 
   step("Git commit", () => {
-    commitRelease(version, [changelogPath, notesPath, join(ROOT, "package.json"), join(ROOT, "package-lock.json")]);
+    commitRelease(version, [
+      changelogPath,
+      notesPath,
+      join(ROOT, "package.json"),
+      join(ROOT, "package-lock.json"),
+    ]);
     console.log(`  ✓ Committed Release v${version}`);
   });
 

@@ -9,9 +9,10 @@
  */
 const readline = require("readline");
 const { listVersionTags } = require("./lib/git");
-const { sshExec } = require("./lib/ssh");
+const { sshExec, remoteScript } = require("./lib/ssh");
 const { getDeployConfig } = require("./lib/deploy-config");
 const { readVersion } = require("./lib/version");
+const { CommandError } = require("./lib/exec");
 
 async function waitForHealth(url, maxMs) {
   const deadline = Date.now() + maxMs;
@@ -119,10 +120,13 @@ async function main() {
   console.log(`\nRolling back to ${tag} on ${config.host}…\n`);
 
   const steps = [
-    { name: `Checkout ${tag}`, cmd: `cd ${app} && git fetch --tags && git checkout ${tag}` },
-    { name: "npm ci --omit=dev", cmd: `cd ${app} && npm ci --omit=dev` },
-    { name: "Prisma generate", cmd: `cd ${app} && npx prisma generate` },
-    { name: "Restart Passenger", cmd: `cd ${app} && mkdir -p tmp && touch tmp/restart.txt` },
+    {
+      name: `Checkout ${tag}`,
+      cmd: remoteScript(app, ["git fetch --tags", `git checkout ${tag}`]),
+    },
+    { name: "npm ci --omit=dev", cmd: remoteScript(app, ["npm ci --omit=dev"]) },
+    { name: "Prisma generate", cmd: remoteScript(app, ["npx prisma generate"]) },
+    { name: "Restart Passenger", cmd: remoteScript(app, ["mkdir -p tmp", "touch tmp/restart.txt"]) },
   ];
 
   for (const step of steps) {
@@ -131,9 +135,9 @@ async function main() {
       console.log(`  ✓ ${step.name}`);
     } catch (err) {
       console.error("\n✗ ROLLBACK FAILED");
-      console.error(`  Step:    ${err.step || step.name}`);
-      console.error(`  Command: ${err.command || step.cmd}`);
-      console.error(`  Error:   ${err.message}`);
+      console.error(`  Step: ${err.step || step.name}`);
+      if (err instanceof CommandError) console.error(err.format());
+      else console.error(`  Error: ${err.message}`);
       process.exit(1);
     }
   }

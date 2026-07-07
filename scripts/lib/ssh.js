@@ -1,10 +1,11 @@
 /**
  * SSH execution — public-key auth only (BatchMode, no passwords).
+ * Remote commands are passed as a single SSH argument (no local shell).
  */
-const { spawnSync } = require("child_process");
+const { spawnCommand, CommandError } = require("./exec");
 const { getDeployConfig } = require("./deploy-config");
 
-function sshArgs(config) {
+function sshBaseArgs(config) {
   return [
     "-i",
     config.keyPath,
@@ -22,35 +23,51 @@ function sshArgs(config) {
   ];
 }
 
-function sshExec(command, stepName) {
+function sshExec(remoteCommand, stepName) {
   const config = getDeployConfig();
-  const label = stepName || command.slice(0, 80);
+  const label = stepName || remoteCommand.slice(0, 80);
   console.log(`\n→ SSH: ${label}`);
 
-  const result = spawnSync("ssh", [...sshArgs(config), command], {
+  const result = spawnCommand("ssh", [...sshBaseArgs(config), remoteCommand], {
     stdio: "inherit",
-    shell: false,
-    env: { ...process.env, SSH_AUTH_SOCK: process.env.SSH_AUTH_SOCK },
   });
 
   if (result.status !== 0) {
-    const err = new Error(`Deployment failed at step: ${label}`);
+    const err = new CommandError({
+      command: "ssh",
+      args: [label, remoteCommand],
+      exitCode: result.status,
+      stderr: result.stderr?.toString?.() || "",
+      hint: "Verify SSH key, host, and that the server is reachable.",
+    });
     err.step = label;
-    err.command = command;
+    err.remoteCommand = remoteCommand;
     throw err;
   }
 }
 
-function sshExecCapture(command) {
+function sshExecCapture(remoteCommand) {
   const config = getDeployConfig();
-  const result = spawnSync("ssh", [...sshArgs(config), command], {
-    encoding: "utf8",
-    shell: false,
+  const result = spawnCommand("ssh", [...sshBaseArgs(config), remoteCommand], {
+    capture: true,
   });
+
   if (result.status !== 0) {
-    throw new Error(`SSH command failed: ${command}\n${result.stderr || ""}`);
+    throw new CommandError({
+      command: "ssh",
+      args: [remoteCommand],
+      exitCode: result.status,
+      stderr: result.stderr || "",
+      hint: "Verify SSH key and server connectivity.",
+    });
   }
   return (result.stdout || "").trim();
 }
 
-module.exports = { sshExec, sshExecCapture };
+/** Build a remote shell command without local shell parsing. */
+function remoteScript(appPath, commands) {
+  const quoted = appPath.includes(" ") ? `"${appPath}"` : appPath;
+  return `cd ${quoted} && ${commands.join(" && ")}`;
+}
+
+module.exports = { sshExec, sshExecCapture, remoteScript };

@@ -25,6 +25,7 @@ Released: 2026-07-07
 - Verify: `curl /api/health`
 
 ## Other changes
+- Release v0.1.1 (ba48ed9, Anesu Gozo)
 - Update package (39d3fcf, Anesu Gozo)
 - Update package lock (455e142, Anesu Gozo)
 - Initial BuddyIntro production release (b7547e4, Anesu Gozo)

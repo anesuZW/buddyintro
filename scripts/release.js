@@ -5,7 +5,7 @@
  */
 const { existsSync } = require("fs");
 const { join } = require("path");
-const { run, runCapture } = require("./lib/exec");
+const { runNode, runNpm, runNpx, runGit, CommandError } = require("./lib/exec");
 const { parseReleaseArgs, readVersion, writeVersion, bumpVersion } = require("./lib/version");
 const { generateReleaseNotes } = require("./lib/release-notes");
 const { ROOT } = require("./lib/paths");
@@ -26,12 +26,12 @@ function main() {
   }
 
   const steps = [
-    ["Clean", () => run("node", ["scripts/clean.js"])],
-    ["Install dependencies", () => run("npm", ["install"])],
-    ["Prisma generate", () => run("npx", ["prisma", "generate"])],
-    ["Verify", () => run("node", ["scripts/verify.js"])],
-    ["Production build", () => run("npm", ["run", "build"])],
-    ["Deployment package", () => run("node", ["deployment/package.js", `--version=${version}`])],
+    ["Clean", () => runNode(["scripts/clean.js"])],
+    ["Install dependencies", () => runNpm(["install"])],
+    ["Prisma generate", () => runNpx(["prisma", "generate"])],
+    ["Verify", () => runNode(["scripts/verify.js"])],
+    ["Production build", () => runNpm(["run", "build"])],
+    ["Deployment package", () => runNode(["deployment/package.js", `--version=${version}`])],
   ];
 
   steps.forEach(([name, fn], i) => {
@@ -45,12 +45,12 @@ function main() {
 
   if (args.commit && !args.dryRun) {
     console.log(`\n[${steps.length + 2}/${steps.length + 2}] Git commit…`);
-    run("git", ["add", "package.json", "package-lock.json", "deployment/"]);
-    run("git", ["commit", "-m", `Release v${version}`]);
+    runGit(["add", "package.json", "package-lock.json", "deployment/"]);
+    runGit(["commit", "-m", `Release v${version}`]);
     if (args.push) {
-      run("git", ["tag", "-a", `v${version}`, "-m", `Release v${version}`]);
-      run("git", ["push"]);
-      run("git", ["push", "origin", `v${version}`]);
+      runGit(["tag", "-a", `v${version}`, "-m", `Release v${version}`]);
+      runGit(["push"]);
+      runGit(["push", "origin", `v${version}`]);
     }
   } else {
     console.log(`\n[${steps.length + 2}/${steps.length + 2}] Git skipped (use --commit --push)`);
@@ -66,6 +66,8 @@ function main() {
 try {
   main();
 } catch (err) {
-  console.error("\nRelease failed:", err.message);
+  console.error("\nRelease failed:");
+  if (err instanceof CommandError) console.error(err.format());
+  else console.error(err.message);
   process.exit(1);
 }
