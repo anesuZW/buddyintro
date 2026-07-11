@@ -25,4 +25,5 @@ Released: 2026-07-11
 - Verify: `curl /api/health`
 
 ## Other changes
+- Improve deployment pipeline and Windows compatibility (e0ad1b8, Anesu Gozo)
 - Improve cross-platform release and deployment tooling (71b94c3, Anesu Gozo)
