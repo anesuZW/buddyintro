@@ -1,20 +1,30 @@
 #!/usr/bin/env node
 /**
- * Full release pipeline.
- * Usage: npm run release [-- --minor|--major|--no-bump|--commit|--push|--dry-run]
+ * Full release pipeline — build and package only (no deploy).
+ * Usage: npm run release [-- --minor|--major|--no-bump|--dry-run]
  */
-const { existsSync } = require("fs");
 const { join } = require("path");
-const { runNode, runNpm, runNpx, runGit, CommandError } = require("./lib/exec");
+const { runNode, runNpm, runNpx, CommandError } = require("./lib/exec");
+const { assertRepoRoot } = require("./lib/repo-root");
 const { parseReleaseArgs, readVersion, writeVersion, bumpVersion } = require("./lib/version");
-const { generateReleaseNotes } = require("./lib/release-notes");
+const { ensureChangelog } = require("./lib/changelog");
+const { verifyReleasePackage } = require("./lib/package-verify");
 const { ROOT } = require("./lib/paths");
 
 const args = parseReleaseArgs(process.argv.slice(2));
 
+function step(index, total, name, fn) {
+  console.log(`\n[${index}/${total}] ${name}…`);
+  if (!args.dryRun) fn();
+}
+
 function main() {
   console.log("\n=== BuddyIntro Release ===\n");
-  if (args.dryRun) console.log("(dry-run mode)\n");
+  console.log(`cwd: ${process.cwd()}`);
+  assertRepoRoot();
+  console.log("  ✓ package.json and package-lock.json found\n");
+
+  if (args.dryRun) console.log("(dry-run mode — destructive steps skipped)\n");
 
   let version = readVersion();
   if (!args.skipBump) {
@@ -25,42 +35,32 @@ function main() {
     console.log(`Version: ${version} (no bump)`);
   }
 
-  const steps = [
-    ["Clean", () => runNode(["scripts/clean.js"])],
-    ["Install dependencies", () => runNpm(["install"])],
-    ["Prisma generate", () => runNpx(["prisma", "generate"])],
-    ["Verify", () => runNode(["scripts/verify.js"])],
-    ["Production build", () => runNpm(["run", "build"])],
-    ["Deployment package", () => runNode(["deployment/package.js", `--version=${version}`])],
-  ];
+  const total = 9;
 
-  steps.forEach(([name, fn], i) => {
-    console.log(`\n[${i + 1}/${steps.length + 2}] ${name}…`);
-    if (!args.dryRun) fn();
+  step(1, total, "Clean", () => runNode(["scripts/clean.js"]));
+  step(2, total, "Install dependencies", () => runNpm(["install"]));
+  step(3, total, "Prisma generate", () => runNpx(["prisma", "generate"]));
+  step(4, total, "Lint, typecheck, and tests", () => runNode(["scripts/verify.js"]));
+  step(5, total, "Production build", () => runNpm(["run", "build"]));
+  step(6, total, "Create deployment package", () =>
+    runNode(["deployment/package.js", `--version=${version}`])
+  );
+  step(7, total, "Generate CHANGELOG and release notes", () => {
+    const { changelogPath, notesPath } = ensureChangelog(version);
+    console.log(`  ✓ ${changelogPath.replace(ROOT, ".")}`);
+    console.log(`  ✓ ${notesPath.replace(ROOT, ".")}`);
+  });
+  step(8, total, "Verify deployment package", () => {
+    const { zipPath, size } = verifyReleasePackage(version);
+    console.log(`  ✓ ${zipPath.replace(ROOT, ".")} (${Math.round(size / 1024 / 1024)} MB)`);
   });
 
-  console.log(`\n[${steps.length + 1}/${steps.length + 2}] Release notes…`);
-  const { notesPath } = generateReleaseNotes(version);
-  console.log(`  ✓ ${notesPath.replace(ROOT, ".")}`);
-
-  if (args.commit && !args.dryRun) {
-    console.log(`\n[${steps.length + 2}/${steps.length + 2}] Git commit…`);
-    runGit(["add", "package.json", "package-lock.json", "deployment/"]);
-    runGit(["commit", "-m", `Release v${version}`]);
-    if (args.push) {
-      runGit(["tag", "-a", `v${version}`, "-m", `Release v${version}`]);
-      runGit(["push"]);
-      runGit(["push", "origin", `v${version}`]);
-    }
-  } else {
-    console.log(`\n[${steps.length + 2}/${steps.length + 2}] Git skipped (use --commit --push)`);
-  }
-
+  console.log(`\n[${total}/${total}] Release complete`);
   const zip = join(ROOT, "deployment", "releases", `BuddyIntro-v${version}.zip`);
   console.log("\n=== Release complete ===");
   console.log(`Version:  v${version}`);
-  console.log(`Package:  ${!args.dryRun && existsSync(zip) ? zip.replace(ROOT, ".") : "(see dry-run)"}`);
-  console.log(`Notes:    deployment/releases/RELEASE_NOTES_v${version}.md\n`);
+  console.log(`Package:  ${args.dryRun ? "(dry-run)" : zip.replace(ROOT, ".")}`);
+  console.log(`Next:     npm run publish\n`);
 }
 
 try {

@@ -11,105 +11,102 @@ Professional release pipeline for Next.js + Prisma + Passenger deployment.
 | `npm run package` | Build ZIP in `deployment/releases/` |
 | `npm run release` | Full build pipeline + semver bump |
 | `npm run publish` | Git tag + push + GitHub Release |
-| `npm run deploy` | SSH deploy to InterServer |
-| `npm run rollback` | SSH rollback to prior git tag |
+| `npm run doctor` | Pre-flight checks (SSH, GitHub, env, server) |
+| `npm run deploy` | SSH deploy to InterServer (auto-rollback) |
+| `npm run rollback` | Manual SSH rollback to prior git tag |
 | `npm run health` | DB, Supabase, API, page checks |
 
 ## End-to-end release flow
 
 ```bash
-# 1. Build and package
-npm run release -- --patch
-
-# 2. Publish to GitHub (never overwrites existing releases)
-npm run publish
-
-# 3. Deploy to InterServer via SSH
-npm run deploy
-
-# 4. Rollback if needed
-npm run rollback
+npm run release -- --patch   # 1. Build + package + CHANGELOG
+npm run publish              # 2. GitHub Release
+npm run deploy               # 3. Deploy to InterServer
 ```
 
-### Publish (`npm run publish`)
+See [DEPLOYMENT_FLOW.md](./DEPLOYMENT_FLOW.md) for the full v2 pipeline diagram and safety rules.
 
-1. Verifies `deployment/releases/BuddyIntro-vX.Y.Z.zip` exists
-2. Verifies git working tree is clean (or only release files pending)
-3. Generates `CHANGELOG.md` + release notes
-4. `git add` → `git commit` → `git tag` → `git push` → `git push --tags`
-5. Creates GitHub Release with ZIP + CHANGELOG + release notes
-6. **Stops on any failure** — never overwrites existing tags/releases
+### Release (`npm run release`)
 
-Requires: [GitHub CLI](https://cli.github.com/) (`gh auth login`)
-
-### Deploy (`npm run deploy`)
-
-SSH into InterServer (key-only, no passwords):
-
-```
-git pull → npm ci --omit=dev → prisma generate → migrate deploy → restart Passenger → /api/health
-```
-
-Configure in `.env`:
-
-```
-DEPLOY_SSH_HOST, DEPLOY_SSH_USER, DEPLOY_SSH_KEY, DEPLOY_APP_PATH, DEPLOY_HEALTH_URL
-```
-
-### Rollback (`npm run rollback`)
-
-Lists git tags, prompts for selection, SSH checkout + reinstall + restart + health verify.
-
-## Release pipeline
+1. Clean → Install → Prisma generate
+2. Lint + TypeScript + tests
+3. Production build
+4. Deployment ZIP package
+5. CHANGELOG + release notes
+6. Verify deployment package
+7. **Stops on any failure** — no deploy, no git push
 
 ```bash
 npm run release              # patch bump (default)
 npm run release -- --minor
 npm run release -- --major
-npm run release -- --no-bump   # package current version
-npm run release -- --dry-run   # skip destructive steps
-npm run release -- --commit --push   # git tag + push (manual approval)
+npm run release -- --no-bump
+npm run release -- --dry-run
 ```
 
-Steps executed:
+### Publish (`npm run publish`)
 
-1. Clean → 2. Install → 3. Prisma generate → 4. Verify → 5. Build → 6. Package → 7. Release notes → 8. Optional git
+1. Verifies `gh` installed and authenticated
+2. Verifies ZIP exists and tag/release are available
+3. Verifies clean working tree
+4. Generates `CHANGELOG.md` + release notes
+5. Git commit → tag → push
+6. GitHub Release with ZIP + CHANGELOG + notes
+7. **Never overwrites** existing tags/releases
+8. Removes local tag if push fails
+
+### Deploy (`npm run deploy`)
+
+SSH into InterServer (key-only). GitHub `origin/main` is source of truth:
+
+```
+SSH verify → clone if needed → git reset --hard origin/main → npm ci → prisma → restart → health
+```
+
+- Automatic rollback to previous tag if deploy fails after git sync
+- Logs to `deployment/logs/deploy-*.log`
+- Idempotent — safe to run multiple times
+
+Configure in `.env`:
+
+```
+DEPLOY_SSH_HOST, DEPLOY_SSH_USER, DEPLOY_SSH_KEY
+DEPLOY_APP_PATH, DEPLOY_GIT_BRANCH, DEPLOY_HEALTH_URL
+```
+
+### Doctor (`npm run doctor`)
+
+Pre-flight report: SSH, GitHub, GitHub CLI, Node, Prisma, Supabase, Database, env vars, server checks.
+
+Status per check: **PASS** / **WARNING** / **FAIL**
 
 ## Repository layout
 
 ```
-deployment/          Production packaging
-  package.js           Creates BuddyIntro-vX.Y.Z.zip
-  releases/            Generated artifacts (gitignored)
-  templates/           README_DEPLOY.md template
-
-scripts/               Production operations
-  clean.js verify.js package.js release.js
-  deploy.js rollback.js healthcheck.js
-  lib/                 Shared release utilities
-
-tools/                 Dev-only utilities (benchmarks, audits)
-
-docs/deployment/       Passenger hosting guide
-
-.cursor/rules/         Permanent Cursor project rules
-
-.github/workflows/     CI build + manual release
+deployment/
+  package.js          # ZIP packager
+  releases/           # BuddyIntro-vX.Y.Z.zip
+  logs/               # deploy-YYYY-MM-DD-HHMM.log
+  templates/          # README_DEPLOY.md template
+scripts/
+  release.js          # Build pipeline
+  publish.js          # GitHub publish
+  deploy.js           # SSH deploy + auto-rollback
+  rollback.js         # Manual rollback
+  doctor.js           # Pre-flight checks
+  lib/
+    exec.js           # Cross-platform process execution
+    deploy-logger.js  # Deployment log writer
+    deploy-env.js     # Environment validation
+    remote-deploy.js  # Remote command builders
+    health-poll.js    # Health endpoint polling
+    server-verify.js  # Server verification via SSH
 ```
 
-## Semantic versioning
+## Cross-platform support
 
-Version in `package.json` follows **semver**. Release bumps patch/minor/major automatically.
+All scripts use `spawnSync` with `shell: false` and array arguments. Works on Windows PowerShell, CMD, Git Bash, Linux, and macOS.
 
-## CI/CD
+## CI
 
-- **build.yml** — runs on push/PR: verify + build + upload artifact
-- **release.yml** — manual `workflow_dispatch` with `release-approval` environment; creates **draft** GitHub Release (never auto-deploys to production)
-
-## Cursor rules
-
-See `.cursor/rules/buddyintro.md` for permanent engineering standards.
-
-## Passenger
-
-See [docs/deployment/PASSENGER.md](./deployment/PASSENGER.md).
+GitHub Actions workflows in `.github/workflows/` provide parallel build and manual release paths. Local `npm run publish` is the canonical GitHub Release path with full safety checks.

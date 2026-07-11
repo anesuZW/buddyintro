@@ -2,7 +2,7 @@
  * Git helpers for publish pipeline.
  */
 const { relative } = require("path");
-const { runGit, runGitCapture, tryGitCapture } = require("./exec");
+const { runGit, runGitCapture, tryGitCapture, tryRun } = require("./exec");
 
 const RELEASE_ALLOWLIST = [
   /^package\.json$/,
@@ -11,7 +11,7 @@ const RELEASE_ALLOWLIST = [
   /^deployment\/package\.js$/,
   /^deployment\/releases\/RELEASE_NOTES_v[\d.]+\.md$/,
   /^deployment\/releases\/\.gitkeep$/,
-  /^scripts\/(clean|verify|package|release|publish|deploy|rollback|healthcheck)\.js$/,
+  /^scripts\/(clean|verify|package|release|publish|deploy|rollback|healthcheck|doctor)\.js$/,
   /^scripts\/lib\/[\w-]+\.js$/,
 ];
 
@@ -102,6 +102,10 @@ function listVersionTags() {
     .map((t) => t.replace(/^v/, ""));
 }
 
+function deleteLocalTag(version) {
+  tryRun("git", ["tag", "-d", `v${version}`]);
+}
+
 module.exports = {
   assertCleanWorkingTree,
   assertReleaseReadyWorkingTree,
@@ -111,6 +115,7 @@ module.exports = {
   commitRelease,
   tagRelease,
   pushRelease,
+  deleteLocalTag,
   listVersionTags,
   RELEASE_ALLOWLIST,
 };

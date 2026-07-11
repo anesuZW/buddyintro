@@ -2,18 +2,13 @@
 /**
  * Publish a built release to GitHub.
  *
- * Prerequisites:
- *   npm run release -- --no-bump   (or --patch / --minor / --major)
- *
- * Usage:
- *   npm run publish
- *
- * Stops on any failure. Never overwrites existing tags or GitHub releases.
+ * Prerequisites: npm run release
+ * Usage: npm run publish
  */
-const { existsSync, statSync } = require("fs");
 const { join } = require("path");
 const { ROOT, RELEASES_DIR } = require("./lib/paths");
 const { readVersion } = require("./lib/version");
+const { verifyReleasePackage } = require("./lib/package-verify");
 const {
   assertReleaseReadyWorkingTree,
   tagExists,
@@ -21,6 +16,7 @@ const {
   commitRelease,
   tagRelease,
   pushRelease,
+  deleteLocalTag,
 } = require("./lib/git");
 const { ensureChangelog } = require("./lib/changelog");
 const {
@@ -38,11 +34,8 @@ function step(name, fn) {
     return fn();
   } catch (err) {
     console.error(`\n✗ FAILED at: ${name}`);
-    if (err instanceof CommandError) {
-      console.error(err.format());
-    } else {
-      console.error(`  ${err.message}`);
-    }
+    if (err instanceof CommandError) console.error(err.format());
+    else console.error(`  ${err.message}`);
     process.exit(1);
   }
 }
@@ -54,17 +47,18 @@ function main() {
   const zipPath = join(RELEASES_DIR, `BuddyIntro-v${version}.zip`);
   const tag = `v${version}`;
 
-  step("Verify release package exists", () => {
-    if (!existsSync(zipPath)) {
-      throw new Error(
-        `Package not found: deployment/releases/BuddyIntro-v${version}.zip\n` +
-          "Run: npm run release -- --no-bump"
-      );
-    }
-    const size = statSync(zipPath).size;
-    if (size < 100_000) {
-      throw new Error(`Package too small (${size} bytes) — likely corrupt. Re-run npm run release.`);
-    }
+  step("Verify GitHub CLI installed", () => {
+    assertGhInstalled();
+    console.log("  ✓ gh installed");
+  });
+
+  step("Verify GitHub CLI authenticated", () => {
+    assertGhAuthenticated();
+    console.log("  ✓ gh authenticated");
+  });
+
+  step("Verify release package", () => {
+    const { size } = verifyReleasePackage(version);
     console.log(`  ✓ BuddyIntro-v${version}.zip (${Math.round(size / 1024 / 1024)} MB)`);
   });
 
@@ -75,15 +69,13 @@ function main() {
   });
 
   step("Verify GitHub release does not exist", () => {
-    assertGhInstalled();
-    assertGhAuthenticated();
     if (releaseExists(version)) {
       throw new Error(`GitHub Release ${tag} already exists — refusing to overwrite`);
     }
     console.log(`  ✓ No existing GitHub Release for ${tag}`);
   });
 
-  step("Verify git working tree is clean", () => {
+  step("Verify clean working tree", () => {
     const { gitStatusPorcelain } = require("./lib/git");
     const porcelain = gitStatusPorcelain();
     if (!porcelain) {
@@ -100,7 +92,7 @@ function main() {
 
   step("Verify release files ready to commit", () => {
     assertReleaseReadyWorkingTree();
-    console.log("  ✓ CHANGELOG and release notes staged for commit");
+    console.log("  ✓ CHANGELOG and release notes ready");
   });
 
   step("Git commit", () => {
@@ -113,14 +105,26 @@ function main() {
     console.log(`  ✓ Committed Release v${version}`);
   });
 
+  let tagCreated = false;
   step("Git tag", () => {
     tagRelease(version);
+    tagCreated = true;
     console.log(`  ✓ Tagged ${tag}`);
   });
 
+  let pushed = false;
   step("Git push", () => {
-    pushRelease();
-    console.log("  ✓ Pushed branch and tags");
+    try {
+      pushRelease();
+      pushed = true;
+      console.log("  ✓ Pushed branch and tags");
+    } catch (err) {
+      if (tagCreated && !pushed) {
+        deleteLocalTag(version);
+        console.error("  ✗ Push failed — local tag removed");
+      }
+      throw err;
+    }
   });
 
   step("Create GitHub Release", () => {
@@ -137,7 +141,7 @@ function main() {
       notesPath,
       repo,
     });
-    console.log(`  ✓ GitHub Release ${tag} created with ZIP + CHANGELOG + release notes`);
+    console.log(`  ✓ GitHub Release ${tag} with ZIP + CHANGELOG + release notes`);
   });
 
   console.log("\n=== Publish complete ===");

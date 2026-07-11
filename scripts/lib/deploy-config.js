@@ -2,7 +2,7 @@
  * Load deployment configuration from environment.
  */
 const { existsSync, readFileSync } = require("fs");
-const { resolve } = require("path");
+const { resolve, dirname, join } = require("path");
 const { ROOT } = require("./paths");
 const { tryGitCapture } = require("./exec");
 
@@ -45,6 +45,11 @@ function detectGithubRepo() {
   return match ? match[1] : null;
 }
 
+function resolveAppPath(appPath) {
+  if (!appPath.startsWith("~")) return appPath;
+  return appPath.replace(/^~/, "$HOME");
+}
+
 function getDeployConfig() {
   const sshKey = process.env.DEPLOY_SSH_KEY || process.env.SSH_KEY_PATH;
   if (!sshKey) {
@@ -61,15 +66,28 @@ function getDeployConfig() {
       ? `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/api/health`
       : null);
 
+  const githubRepo = process.env.GITHUB_REPOSITORY || detectGithubRepo();
+  const gitBranch = process.env.DEPLOY_GIT_BRANCH || "main";
+  const appPath = process.env.DEPLOY_APP_PATH || "~/buddyintro";
+  const gitRepoUrl =
+    process.env.DEPLOY_GIT_REPO_URL ||
+    (githubRepo ? `https://github.com/${githubRepo}.git` : null);
+
   return {
     host: requireEnv("DEPLOY_SSH_HOST"),
     user: requireEnv("DEPLOY_SSH_USER"),
     port: Number(process.env.DEPLOY_SSH_PORT || 22),
     keyPath,
-    appPath: process.env.DEPLOY_APP_PATH || "~/buddyintro",
+    appPath,
+    appParentDir: dirname(resolveAppPath(appPath)),
     healthUrl,
-    passengerWaitMs: Number(process.env.DEPLOY_PASSENGER_WAIT_MS || 15000),
-    githubRepo: process.env.GITHUB_REPOSITORY || detectGithubRepo(),
+    passengerWaitMs: Number(process.env.DEPLOY_PASSENGER_WAIT_MS || 15_000),
+    healthPollIntervalMs: Number(process.env.DEPLOY_HEALTH_POLL_MS || 5_000),
+    healthPollMaxMs: Number(process.env.DEPLOY_HEALTH_MAX_MS || 120_000),
+    githubRepo,
+    gitBranch,
+    gitRepoUrl,
+    nodeMinVersion: process.env.DEPLOY_NODE_MIN || ">=18.17.0",
   };
 }
 

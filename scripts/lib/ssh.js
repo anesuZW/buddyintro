@@ -19,15 +19,36 @@ function sshBaseArgs(config) {
     "PreferredAuthentications=publickey",
     "-o",
     "StrictHostKeyChecking=accept-new",
+    "-o",
+    "ConnectTimeout=15",
     `${config.user}@${config.host}`,
   ];
 }
 
-function sshExec(remoteCommand, stepName) {
-  const config = getDeployConfig();
+function getConfig() {
+  return getDeployConfig();
+}
+
+function verifySshReachable(config = getConfig()) {
+  const result = spawnCommand("ssh", [...sshBaseArgs(config), "echo", "ok"], { capture: true });
+  if (result.status !== 0 || !(result.stdout || "").includes("ok")) {
+    throw new CommandError({
+      command: "ssh",
+      args: ["echo ok"],
+      exitCode: result.status,
+      stderr: result.stderr || "",
+      hint: "Verify DEPLOY_SSH_HOST, DEPLOY_SSH_KEY, and network connectivity.",
+    });
+  }
+}
+
+function sshExec(remoteCommand, stepName, logger) {
+  const config = getConfig();
   const label = stepName || remoteCommand.slice(0, 80);
   console.log(`\n→ SSH: ${label}`);
+  if (logger) logger.logCommand(label, remoteCommand);
 
+  const started = Date.now();
   const result = spawnCommand("ssh", [...sshBaseArgs(config), remoteCommand], {
     stdio: "inherit",
   });
@@ -42,17 +63,46 @@ function sshExec(remoteCommand, stepName) {
     });
     err.step = label;
     err.remoteCommand = remoteCommand;
+    if (logger) {
+      logger.logStep({
+        step: label,
+        command: remoteCommand,
+        status: "FAILED",
+        durationMs: Date.now() - started,
+        stderr: err.stderr,
+        error: err.message,
+      });
+    }
     throw err;
+  }
+
+  if (logger) {
+    logger.logStep({
+      step: label,
+      command: remoteCommand,
+      status: "SUCCESS",
+      durationMs: Date.now() - started,
+    });
   }
 }
 
-function sshExecCapture(remoteCommand) {
-  const config = getDeployConfig();
+function sshExecCapture(remoteCommand, logger) {
+  const config = getConfig();
+  const started = Date.now();
   const result = spawnCommand("ssh", [...sshBaseArgs(config), remoteCommand], {
     capture: true,
   });
 
   if (result.status !== 0) {
+    if (logger) {
+      logger.logStep({
+        step: "ssh-capture",
+        command: remoteCommand,
+        status: "FAILED",
+        durationMs: Date.now() - started,
+        stderr: result.stderr || "",
+      });
+    }
     throw new CommandError({
       command: "ssh",
       args: [remoteCommand],
@@ -61,13 +111,38 @@ function sshExecCapture(remoteCommand) {
       hint: "Verify SSH key and server connectivity.",
     });
   }
-  return (result.stdout || "").trim();
+
+  const stdout = (result.stdout || "").trim();
+  if (logger) {
+    logger.logStep({
+      step: "ssh-capture",
+      command: remoteCommand,
+      status: "SUCCESS",
+      durationMs: Date.now() - started,
+      stdout,
+    });
+  }
+  return stdout;
+}
+
+/** Wrap command in login shell so node/npm are on PATH (cPanel/Passenger). */
+function bashRemote(cmd) {
+  const escaped = cmd.replace(/'/g, "'\\''");
+  return `bash -lc '${escaped}'`;
 }
 
 /** Build a remote shell command without local shell parsing. */
 function remoteScript(appPath, commands) {
-  const quoted = appPath.includes(" ") ? `"${appPath}"` : appPath;
-  return `cd ${quoted} && ${commands.join(" && ")}`;
+  const expanded = appPath.startsWith("~") ? appPath.replace(/^~/, "$HOME") : appPath;
+  const quoted = expanded.includes(" ") ? `"${expanded}"` : expanded;
+  return bashRemote(`cd ${quoted} && ${commands.join(" && ")}`);
 }
 
-module.exports = { sshExec, sshExecCapture, remoteScript };
+module.exports = {
+  sshExec,
+  sshExecCapture,
+  remoteScript,
+  bashRemote,
+  verifySshReachable,
+  sshBaseArgs,
+};

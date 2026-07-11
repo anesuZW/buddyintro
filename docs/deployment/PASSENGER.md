@@ -115,11 +115,12 @@ npm run job-worker
 
 ## Rollback
 
-1. List packages: `npm run rollback`
-2. Deploy previous ZIP from `deployment/releases/`
-3. `npm ci --omit=dev && npx prisma generate`
-4. `touch tmp/restart.txt`
-5. `npm run health`
+```bash
+npm run rollback -- --list    # list available tags
+npm run rollback -- --tag=v0.1.0
+```
+
+Or use automatic rollback (triggered when `npm run deploy` fails after git sync).
 
 If migrations were applied forward, use **Supabase PITR** before redeploying old code. See `docs/BACKUP_RECOVERY_PLAN.md`.
 
@@ -137,23 +138,43 @@ If migrations were applied forward, use **Supabase PITR** before redeploying old
 From your local machine (SSH key required):
 
 ```bash
-# Configure DEPLOY_* vars in .env.local (see .env.example)
+# Pre-flight checks
+npm run doctor
+
+# Full pipeline
+npm run release -- --patch
+npm run publish
 npm run deploy
 ```
 
-This runs remotely:
+`npm run deploy` uses **GitHub `origin/main` as source of truth**:
 
 ```
-git pull
+git fetch origin
+git reset --hard origin/main
+git clean -fd
 npm ci --omit=dev
 npx prisma generate
 npx prisma migrate deploy
 touch tmp/restart.txt
 ```
 
-Then verifies `/api/health` returns `healthy`.
+Then polls `/api/health` every 5 seconds (max 120s).
+
+**Safety:**
+- SSH public-key auth only (no passwords)
+- Never overwrites server `.env`
+- Never runs `prisma db push`
+- Automatic rollback to previous tag if deploy fails after git sync
+- Logs written to `deployment/logs/deploy-*.log`
+
+Configure `DEPLOY_*` vars in `.env.local` (see `.env.example`).
 
 ## 10. Rollback
+
+**Automatic:** Triggered by `npm run deploy` if health check fails after git sync.
+
+**Manual:**
 
 ```bash
 npm run rollback
@@ -161,6 +182,8 @@ npm run rollback
 ```
 
 Or: `npm run rollback -- --tag=v0.1.0`
+
+If migrations were applied forward, use **Supabase PITR** before redeploying old code. See `docs/BACKUP_RECOVERY_PLAN.md`.
 
 ## File updates (subsequent releases)
 

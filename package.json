@@ -1,6 +1,6 @@
 {
   "name": "friendintro",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "private": true,
   "prisma": {
     "schema": "prisma/schema.prisma"
@@ -44,6 +44,7 @@
     "release": "node scripts/release.js",
     "publish": "node scripts/publish.js",
     "health": "node scripts/healthcheck.js",
+    "doctor": "node scripts/doctor.js",
     "deploy": "node scripts/deploy.js",
     "rollback": "node scripts/rollback.js",
     "health-check": "tsx scripts/health-check.ts",

@@ -9,32 +9,13 @@
  */
 const readline = require("readline");
 const { listVersionTags } = require("./lib/git");
-const { sshExec, remoteScript } = require("./lib/ssh");
+const { sshExec, verifySshReachable } = require("./lib/ssh");
 const { getDeployConfig } = require("./lib/deploy-config");
 const { readVersion } = require("./lib/version");
+const { pollHealth } = require("./lib/health-poll");
+const { rollbackToRefCommand } = require("./lib/remote-deploy");
+const { DeployLogger } = require("./lib/deploy-logger");
 const { CommandError } = require("./lib/exec");
-
-async function waitForHealth(url, maxMs) {
-  const deadline = Date.now() + maxMs;
-  let lastError = "unknown";
-
-  while (Date.now() < deadline) {
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
-      if (res.ok) {
-        const body = await res.json();
-        if (body.status === "healthy" || body.status === "degraded") return body;
-        lastError = `status=${body.status}`;
-      } else {
-        lastError = `HTTP ${res.status}`;
-      }
-    } catch (e) {
-      lastError = e instanceof Error ? e.message : String(e);
-    }
-    await new Promise((r) => setTimeout(r, 5000));
-  }
-  throw new Error(`Health check failed: ${lastError}`);
-}
 
 function prompt(question) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -84,6 +65,7 @@ async function selectTag(tags, currentVersion) {
 }
 
 async function main() {
+  const logger = new DeployLogger();
   console.log("\n=== BuddyIntro Rollback ===\n");
 
   let config;
@@ -99,9 +81,11 @@ async function main() {
     process.exit(1);
   }
 
+  verifySshReachable(config);
+
   const tags = listVersionTags();
-  if (tags.length < 2) {
-    console.error("✗ Need at least 2 version tags to rollback.");
+  if (tags.length < 1) {
+    console.error("✗ No version tags found.");
     process.exit(1);
   }
 
@@ -114,49 +98,42 @@ async function main() {
     process.exit(1);
   }
 
-  const tag = `v${targetVersion}`;
+  const tag = targetVersion.startsWith("v") ? targetVersion : `v${targetVersion}`;
   const app = config.appPath;
 
   console.log(`\nRolling back to ${tag} on ${config.host}…\n`);
 
-  const steps = [
-    {
-      name: `Checkout ${tag}`,
-      cmd: remoteScript(app, ["git fetch --tags", `git checkout ${tag}`]),
-    },
-    { name: "npm ci --omit=dev", cmd: remoteScript(app, ["npm ci --omit=dev"]) },
-    { name: "Prisma generate", cmd: remoteScript(app, ["npx prisma generate"]) },
-    { name: "Restart Passenger", cmd: remoteScript(app, ["mkdir -p tmp", "touch tmp/restart.txt"]) },
-  ];
+  try {
+    sshExec(rollbackToRefCommand(app, tag), `Rollback to ${tag}`, logger);
+    console.log(`  ✓ Checked out ${tag}`);
 
-  for (const step of steps) {
-    try {
-      sshExec(step.cmd, step.name);
-      console.log(`  ✓ ${step.name}`);
-    } catch (err) {
-      console.error("\n✗ ROLLBACK FAILED");
-      console.error(`  Step: ${err.step || step.name}`);
-      if (err instanceof CommandError) console.error(err.format());
-      else console.error(`  Error: ${err.message}`);
+    const health = await pollHealth(config.healthUrl, {
+      maxMs: config.healthPollMaxMs,
+      intervalMs: config.healthPollIntervalMs,
+      onWait: (err) => console.log(`  … waiting (${err})`),
+    });
+
+    if (!health.ok) {
+      logger.finalize("ROLLBACK_FAILED");
+      console.error("\n✗ ROLLBACK FAILED at health verification");
+      console.error(`  ${health.error}`);
+      console.error("\n=== MANUAL INTERVENTION REQUIRED ===");
       process.exit(1);
     }
-  }
 
-  console.log(`\n→ Waiting ${config.passengerWaitMs}ms for Passenger…`);
-  await new Promise((r) => setTimeout(r, config.passengerWaitMs));
-
-  try {
-    const health = await waitForHealth(config.healthUrl, 120_000);
+    logger.finalize("ROLLBACK_SUCCESS");
     console.log(`  ✓ /api/health → ${health.status}`);
+    console.log("\n=== Rollback successful ===");
+    console.log(`Active version on server: ${tag}`);
+    console.log(`Health: ${config.healthUrl}\n`);
   } catch (err) {
-    console.error("\n✗ ROLLBACK FAILED at health verification");
-    console.error(`  ${err.message}`);
+    console.error("\n✗ ROLLBACK FAILED");
+    if (err instanceof CommandError) console.error(err.format());
+    else console.error(`  ${err.message}`);
+    logger.finalize("ROLLBACK_FAILED");
+    console.error("\n=== MANUAL INTERVENTION REQUIRED ===");
     process.exit(1);
   }
-
-  console.log("\n=== Rollback successful ===");
-  console.log(`Active version on server: ${tag}`);
-  console.log(`Health: ${config.healthUrl}\n`);
 }
 
 main().catch((err) => {
