@@ -24,6 +24,7 @@ deployment/releases/*.zip
 deployment/staging/
 deployment/failures/*
 !deployment/failures/.gitkeep
+prisma/_*.sql
 !deployment/releases/.gitkeep
 !deployment/releases/RELEASE_NOTES_*.md
 deploy/

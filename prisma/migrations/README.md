@@ -1,43 +1,62 @@
-# Prisma Migrations
+# BuddyIntro Prisma Migrations (Rebuilt 2026-07-14)
 
-FriendIntro uses **Prisma Migrate** starting 2026-05-24.
+Fresh migration history generated from `schema.prisma` using `prisma migrate diff`.
 
-## Active migrations
+## Design principles
 
-| Folder | Purpose |
-|--------|---------|
-| `2026_baseline/` | Idempotent baseline — existing schema, enums, indexes, core FKs |
-| `2026_database_alignment/` | FK repair, admin default fix, `user_connections` table |
+- **`schema.prisma` is the single source of truth**
+- **Baseline (`0001_baseline`) always runs first**
+- Each migration depends only on prior migrations
+- No `git pull` — deploy uses `npx prisma migrate deploy`
+- RLS policies remain in `prisma/policies.sql` (run via `npm run db:rls` after migrate)
 
-## Legacy manual SQL (superseded)
+## Migration chain
 
-These files were applied manually before Prisma Migrate adoption. **Do not re-run** on production; kept for historical reference:
-
-- `introduction_network_controls.sql`
-- `introductions_never_expire.sql`
-- `introduction_graph_and_context.sql`
-- `add_invitation_expires_at.sql`
-- `platform_extension.sql`
-
-## Commands
-
-```bash
-# Pre-flight orphan check
-npm run orphan-check
-
-# Apply migrations (production)
-npx prisma migrate deploy
-
-# Regenerate client
-npx prisma generate
-
-# Verify schema
-npm run verify-database
-
-# Backfill introduction graph
-npm run rebuild-connections
+```
+0001_baseline          Core enums, users, stories, invitations, messages, posts, admin_settings, user_consents
+0002_discoveries       Discoveries feed + conversation_contexts
+0003_trust_graph       Trust graph, introduction categories, shared introducers (+ category seed)
+0004_notifications     Notifications, preferences, push, analytics
+0005_moderation        Phone verification, blocks, content reports
+0006_platform          Background jobs
+0007_security_rbac     RBAC, audit logs, security events (+ role seed)
 ```
 
-## Existing database bootstrap
+## Fresh database bootstrap
 
-If `_prisma_migrations` did not exist before first deploy, `migrate deploy` creates it and records applied migrations automatically.
+```bash
+npm install
+npx prisma migrate deploy
+npx prisma generate
+npm run build
+npm run db:rls   # optional — Supabase RLS policies
+```
+
+## Validation
+
+```bash
+node scripts/validate-migrations.js
+# Full reset test (destructive):
+MIGRATION_TEST_RESET=1 node scripts/validate-migrations.js
+```
+
+## Archive
+
+Previous migrations are preserved in:
+
+```
+prisma/migrations_archive/pre-rebuild-2026-07-14/
+```
+
+Do not delete the archive until production validation succeeds.
+
+## Regenerating (maintainers)
+
+```bash
+npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script -o prisma/_full_schema_diff.sql
+node scripts/split-migration-sql.js
+```
+
+## Deployment pipeline
+
+`npm run deploy` runs `npx prisma migrate deploy` on the server automatically — no manual SQL required for schema.

@@ -1,7 +1,7 @@
 {
-  "commit": "bcfdf6d91dfe62a9ebad5f75dbdddf5f9eb8c4fe",
-  "branch": "release-engineering",
+  "commit": "0ef7baffbe16b2d271f5efb45413877c6d028767",
+  "branch": "migration-history-rebuild",
   "version": "0.1.3",
-  "builtAt": "2026-07-14T09:38:18.775Z",
+  "builtAt": "2026-07-14T15:22:57.232Z",
   "node": "v24.15.0"
 }
