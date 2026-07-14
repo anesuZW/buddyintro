@@ -20,7 +20,8 @@ class DeployLogger {
     if (!existsSync(DEPLOY_LOGS_DIR)) mkdirSync(DEPLOY_LOGS_DIR, { recursive: true });
     this.path = join(DEPLOY_LOGS_DIR, logFilename());
     this.startedAt = Date.now();
-    this.write(`=== BuddyIntro Deploy Log ===`);
+    this.metadata = {};
+    this.write(`=== BuddyIntro Deploy Log v3 ===`);
     this.write(`Started: ${timestamp()}`);
   }
 
@@ -33,6 +34,15 @@ class DeployLogger {
   log(message) {
     console.log(message);
     this.write(message);
+  }
+
+  setMetadata(meta) {
+    this.metadata = { ...this.metadata, ...meta };
+    for (const [key, value] of Object.entries(meta)) {
+      if (value !== undefined && value !== null) {
+        this.write(`${key}: ${value}`);
+      }
+    }
   }
 
   logCommand(step, command) {
@@ -56,10 +66,13 @@ class DeployLogger {
     this.write("---");
   }
 
-  finalize(status) {
+  finalize(status, extra = {}) {
     const durationMs = Date.now() - this.startedAt;
     this.write(`FINAL_STATUS: ${status}`);
     this.write(`TOTAL_DURATION_MS: ${durationMs}`);
+    if (extra.rollbackStatus) this.write(`Rollback status: ${extra.rollbackStatus}`);
+    if (extra.healthStatus) this.write(`Health status: ${extra.healthStatus}`);
+    if (extra.runtimeSha) this.write(`Runtime SHA: ${extra.runtimeSha}`);
     this.write(`Log file: ${this.path.replace(/\\/g, "/")}`);
     console.log(`\nDeploy log: ${this.path}`);
   }

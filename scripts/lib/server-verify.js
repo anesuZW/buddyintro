@@ -1,7 +1,9 @@
 /**
  * Server verification routines (via SSH).
+ * Requires resolveServerNode() before runServerChecks().
  */
-const { sshExecCapture, bashRemote, remoteScript } = require("./ssh");
+const { sshExecCapture, bashRemote } = require("./ssh");
+const { remoteScript, withNodeEnvironment, getRemoteNodeEnv } = require("./resolve-server-node");
 const { satisfiesMinVersion } = require("./node-version");
 const { remoteEnvCheckScript } = require("./deploy-env");
 
@@ -9,7 +11,8 @@ function check(name, status, message) {
   return { name, status, message };
 }
 
-async function runServerChecks(config) {
+async function runServerChecks(config, nodeEnv) {
+  const env = nodeEnv || getRemoteNodeEnv();
   const app = config.appPath;
   const branch = config.gitBranch;
   const results = [];
@@ -24,14 +27,18 @@ async function runServerChecks(config) {
 
   run("Repository exists", () => {
     const appDir = quote(app.replace(/^~/, "$HOME"));
-    const out = sshExecCapture(bashRemote(`test -d ${appDir}/.git && echo yes || echo no`));
-    return check("Repository exists", out === "yes" ? "PASS" : "FAIL", out === "yes" ? "Git repo found" : "No .git directory");
+    const out = sshExecCapture(withNodeEnvironment(`test -d ${appDir}/.git && echo yes || echo no`));
+    return check(
+      "Repository exists",
+      out === "yes" ? "PASS" : "FAIL",
+      out === "yes" ? "Git repo found" : "No .git directory"
+    );
   });
 
   run("Correct branch tracking", () => {
-    const out = sshExecCapture(remoteScript(app, [`git rev-parse --abbrev-ref HEAD`]));
+    const out = sshExecCapture(remoteScript(app, ["git rev-parse --abbrev-ref HEAD"]));
     const tracking = sshExecCapture(
-      remoteScript(app, [`git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo none`])
+      remoteScript(app, ["git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo none"])
     );
     const ok = out === branch || tracking.includes(`origin/${branch}`);
     return check(
@@ -44,27 +51,33 @@ async function runServerChecks(config) {
   run("Clean working tree", () => {
     const out = sshExecCapture(remoteScript(app, ["git status --porcelain"]));
     const clean = !out || out.trim() === "";
-    return check("Clean working tree", clean ? "PASS" : "WARNING", clean ? "Clean" : "Dirty tree detected");
+    return check(
+      "Clean working tree",
+      clean ? "PASS" : "WARNING",
+      clean ? "Clean" : "Dirty tree detected"
+    );
   });
 
   run("Node version", () => {
-    const out = sshExecCapture(remoteScript(app, ["node -v"]));
-    const ok = satisfiesMinVersion(out, config.nodeMinVersion);
+    const ok = satisfiesMinVersion(env.nodeVersion, config.nodeMinVersion);
     return check(
       "Node version",
       ok ? "PASS" : "FAIL",
-      `${out} (required ${config.nodeMinVersion})`
+      `${env.nodeVersion} (required ${config.nodeMinVersion})`
     );
   });
 
   run("npm version", () => {
-    const out = sshExecCapture(remoteScript(app, ["npm -v"]));
-    return check("npm version", out ? "PASS" : "FAIL", out || "unknown");
+    return check("npm version", env.npmVersion ? "PASS" : "FAIL", env.npmVersion || "unknown");
   });
 
   run("Prisma version", () => {
     const out = sshExecCapture(remoteScript(app, ["npx prisma -v"]));
-    return check("Prisma version", out ? "PASS" : "WARNING", out ? out.split("\n")[0] : "unknown");
+    return check(
+      "Prisma version",
+      out ? "PASS" : "WARNING",
+      out ? out.split("\n")[0] : "unknown"
+    );
   });
 
   run("Disk space", () => {
@@ -80,7 +93,9 @@ async function runServerChecks(config) {
 
   run("Passenger restart file", () => {
     const appDir = quote(app.replace(/^~/, "$HOME"));
-    const out = sshExecCapture(bashRemote(`test -f ${appDir}/tmp/restart.txt && echo yes || echo no`));
+    const out = sshExecCapture(
+      withNodeEnvironment(`test -f ${appDir}/tmp/restart.txt && echo yes || echo no`)
+    );
     return check(
       "Passenger restart file",
       out === "yes" ? "PASS" : "WARNING",
@@ -102,7 +117,7 @@ async function runServerChecks(config) {
   run("Supabase reachable", () => {
     const out = sshExecCapture(
       remoteScript(app, [
-        "bash -lc 'set -a; [ -f .env ] && . ./.env; set +a; curl -sf \"$NEXT_PUBLIC_SUPABASE_URL/auth/v1/health\" -o /dev/null && echo ok || echo fail'",
+        'set -a; [ -f .env ] && . ./.env; set +a; curl -sf "$NEXT_PUBLIC_SUPABASE_URL/auth/v1/health" -o /dev/null && echo ok || echo fail',
       ])
     );
     return check("Supabase reachable", out.includes("ok") ? "PASS" : "WARNING", out || "Could not verify");

@@ -125,23 +125,15 @@ function sshExecCapture(remoteCommand, logger) {
   return stdout;
 }
 
-/** Wrap command in login shell so node/npm are on PATH (cPanel/Passenger). */
+/** Wrap command in login shell for generic remote bash (no Node PATH). */
 function bashRemote(cmd) {
   const escaped = cmd.replace(/'/g, "'\\''");
   return `bash -lc '${escaped}'`;
 }
 
-/** Build a remote shell command without local shell parsing. */
-function remoteScript(appPath, commands) {
-  const expanded = appPath.startsWith("~") ? appPath.replace(/^~/, "$HOME") : appPath;
-  const quoted = expanded.includes(" ") ? `"${expanded}"` : expanded;
-  return bashRemote(`cd ${quoted} && ${commands.join(" && ")}`);
-}
-
 module.exports = {
   sshExec,
   sshExecCapture,
-  remoteScript,
   bashRemote,
   verifySshReachable,
   sshBaseArgs,

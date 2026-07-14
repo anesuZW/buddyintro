@@ -14,6 +14,6 @@ export const config = {
      * - favicon.ico, robots.txt, sitemap.xml (metadata files)
      * - api/public (publicly callable APIs)
      */
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|offline|icons/|api/public|api/health).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|offline|icons/|api/public|api/health|api/version).*)",
   ],
 };

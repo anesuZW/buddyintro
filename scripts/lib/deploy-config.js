@@ -73,6 +73,17 @@ function getDeployConfig() {
     process.env.DEPLOY_GIT_REPO_URL ||
     (githubRepo ? `https://github.com/${githubRepo}.git` : null);
 
+  const versionUrl = healthUrl
+    ? (() => {
+        const trimmed = healthUrl.replace(/\/$/, "");
+        if (trimmed.endsWith("/api/health")) {
+          return trimmed.replace(/\/api\/health$/, "/api/version");
+        }
+        if (trimmed.endsWith("/api/version")) return trimmed;
+        return `${trimmed}/api/version`;
+      })()
+    : null;
+
   return {
     host: requireEnv("DEPLOY_SSH_HOST"),
     user: requireEnv("DEPLOY_SSH_USER"),
@@ -81,13 +92,16 @@ function getDeployConfig() {
     appPath,
     appParentDir: dirname(resolveAppPath(appPath)),
     healthUrl,
-    passengerWaitMs: Number(process.env.DEPLOY_PASSENGER_WAIT_MS || 15_000),
+    versionUrl,
+    passengerWaitMs: Number(process.env.DEPLOY_PASSENGER_WAIT_MS || 5_000),
     healthPollIntervalMs: Number(process.env.DEPLOY_HEALTH_POLL_MS || 5_000),
-    healthPollMaxMs: Number(process.env.DEPLOY_HEALTH_MAX_MS || 120_000),
+    healthPollMaxMs: Number(process.env.DEPLOY_HEALTH_MAX_MS || 180_000),
     githubRepo,
     gitBranch,
     gitRepoUrl,
     nodeMinVersion: process.env.DEPLOY_NODE_MIN || ">=18.17.0",
+    deployNodeBin: process.env.DEPLOY_NODE_BIN || null,
+    deployCommitSha: (process.env.DEPLOY_COMMIT_SHA || "").trim() || null,
   };
 }
 

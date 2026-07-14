@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && next build && node scripts/write-build-version.js",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
@@ -57,7 +57,7 @@
     "audit:routes": "tsx scripts/audit-routes.ts",
     "audit:navigation": "tsx scripts/audit-navigation.ts",
     "audit:region-latency": "tsx scripts/audit-region-latency.ts",
-    "test": "tsx --test tests/**/*.test.ts",
+    "test": "tsx --test tests/**/*.test.ts && node --test tests/**/*.test.js",
     "test:watch": "tsx --test --watch tests/**/*.test.ts",
     "rebuild-connections": "tsx scripts/rebuild-connections.ts",
     "orphan-check": "tsx scripts/run-orphan-check.ts",

@@ -7,6 +7,8 @@ const ROOT = resolve(process.cwd());
 const DEPLOYMENT_DIR = join(ROOT, "deployment");
 const RELEASES_DIR = join(DEPLOYMENT_DIR, "releases");
 const DEPLOY_LOGS_DIR = join(DEPLOYMENT_DIR, "logs");
+const DEPLOY_FAILURES_DIR = join(DEPLOYMENT_DIR, "failures");
+const DEPLOY_HISTORY_PATH = join(DEPLOYMENT_DIR, "history.json");
 const STAGING_DIR = join(DEPLOYMENT_DIR, "staging");
 const PACKAGE_JSON = join(ROOT, "package.json");
 
@@ -25,6 +27,8 @@ module.exports = {
   DEPLOYMENT_DIR,
   RELEASES_DIR,
   DEPLOY_LOGS_DIR,
+  DEPLOY_FAILURES_DIR,
+  DEPLOY_HISTORY_PATH,
   STAGING_DIR,
   PACKAGE_JSON,
   PRODUCTION_INCLUDES,
