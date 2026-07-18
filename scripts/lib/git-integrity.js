@@ -2,8 +2,11 @@
  * Git integrity — single source of truth for deployment SHA alignment.
  * GitHub is authoritative; never deploy unpushed local code.
  */
-const { runGitCapture } = require("./exec");
 const { remoteScript } = require("./resolve-server-node");
+
+function gitCapture(args, opts) {
+  return require("./exec").runGitCapture(args, opts);
+}
 
 function normalizeSha(sha) {
   return (sha || "").trim().toLowerCase();
@@ -18,15 +21,23 @@ function shasEqual(a, b) {
 }
 
 function fetchOrigin(branch = "main") {
-  runGitCapture(["fetch", "origin", branch]);
+  gitCapture(["fetch", "origin", branch]);
 }
 
 function getLocalSHA() {
-  return runGitCapture(["rev-parse", "HEAD"]);
+  return gitCapture(["rev-parse", "HEAD"]);
+}
+
+function getCurrentBranch() {
+  return gitCapture(["branch", "--show-current"]);
+}
+
+function getLocalBranchSHA(branch = "main") {
+  return gitCapture(["rev-parse", branch]);
 }
 
 function getOriginSHA(branch = "main") {
-  return runGitCapture(["rev-parse", `origin/${branch}`]);
+  return gitCapture(["rev-parse", `origin/${branch}`]);
 }
 
 /**
@@ -65,19 +76,44 @@ function resolveTargetSha(config) {
   };
 }
 
-function formatLocalNotPushedError(localSha, githubSha, branch) {
-  return [
+function formatLocalNotPushedError(localSha, remoteSha, branch, context = {}) {
+  const { currentBranch, compareLabel = `origin/${branch}` } = context;
+  const lines = [
     "Deployment aborted.",
-    "Your local branch contains commits that have not been pushed.",
+    currentBranch && currentBranch !== branch
+      ? `Checked-out branch "${currentBranch}" does not match deploy branch "${branch}".`
+      : `Local ${branch} is not aligned with GitHub ${compareLabel}.`,
     "",
     "Local:",
     localSha,
     "GitHub:",
-    githubSha,
+    remoteSha,
     "",
-    "Run",
-    `git push origin ${branch}`,
-    "and retry.",
+  ];
+
+  if (currentBranch && currentBranch !== branch) {
+    lines.push(`Checkout ${branch} and ensure it matches GitHub:`);
+    lines.push(`  git checkout ${branch}`);
+    lines.push(`  git pull origin ${branch}`);
+  } else {
+    lines.push("Run");
+    lines.push(`  git push origin ${branch}`);
+  }
+  lines.push("and retry.");
+  return lines.join("\n");
+}
+
+function formatCommitPinMismatchError(localSha, targetSha) {
+  return [
+    "Deployment aborted.",
+    "Local HEAD does not match DEPLOY_COMMIT_SHA.",
+    "",
+    "Local HEAD:",
+    localSha,
+    "DEPLOY_COMMIT_SHA:",
+    targetSha,
+    "",
+    "Checkout the pinned commit or clear DEPLOY_COMMIT_SHA and retry.",
   ].join("\n");
 }
 
@@ -87,31 +123,64 @@ function formatLocalNotPushedError(localSha, githubSha, branch) {
  */
 function assertLocalPushed(config, target, logger) {
   fetchOrigin(target.branch);
-  const localSha = getLocalSHA();
+  const currentBranch = getCurrentBranch();
+  const headSha = getLocalSHA();
+  const localBranchSha = getLocalBranchSHA(target.branch);
   const githubSha = getOriginSHA(target.branch);
 
+  try {
+    const { debugLog } = require("./deploy-debug");
+    debugLog(`assertLocalPushed currentBranch=${currentBranch}`);
+    debugLog(`assertLocalPushed headSha=${headSha}`);
+    debugLog(`assertLocalPushed local ${target.branch}=${localBranchSha}`);
+    debugLog(`assertLocalPushed origin/${target.branch}=${githubSha}`);
+  } catch {
+    // optional
+  }
+
   if (target.mode === "commit") {
-    if (!shasEqual(localSha, target.targetSha)) {
-      const msg = formatLocalNotPushedError(localSha, target.targetSha, target.branch);
+    if (!shasEqual(headSha, target.targetSha)) {
+      const msg = formatCommitPinMismatchError(headSha, target.targetSha);
       if (logger) logger.log(msg);
       throw new Error(msg);
     }
     if (logger) {
-      logger.log(`SHA compare — Local HEAD: ${localSha} | DEPLOY_COMMIT_SHA: ${target.targetSha} → MATCH`);
+      logger.log(`SHA compare — Local HEAD: ${headSha} | DEPLOY_COMMIT_SHA: ${target.targetSha} → MATCH`);
     }
-    return { localSha, githubSha };
+    return { localSha: headSha, githubSha, currentBranch, localBranchSha };
   }
 
-  if (!shasEqual(localSha, githubSha)) {
-    const msg = formatLocalNotPushedError(localSha, githubSha, target.branch);
+  if (currentBranch && currentBranch !== target.branch) {
+    const msg = formatLocalNotPushedError(headSha, githubSha, target.branch, {
+      currentBranch,
+      compareLabel: `origin/${target.branch}`,
+    });
+    if (logger) logger.log(msg);
+    throw new Error(msg);
+  }
+
+  if (!shasEqual(localBranchSha, githubSha)) {
+    const msg = formatLocalNotPushedError(localBranchSha, githubSha, target.branch, {
+      currentBranch: target.branch,
+      compareLabel: `origin/${target.branch}`,
+    });
+    if (logger) logger.log(msg);
+    throw new Error(msg);
+  }
+
+  if (!shasEqual(headSha, githubSha)) {
+    const msg = formatLocalNotPushedError(headSha, githubSha, target.branch, {
+      currentBranch: target.branch,
+      compareLabel: `origin/${target.branch}`,
+    });
     if (logger) logger.log(msg);
     throw new Error(msg);
   }
 
   if (logger) {
-    logger.log(`SHA compare — Local HEAD: ${localSha} | origin/${target.branch}: ${githubSha} → MATCH`);
+    logger.log(`SHA compare — Local HEAD: ${headSha} | origin/${target.branch}: ${githubSha} → MATCH`);
   }
-  return { localSha, githubSha };
+  return { localSha: headSha, githubSha, currentBranch, localBranchSha };
 }
 
 function getServerShaCommand(appPath) {
@@ -236,6 +305,8 @@ module.exports = {
   shasEqual,
   fetchOrigin,
   getLocalSHA,
+  getCurrentBranch,
+  getLocalBranchSHA,
   getOriginSHA,
   resolveTargetSha,
   assertLocalPushed,

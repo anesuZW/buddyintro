@@ -29,10 +29,10 @@ class CommandError extends Error {
       `cwd:       ${this.cwd || ROOT}`,
     ];
     if (this.spawnError) lines.push(`spawn error: ${this.spawnError}`);
+    if (this.stdout.trim()) lines.push(`stdout:\n${this.stdout.trim()}`);
     if (this.stderr.trim()) lines.push(`stderr:\n${this.stderr.trim()}`);
-    if (this.stdout.trim() && !this.stderr.trim()) lines.push(`stdout:\n${this.stdout.trim()}`);
     if (!this.stderr.trim() && !this.stdout.trim() && !this.spawnError) {
-      lines.push("(output was streamed live above)");
+      lines.push("(no captured output)");
     }
     if (this.hint) lines.push(`Suggested fix: ${this.hint}`);
     return lines.join("\n");
@@ -46,8 +46,6 @@ const HINTS = {
   npx: "Ensure node_modules is installed (npm install).",
   node: "Use the Node.js version specified in package.json engines.",
   ssh: "Verify DEPLOY_SSH_HOST, DEPLOY_SSH_KEY, and that the public key is on the server.",
-  tar: "Windows 10+ includes tar; on older systems install zip or tar.",
-  zip: "Install zip (e.g. apt install zip) for packaging.",
 };
 
 function npmCliPath() {
@@ -186,7 +184,15 @@ function runGit(args, opts) {
 }
 
 function runGitCapture(args, opts) {
-  return runCapture("git", args, { hint: HINTS.git, cwd: ROOT, ...opts });
+  const cwd = opts?.cwd || ROOT;
+  const out = runCapture("git", args, { hint: HINTS.git, cwd, ...opts });
+  try {
+    const { logGitInvocation } = require("./deploy-debug");
+    logGitInvocation(args, cwd, out);
+  } catch {
+    // deploy-debug is optional
+  }
+  return out;
 }
 
 function tryGitCapture(args) {

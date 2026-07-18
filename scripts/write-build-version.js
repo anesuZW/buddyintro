@@ -1,30 +1,17 @@
 #!/usr/bin/env node
 /**
- * Write build/version.json after next build — consumed by /api/version at runtime.
+ * Write build/version.json and deployment/build.json after next build.
  */
-const { mkdirSync, writeFileSync, readFileSync } = require("fs");
+const { createReleaseId, writeBuildMetadata } = require("./lib/deploy-metadata");
 const { join } = require("path");
-const { tryGitCapture } = require("./lib/exec");
-const { ROOT, PACKAGE_JSON } = require("./lib/paths");
+const { ROOT } = require("./lib/paths");
 
 function main() {
-  const commit = tryGitCapture(["rev-parse", "HEAD"]) || "unknown";
-  const branch = tryGitCapture(["rev-parse", "--abbrev-ref", "HEAD"]) || "unknown";
-  const pkg = JSON.parse(readFileSync(PACKAGE_JSON, "utf8"));
-
-  const payload = {
-    commit,
-    branch,
-    version: pkg.version || "0.0.0",
-    builtAt: new Date().toISOString(),
-    node: process.version,
-  };
-
-  const dir = join(ROOT, "build");
-  mkdirSync(dir, { recursive: true });
-  const outPath = join(dir, "version.json");
-  writeFileSync(outPath, `${JSON.stringify(payload, null, 2)}\n`);
-  console.log(`✓ ${outPath.replace(/\\/g, "/")} (commit ${commit.slice(0, 7)})`);
+  const releaseId = process.env.DEPLOY_RELEASE_ID || createReleaseId();
+  const { meta } = writeBuildMetadata(ROOT, releaseId);
+  console.log(
+    `✓ build/version.json + deployment/build.json (commit ${meta.gitCommit.slice(0, 7)}, release ${releaseId})`
+  );
 }
 
 main();

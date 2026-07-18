@@ -93,15 +93,18 @@ function getDeployConfig() {
     appParentDir: dirname(resolveAppPath(appPath)),
     healthUrl,
     versionUrl,
-    passengerWaitMs: Number(process.env.DEPLOY_PASSENGER_WAIT_MS || 5_000),
+    passengerWaitMs: Number(process.env.DEPLOY_PASSENGER_WAIT_MS || 0),
     healthPollIntervalMs: Number(process.env.DEPLOY_HEALTH_POLL_MS || 5_000),
     healthPollMaxMs: Number(process.env.DEPLOY_HEALTH_MAX_MS || 180_000),
+    versionPollMaxMs: Number(process.env.DEPLOY_VERSION_MAX_MS || 120_000),
     githubRepo,
     gitBranch,
     gitRepoUrl,
     nodeMinVersion: process.env.DEPLOY_NODE_MIN || ">=18.17.0",
     deployNodeBin: process.env.DEPLOY_NODE_BIN || null,
     deployCommitSha: (process.env.DEPLOY_COMMIT_SHA || "").trim() || null,
+    runMigrations: process.env.DEPLOY_SKIP_MIGRATIONS !== "1",
+    keepBackups: Number(process.env.DEPLOY_KEEP_BACKUPS || process.env.DEPLOY_KEEP_RELEASES || 5),
   };
 }
 

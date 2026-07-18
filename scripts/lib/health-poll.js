@@ -1,5 +1,9 @@
 /**
- * Health and version endpoint polling for deploy and rollback.
+ * Health and version endpoint polling for deploy and rollback (v6).
+ *
+ * - On 404/502 during startup, continues polling (does not fail instantly)
+ * - Optional onAnomaly callback collects Passenger diagnostics once
+ * - Post-deploy validation checks database, supabase, storage, response time
  */
 function classifyFetchError(err) {
   const message = err instanceof Error ? err.message : String(err);
@@ -27,6 +31,8 @@ function classifyFetchError(err) {
 }
 
 function describeHttpStatus(status, body) {
+  if (status === 404) return "Route not found — Passenger may still be starting";
+  if (status === 502) return "Bad gateway — upstream not ready";
   if (status === 503) {
     if (body?.error?.includes?.("Prisma") || body?.database === "error") {
       return "Prisma initialization failed";
@@ -61,14 +67,43 @@ function truncateBody(body, max = 300) {
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
+/** HTTP statuses that may occur during Passenger warm-up — keep polling, do not abort early. */
+const STARTUP_ANOMALY_STATUSES = new Set([404, 502, 503]);
+
+function validatePostDeployHealth(body, { maxResponseMs = 15_000 } = {}) {
+  const issues = [];
+  if (!body || typeof body !== "object") {
+    issues.push("invalid health response body");
+    return issues;
+  }
+  if (body.status === "unhealthy") {
+    issues.push(`overall status=${body.status}`);
+  }
+  if (body.database === "unhealthy") {
+    issues.push("database unhealthy");
+  }
+  if (body.supabase === "unhealthy") {
+    issues.push("supabase unhealthy");
+  }
+  if (body.storage === "unhealthy") {
+    issues.push("storage unhealthy");
+  }
+  if (typeof body.responseTimeMs === "number" && body.responseTimeMs > maxResponseMs) {
+    issues.push(`slow response ${body.responseTimeMs}ms`);
+  }
+  return issues;
+}
+
 async function pollHealth(url, options = {}) {
   const maxMs = options.maxMs ?? 180_000;
   const intervalMs = options.intervalMs ?? 5_000;
   const requireHealthy = options.requireHealthy ?? true;
   const initialDelayMs = options.initialDelayMs ?? 0;
+  const onAnomaly = options.onAnomaly;
   const deadline = Date.now() + maxMs;
   let attempt = 0;
   let lastMessage = "unknown";
+  let anomalyDiagnosticsRan = false;
 
   if (initialDelayMs > 0) {
     await new Promise((r) => setTimeout(r, initialDelayMs));
@@ -76,15 +111,18 @@ async function pollHealth(url, options = {}) {
 
   while (Date.now() < deadline) {
     attempt += 1;
+    const fetchStarted = Date.now();
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
       const bodyText = await res.text();
+      const responseTimeMs = Date.now() - fetchStarted;
       let body = {};
       try {
         body = bodyText ? JSON.parse(bodyText) : {};
       } catch {
         body = { raw: bodyText };
       }
+      body.responseTimeMs = responseTimeMs;
 
       if (!res.ok) {
         const detail = describeHttpStatus(res.status, body);
@@ -94,8 +132,37 @@ async function pollHealth(url, options = {}) {
           detail,
           truncateBody(bodyText)
         );
+        if (
+          STARTUP_ANOMALY_STATUSES.has(res.status) &&
+          onAnomaly &&
+          !anomalyDiagnosticsRan
+        ) {
+          anomalyDiagnosticsRan = true;
+          try {
+            await onAnomaly({ status: res.status, body, attempt, lastMessage });
+          } catch {
+            /* diagnostics must not block polling */
+          }
+        }
       } else if (!requireHealthy || body.status === "healthy" || body.status === "degraded") {
-        return { ok: true, status: body.status || `HTTP ${res.status}`, body, attempts: attempt };
+        const postIssues = validatePostDeployHealth(body, options);
+        if (postIssues.length && requireHealthy && body.status === "unhealthy") {
+          lastMessage = formatAttemptMessage(
+            attempt,
+            `Health validation failed`,
+            postIssues.join("; "),
+            truncateBody(body)
+          );
+        } else {
+          return {
+            ok: true,
+            status: body.status || `HTTP ${res.status}`,
+            body,
+            attempts: attempt,
+            responseTimeMs,
+            validationIssues: postIssues,
+          };
+        }
       } else {
         lastMessage = formatAttemptMessage(
           attempt,
@@ -131,7 +198,7 @@ function versionUrlFromBase(baseUrl) {
 }
 
 async function pollVersion(url, targetSha, options = {}) {
-  const maxMs = options.maxMs ?? 60_000;
+  const maxMs = options.maxMs ?? 120_000;
   const intervalMs = options.intervalMs ?? 5_000;
   const deadline = Date.now() + maxMs;
   let attempt = 0;
@@ -188,11 +255,35 @@ async function pollVersion(url, targetSha, options = {}) {
   };
 }
 
+/** Full post-deploy validation: health + version + BUILD_ID on server. */
+async function pollPostDeployValidation(config, targetSha, options = {}) {
+  const health = await pollHealth(config.healthUrl, {
+    maxMs: options.healthMaxMs ?? config.healthPollMaxMs,
+    intervalMs: options.intervalMs ?? config.healthPollIntervalMs,
+    onWait: options.onWait,
+    onAnomaly: options.onAnomaly,
+    initialDelayMs: options.initialDelayMs ?? 0,
+  });
+  if (!health.ok) return { ok: false, phase: "health", health };
+
+  const version = await pollVersion(config.versionUrl, targetSha, {
+    maxMs: options.versionMaxMs ?? config.versionPollMaxMs,
+    intervalMs: options.intervalMs ?? config.healthPollIntervalMs,
+    onWait: options.onWait,
+  });
+  if (!version.ok) return { ok: false, phase: "version", health, version };
+
+  return { ok: true, health, version };
+}
+
 module.exports = {
   classifyFetchError,
   describeHttpStatus,
   formatAttemptMessage,
+  validatePostDeployHealth,
   pollHealth,
   pollVersion,
+  pollPostDeployValidation,
   versionUrlFromBase,
+  STARTUP_ANOMALY_STATUSES,
 };

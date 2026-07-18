@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   reactStrictMode: true,
   images: {
     remotePatterns: [
@@ -12,6 +13,10 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: "25mb",
+    },
+    outputFileTracingIncludes: {
+      "/*": ["./node_modules/.prisma/client/**/*"],
+      "/api/**/*": ["./node_modules/.prisma/client/**/*"],
     },
   },
 };

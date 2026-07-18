@@ -1,0 +1,10 @@
+{
+  "version": "0.1.3",
+  "gitCommit": "3006b5d630008572bafdcc21e56efe3779c1ce4c",
+  "gitBranch": "main",
+  "buildDate": "2026-07-17T08:47:31.330Z",
+  "nodeVersion": "v24.15.0",
+  "nextVersion": "14.2.15",
+  "prismaVersion": "5.22.0",
+  "deploymentId": "20260717-104731"
+}

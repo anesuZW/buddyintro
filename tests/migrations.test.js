@@ -90,22 +90,27 @@ describe("Deployment pipeline compatibility", () => {
   const { setRemoteNodeCache, resetRemoteNodeCache } = require("../scripts/lib/resolve-server-node");
   const BIN = "/opt/alt/alt-nodejs20/root/usr/bin";
 
-  it("remote-deploy still exports prisma migrate deploy", () => {
+  it("remote-deploy exports server activate in staging with prisma migrate (no build)", () => {
     setRemoteNodeCache(BIN);
     const remote = require("../scripts/lib/remote-deploy");
-    assert.equal(typeof remote.prismaMigrateDeployCommand, "function");
-    const cmd = remote.prismaMigrateDeployCommand("/app");
+    assert.equal(typeof remote.serverActivateInStagingCommand, "function");
+    const cmd = remote.serverActivateInStagingCommand("/app", { runMigrations: true });
     resetRemoteNodeCache();
-    assert.ok(cmd.includes("prisma migrate deploy"));
+    assert.ok(cmd.includes("cd staging"));
+    assert.ok(cmd.includes("npm install"));
+    assert.ok(cmd.includes("prisma generate"));
+    assert.ok(cmd.includes("migrate deploy"));
+    assert.ok(!cmd.includes("npm run build"));
   });
 
-  it("rollback command still includes prisma generate", () => {
+  it("rollback command restores tar.gz backup without build", () => {
     setRemoteNodeCache(BIN);
-    const remote = require("../scripts/lib/remote-deploy");
-    const cmd = remote.rollbackToShaCommand("/app", "a".repeat(40));
+    const { restoreBackupCommand } = require("../scripts/lib/remote-deploy");
+    const cmd = restoreBackupCommand("/app", "2026-07-17-0930");
     resetRemoteNodeCache();
-    assert.ok(cmd.includes("npx prisma generate"));
-    assert.ok(cmd.includes("npm run build"));
+    assert.ok(cmd.includes("2026-07-17-0930.tar.gz"));
+    assert.ok(cmd.includes("tar -xzf"));
+    assert.ok(!cmd.includes("npm run build"));
   });
 });
 

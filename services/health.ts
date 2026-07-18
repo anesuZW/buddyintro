@@ -1,9 +1,12 @@
 import "server-only";
 
+import { readFileSync, existsSync } from "fs";
+import { join } from "path";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { STORAGE_BUCKET } from "@/lib/constants";
 import { isUserConnectionsMaterialized } from "@/services/introduction-graph-builder";
+import { readDeploymentBuildInfo } from "@/lib/deployment-info";
 
 export type HealthStatus = "healthy" | "degraded" | "unhealthy";
 
@@ -29,6 +32,13 @@ export type ProductionHealthSummary = {
   };
   uptime: number;
   checkedAt: string;
+  deployment?: {
+    version: string;
+    gitCommit: string;
+    gitBranch: string;
+    deploymentId?: string;
+    buildDate: string;
+  };
   details?: Record<string, string | number | boolean>;
 };
 
@@ -154,6 +164,14 @@ export async function getProductionHealthSummary(options?: {
       ? "degraded"
       : checks.status;
 
+  const buildInfo = readDeploymentBuildInfo();
+  const staticOk = existsSync(join(process.cwd(), ".next", "static"));
+  if (!staticOk) {
+    checks.details.staticAssets = false;
+  } else {
+    checks.details.staticAssets = true;
+  }
+
   return {
     status,
     database: checks.database,
@@ -165,7 +183,27 @@ export async function getProductionHealthSummary(options?: {
     },
     uptime: Math.round(process.uptime()),
     checkedAt: checks.checkedAt,
-    ...(options?.verbose ? { details: { ...checks.details, supabaseAuth: supabaseAuth.detail ?? "ok" } } : {}),
+    ...(buildInfo
+      ? {
+          deployment: {
+            version: buildInfo.version,
+            gitCommit: buildInfo.gitCommit,
+            gitBranch: buildInfo.gitBranch,
+            deploymentId: buildInfo.deploymentId,
+            buildDate: buildInfo.buildDate,
+          },
+        }
+      : {}),
+    ...(options?.verbose
+      ? {
+          details: {
+            ...checks.details,
+            supabaseAuth: supabaseAuth.detail ?? "ok",
+            prismaClient: checks.database === "healthy" ? "ok" : "error",
+            versionEndpoint: buildInfo ? "ok" : "missing",
+          },
+        }
+      : {}),
   };
 }
 

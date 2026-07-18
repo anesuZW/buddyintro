@@ -54,13 +54,14 @@ describe("withNodeEnvironment", () => {
 });
 
 describe("rollback uses resolved Node", () => {
-  it("includes PATH for npm and npx", () => {
+  it("includes PATH for backup restore", () => {
     setRemoteNodeCache(BIN, { nodeVersion: "v20.20.2", npmVersion: "10.8.2" });
-    const cmd = rollbackToShaCommand("/home/user/app", "a1b2c3d4e5f6789012345678901234567890abcd");
+    const { restoreBackupCommand } = require("../scripts/lib/deploy-releases");
+    const cmd = restoreBackupCommand("/home/user/app", "2026-07-16-1540");
     assert.ok(cmd.includes(BIN));
-    assert.ok(cmd.includes("npm ci"));
-    assert.ok(cmd.includes("npx prisma generate"));
-    assert.ok(cmd.includes("npm run build"));
+    assert.ok(cmd.includes("backups/2026-07-16-1540"));
+    assert.ok(cmd.includes("tmp/restart.txt"));
+    assert.ok(!cmd.includes("ln -sfn"));
   });
 });
 

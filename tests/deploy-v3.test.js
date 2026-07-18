@@ -7,6 +7,7 @@ const { mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } = require("
 const { join } = require("path");
 const { tmpdir } = require("os");
 
+const { CommandError } = require("../scripts/lib/exec");
 const {
   shasEqual,
   resolveTargetSha,
@@ -55,6 +56,24 @@ const mockLogger = () => {
 
 beforeEach(() => resetRemoteNodeCache());
 
+describe("CommandError captured output", () => {
+  it("includes both stdout and stderr in format()", () => {
+    const err = new CommandError({
+      command: "ssh",
+      args: ["npm run build"],
+      exitCode: 1,
+      stdout: "Failed to compile.\n./app/page.tsx:10:5",
+      stderr: "Type error: Property 'foo' does not exist.",
+      display: "ssh npm run build",
+    });
+    const text = err.format();
+    assert.ok(text.includes("stdout:"));
+    assert.ok(text.includes("Failed to compile."));
+    assert.ok(text.includes("stderr:"));
+    assert.ok(text.includes("Type error"));
+  });
+});
+
 describe("Phase 1 — Git integrity", () => {
   it("local not pushed — abort message format", () => {
     const msg = formatLocalNotPushedError(SHA_A, SHA_B, "main");
@@ -73,8 +92,10 @@ describe("Phase 1 — Git integrity", () => {
     exec.runGitCapture = (args) => {
       calls.push(args.join(" "));
       if (args.includes("fetch")) return "";
-      if (args.includes("HEAD")) return SHA_A;
-      if (args.includes("origin/main")) return SHA_B;
+      if (args.includes("--show-current")) return "main";
+      if (args[0] === "rev-parse" && args[1] === "HEAD") return SHA_A;
+      if (args[0] === "rev-parse" && args[1] === "main") return SHA_A;
+      if (args[0] === "rev-parse" && args[1] === "origin/main") return SHA_B;
       return "";
     };
     try {
@@ -87,6 +108,33 @@ describe("Phase 1 — Git integrity", () => {
             logger
           ),
         /Deployment aborted/
+      );
+    } finally {
+      exec.runGitCapture = original;
+    }
+  });
+
+  it("assertLocalPushed rejects wrong checked-out branch", () => {
+    const exec = require("../scripts/lib/exec");
+    const original = exec.runGitCapture;
+    exec.runGitCapture = (args) => {
+      if (args.includes("fetch")) return "";
+      if (args.includes("--show-current")) return "migration-history-rebuild";
+      if (args[0] === "rev-parse" && args[1] === "HEAD") return SHA_A;
+      if (args[0] === "rev-parse" && args[1] === "main") return SHA_B;
+      if (args[0] === "rev-parse" && args[1] === "origin/main") return SHA_B;
+      return "";
+    };
+    try {
+      const logger = mockLogger();
+      assert.throws(
+        () =>
+          assertLocalPushed(
+            { gitBranch: "main", deployCommitSha: null },
+            { mode: "branch", branch: "main", targetSha: SHA_B },
+            logger
+          ),
+        /does not match deploy branch/
       );
     } finally {
       exec.runGitCapture = original;
@@ -161,13 +209,14 @@ describe("Phase 2 — Build integrity", () => {
     );
   });
 
-  it("verify build command checks .next and BUILD_ID", () => {
+  it("verify build command checks Passenger app root artifacts", () => {
     setRemoteNodeCache(BIN);
     const cmd = verifyBuildCommand("/app");
     resetRemoteNodeCache();
-    assert.ok(cmd.includes("test -d .next"));
+    assert.ok(cmd.includes("test -f index.js"));
+    assert.ok(cmd.includes("test -f server.js"));
     assert.ok(cmd.includes("test -f .next/BUILD_ID"));
-    assert.ok(cmd.includes("build/version.json"));
+    assert.ok(!cmd.includes("current"));
   });
 
   it("successful build verify returns BUILD_ID", () => {
@@ -237,23 +286,57 @@ describe("Phase 3 — Health polling", () => {
   });
 });
 
-describe("Phase 5 — Rollback", () => {
-  it("rollback command includes build and restart", () => {
-    setRemoteNodeCache(BIN);
-    const cmd = rollbackToShaCommand("/app", SHA_A);
-    resetRemoteNodeCache();
-    assert.ok(cmd.includes(`git checkout ${SHA_A}`));
-    assert.ok(cmd.includes("npm run build"));
-    assert.ok(cmd.includes("tmp/restart.txt"));
+describe("Phase 4 — CloudLinux app root", () => {
+  it("ensureAppLayout creates incoming staging backups not releases", () => {
+    const { ensureAppLayoutCommand } = require("../scripts/lib/deploy-cloudlinux");
+    const cmd = ensureAppLayoutCommand("/home/socialit/repositories/buddyintro.com");
+    assert.match(cmd, /mkdir -p .*\/backups/);
+    assert.match(cmd, /mkdir -p .*\/incoming/);
+    assert.match(cmd, /mkdir -p .*\/staging/);
+    assert.doesNotMatch(cmd, /mkdir -p .*\/releases/);
+    assert.doesNotMatch(cmd, /current/);
   });
 
-  it("previous successful sha read/write commands", () => {
+  it("restart uses tmp/restart.txt at app root", () => {
     setRemoteNodeCache(BIN);
-    const write = writePreviousSuccessfulShaCommand("/app", SHA_A);
-    const read = readPreviousSuccessfulShaCommand("/app");
+    const { restartCloudLinuxAppCommand } = require("../scripts/lib/deploy-cloudlinux");
+    const cmd = restartCloudLinuxAppCommand("/app");
     resetRemoteNodeCache();
+    assert.match(cmd, /touch tmp\/restart\.txt/);
+    assert.doesNotMatch(cmd, /current/);
+  });
+
+  it("legacy layout command removes current symlink", () => {
+    setRemoteNodeCache(BIN);
+    const { removeLegacyReleaseLayoutCommand } = require("../scripts/lib/deploy-cloudlinux");
+    const cmd = removeLegacyReleaseLayoutCommand("/app");
+    resetRemoteNodeCache();
+    assert.match(cmd, /rm -f .*\/current/);
+  });
+});
+
+describe("Phase 5 — Rollback", () => {
+  it("rollback restores tar.gz backup without symlink switch", () => {
+    setRemoteNodeCache(BIN);
+    const { restoreBackupCommand } = require("../scripts/lib/deploy-cloudlinux");
+    const cmd = restoreBackupCommand("/app", "2026-07-16-1540");
+    resetRemoteNodeCache();
+    assert.ok(cmd.includes("backups/2026-07-16-1540.tar.gz"));
+    assert.ok(cmd.includes("tar -xzf"));
+    assert.ok(cmd.includes("tmp/restart.txt"));
+    assert.ok(!cmd.includes("ln -sfn"));
+    assert.ok(!cmd.includes("current"));
+  });
+
+  it("previous successful backup read/write commands", () => {
+    setRemoteNodeCache(BIN);
+    const { writePreviousBackupCommand, readPreviousBackupCommand } = require("../scripts/lib/deploy-cloudlinux");
+    const write = writePreviousBackupCommand("/app", "2026-07-16-1540", SHA_A);
+    const read = readPreviousBackupCommand("/app");
+    resetRemoteNodeCache();
+    assert.ok(write.includes(".previous-successful-backup"));
     assert.ok(write.includes(".previous-successful-sha"));
-    assert.ok(read.includes(".previous-successful-sha"));
+    assert.ok(read.includes(".previous-successful-backup"));
   });
 });
 

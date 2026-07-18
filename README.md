@@ -153,6 +153,22 @@ When a story is posted with an external email:
 
 ---
 
+## Production deployment (InterServer / Passenger)
+
+BuddyIntro uses **CloudLinux v6 atomic app-root deployment**. Packages are validated in `staging/` before an atomic sync replaces the live app. Backups are immutable `.tar.gz` archives — never rsync-into-self.
+
+```bash
+npm run deploy              # Full: local build → package → staging deploy → atomic sync
+npm run deploy:build        # Local build + package only
+npm run deploy:upload       # Upload latest standalone package
+npm run deploy:rollback     # Restore a .tar.gz backup archive
+npm run deploy:clean        # Remove old server backup archives (keep last 5)
+```
+
+See **[docs/DEPLOYMENT_CLOUDLINUX.md](docs/DEPLOYMENT_CLOUDLINUX.md)** for InterServer CloudLinux setup.
+
+---
+
 ## Deploying to Vercel
 
 1. Push to GitHub.
@@ -176,6 +192,9 @@ When a story is posted with an external email:
 | `npm run prisma:studio` | Browse the database |
 | `npm run db:push` | Push Prisma schema to Supabase Postgres |
 | `npm run db:rls` | Apply `prisma/policies.sql` (RLS + triggers + bucket) |
+| `npm run deploy` | Local build + upload standalone release to production |
+| `npm run deploy:build` | Build and package locally only |
+| `npm run deploy:rollback` | Rollback to previous server release |
 | `npm run lint` | ESLint |
 
 ---

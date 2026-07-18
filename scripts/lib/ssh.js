@@ -42,6 +42,26 @@ function verifySshReachable(config = getConfig()) {
   }
 }
 
+function logCapturedStreams(logger, label, stdout, stderr) {
+  if (!logger) return;
+  if (stdout.trim()) logger.logOutput("STDOUT", stdout);
+  if (stderr.trim()) logger.logOutput("STDERR", stderr);
+  if (!stdout.trim() && !stderr.trim()) {
+    logger.write(`${label}: (no captured output)`);
+  }
+}
+
+function printCapturedStreams(stdout, stderr) {
+  if (stdout.trim()) {
+    console.error("\n--- remote stdout ---");
+    console.error(stdout);
+  }
+  if (stderr.trim()) {
+    console.error("\n--- remote stderr ---");
+    console.error(stderr);
+  }
+}
+
 function sshExec(remoteCommand, stepName, logger) {
   const config = getConfig();
   const label = stepName || remoteCommand.slice(0, 80);
@@ -125,6 +145,69 @@ function sshExecCapture(remoteCommand, logger) {
   return stdout;
 }
 
+/**
+ * Run a remote command with captured stdout/stderr.
+ * On failure, logs full output to the deploy log and console before throwing.
+ */
+function sshExecCaptured(remoteCommand, stepName, logger) {
+  const config = getConfig();
+  const label = stepName || remoteCommand.slice(0, 80);
+  console.log(`\n→ SSH (capture): ${label}`);
+  if (logger) logger.logCommand(label, remoteCommand);
+
+  const started = Date.now();
+  const result = spawnCommand("ssh", [...sshBaseArgs(config), remoteCommand], {
+    capture: true,
+  });
+
+  const stdout = typeof result.stdout === "string" ? result.stdout : result.stdout?.toString?.() || "";
+  const stderr = typeof result.stderr === "string" ? result.stderr : result.stderr?.toString?.() || "";
+
+  if (result.status !== 0 || result.error) {
+    printCapturedStreams(stdout, stderr);
+    if (logger) {
+      logger.logStep({
+        step: label,
+        command: remoteCommand,
+        status: "FAILED",
+        durationMs: Date.now() - started,
+        stdout,
+        stderr,
+        error: result.error ? result.error.message : `exit code ${result.status}`,
+      });
+    }
+
+    const err = new CommandError({
+      command: "ssh",
+      args: [label, remoteCommand],
+      exitCode: result.status ?? 1,
+      stdout,
+      stderr,
+      hint: "Remote command failed. Full compiler output is in the deploy log above.",
+      display: `ssh ${label}`,
+    });
+    err.step = label;
+    err.remoteCommand = remoteCommand;
+    throw err;
+  }
+
+  if (logger) {
+    logger.logStep({
+      step: label,
+      command: remoteCommand,
+      status: "SUCCESS",
+      durationMs: Date.now() - started,
+      stdout: stdout.trim() ? stdout : undefined,
+      stderr: stderr.trim() ? stderr : undefined,
+    });
+  }
+
+  if (stdout.trim()) console.log(stdout);
+  if (stderr.trim()) console.error(stderr);
+
+  return { stdout, stderr };
+}
+
 /** Wrap command in login shell for generic remote bash (no Node PATH). */
 function bashRemote(cmd) {
   const escaped = cmd.replace(/'/g, "'\\''");
@@ -134,7 +217,9 @@ function bashRemote(cmd) {
 module.exports = {
   sshExec,
   sshExecCapture,
+  sshExecCaptured,
   bashRemote,
   verifySshReachable,
   sshBaseArgs,
+  logCapturedStreams,
 };
