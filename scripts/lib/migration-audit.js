@@ -17,6 +17,7 @@ const MIGRATION_ORDER = [
   "0006_platform",
   "0007_security_rbac",
   "0008_media_platform",
+  "0009_i18n",
 ];
 
 const TABLE_MIGRATION = {

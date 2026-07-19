@@ -1,3 +1,8 @@
+import {
+  isProductionEnv,
+  validateProductionMediaRoot,
+} from "@/lib/storage/media-root";
+
 export type EnvValidationResult = {
   ok: boolean;
   missing: string[];
@@ -35,6 +40,14 @@ export function validateEnvironment(options?: { strict?: boolean }): EnvValidati
   if (mediaProvider === "local") {
     for (const key of REQUIRED_LOCAL_MEDIA) {
       if (!process.env[key]?.trim()) missing.push(key);
+    }
+
+    if (isProductionEnv()) {
+      try {
+        validateProductionMediaRoot();
+      } catch (err) {
+        missing.push(err instanceof Error ? err.message : String(err));
+      }
     }
   }
 

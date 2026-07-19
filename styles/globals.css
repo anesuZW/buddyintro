@@ -99,3 +99,18 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+[dir="rtl"] .rtl-nav {
+  direction: rtl;
+}
+
+[dir="rtl"] .fi-gradient-text,
+[dir="rtl"] .text-start {
+  text-align: start;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: start;
+}

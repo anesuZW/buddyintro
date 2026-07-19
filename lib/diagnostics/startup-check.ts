@@ -1,14 +1,14 @@
-import { access } from "fs/promises";
-import { constants } from "fs";
 import { PrismaClient } from "@prisma/client";
 import { validateEnvironment } from "@/lib/diagnostics/env-validation";
 import { readDeploymentBuildInfo } from "@/lib/diagnostics/deployment-info";
-import { getMediaRoot, getMediaProviderName } from "@/lib/storage/config";
+import { ensureLocalStorageReady } from "@/lib/diagnostics/storage-check";
+import { getMediaProviderName } from "@/lib/storage/config";
 
 export type StartupDiagnostic = {
   name: string;
   status: "ok" | "warn" | "error";
   detail?: string;
+  messages?: string[];
 };
 
 async function measureRedisLatency(): Promise<{ ok: boolean; latencyMs?: number; error?: string }> {
@@ -69,16 +69,13 @@ export async function runStartupDiagnostics(): Promise<StartupDiagnostic[]> {
 
   const provider = getMediaProviderName();
   if (provider === "local") {
-    try {
-      await access(getMediaRoot(), constants.R_OK | constants.W_OK);
-      results.push({ name: "storage", status: "ok", detail: getMediaRoot() });
-    } catch (err) {
-      results.push({
-        name: "storage",
-        status: "error",
-        detail: err instanceof Error ? err.message : String(err),
-      });
-    }
+    const storage = await ensureLocalStorageReady();
+    results.push({
+      name: "storage",
+      status: storage.ok ? "ok" : "error",
+      detail: storage.path,
+      messages: storage.messages,
+    });
   } else {
     results.push({ name: "storage", status: "ok", detail: provider });
   }

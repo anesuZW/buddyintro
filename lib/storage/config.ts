@@ -1,4 +1,5 @@
 import type { MediaProviderName } from "@/lib/storage/types";
+import { resolveMediaRoot } from "@/lib/storage/media-root";
 
 const PROVIDER_ALIASES: Record<string, MediaProviderName> = {
   local: "local",
@@ -22,7 +23,7 @@ export function getMediaProviderName(): MediaProviderName {
 
 /** Root directory for local media files. */
 export function getMediaRoot(): string {
-  return process.env.MEDIA_ROOT || "/home/buddyintro/uploads";
+  return resolveMediaRoot();
 }
 
 export function isLocalMediaProvider(): boolean {

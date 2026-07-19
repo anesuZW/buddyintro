@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
-import { BRAND } from "@/lib/branding";
+import { Link } from "@/lib/i18n/navigation";
 import { LEGAL_VERSIONS } from "@/lib/legal-versions";
 
 type Prefs = "all" | "essential" | "custom";
@@ -11,6 +11,8 @@ type Prefs = "all" | "essential" | "custom";
 const STORAGE_KEY = "fi_cookie_consent";
 
 export function CookieConsentBanner() {
+  const t = useTranslations("cookies");
+  const tLegal = useTranslations("legal");
   const [visible, setVisible] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [analytics, setAnalytics] = useState(false);
@@ -33,14 +35,13 @@ export function CookieConsentBanner() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-20 left-0 right-0 z-40 px-4 md:bottom-4">
+    <div className="fixed bottom-20 inset-x-0 z-40 px-4 md:bottom-4">
       <div className="max-w-2xl mx-auto card p-4 shadow-xl border border-border">
-        <p className="text-sm font-semibold">Cookie preferences</p>
+        <p className="text-sm font-semibold">{t("title")}</p>
         <p className="text-xs text-muted-foreground mt-1">
-          We use essential cookies for authentication. Optional analytics cookies help us
-          improve {BRAND.name}. See our{" "}
+          {t("description")}{" "}
           <Link href="/cookies" className="text-primary underline">
-            Cookie Policy
+            {tLegal("cookies")}
           </Link>
           .
         </p>
@@ -52,24 +53,24 @@ export function CookieConsentBanner() {
               checked={analytics}
               onChange={(e) => setAnalytics(e.target.checked)}
             />
-            Analytics cookies (non-essential)
+            {t("analytics")}
           </label>
         )}
 
         <div className="flex flex-wrap gap-2 mt-4">
           <Button className="h-9 text-xs" onClick={() => save("all")}>
-            Accept all
+            {t("acceptAll")}
           </Button>
           <Button variant="outline" className="h-9 text-xs" onClick={() => save("essential")}>
-            Reject non-essential
+            {t("rejectNonEssential")}
           </Button>
           {!showCustomize ? (
             <Button variant="ghost" className="h-9 text-xs" onClick={() => setShowCustomize(true)}>
-              Customize
+              {t("customize")}
             </Button>
           ) : (
             <Button variant="ghost" className="h-9 text-xs" onClick={() => save("custom")}>
-              Save preferences
+              {t("savePreferences")}
             </Button>
           )}
         </div>

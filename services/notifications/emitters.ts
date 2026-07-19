@@ -1,5 +1,15 @@
 import { NOTIFICATION_TYPES } from "@/lib/notification-types";
-import { BRAND } from "@/lib/branding";
+import {
+  buildDiscoveryEngagementNotification,
+  buildDiscoveryMessageNotification,
+  buildIntroductionReceivedNotification,
+  buildInviteNotification,
+  buildMessageReceivedNotification,
+  buildSharedIntroducerNotification,
+  buildTrustScoreNotification,
+  buildVerificationNotification,
+  getUserLocale,
+} from "@/lib/i18n/notifications";
 import { notificationQueue } from "@/services/notifications/notification-service";
 
 export async function notifyIntroductionReceived(args: {
@@ -8,12 +18,14 @@ export async function notifyIntroductionReceived(args: {
   authorName: string;
   storyId: string;
 }) {
+  const locale = await getUserLocale(args.taggedUserId);
+  const copy = await buildIntroductionReceivedNotification(locale, args.authorName);
   await notificationQueue.enqueue({
     userId: args.taggedUserId,
     actorId: args.authorId,
     type: NOTIFICATION_TYPES.INTRODUCTION_RECEIVED,
-    title: "New introduction",
-    message: `${args.authorName} introduced you on ${BRAND.name}.`,
+    title: copy.title,
+    message: copy.message,
     entityType: "story",
     entityId: args.storyId,
   });
@@ -33,12 +45,15 @@ export async function notifyMessageReceived(args: {
       ? NOTIFICATION_TYPES.DISCOVERIES_CONVERSATION
       : NOTIFICATION_TYPES.MESSAGE_RECEIVED;
 
+  const locale = await getUserLocale(args.receiverId);
+  const copy = await buildMessageReceivedNotification(locale, args.senderName, args.preview);
+
   await notificationQueue.enqueue({
     userId: args.receiverId,
     actorId: args.senderId,
     type,
-    title: "New message",
-    message: `${args.senderName}: ${args.preview.slice(0, 120)}`,
+    title: copy.title,
+    message: copy.message,
     entityType: "message",
     entityId: args.storyReference ?? args.discoveriesPostReference ?? args.senderId,
   });
@@ -57,20 +72,21 @@ export async function notifyDiscoveryEngagement(args: {
     commented: NOTIFICATION_TYPES.DISCOVERY_COMMENTED,
     shared: NOTIFICATION_TYPES.DISCOVERY_SHARED,
   };
-  const titleMap = {
-    liked: "Discovery liked",
-    commented: "New comment",
-    shared: "Discovery shared",
-  };
+
+  const locale = await getUserLocale(args.postAuthorId);
+  const copy = await buildDiscoveryEngagementNotification(
+    locale,
+    args.kind,
+    args.actorName,
+    args.preview
+  );
+
   await notificationQueue.enqueue({
     userId: args.postAuthorId,
     actorId: args.actorId,
     type: typeMap[args.kind],
-    title: titleMap[args.kind],
-    message:
-      args.kind === "commented" && args.preview
-        ? `${args.actorName} commented: ${args.preview.slice(0, 100)}`
-        : `${args.actorName} ${args.kind} your discovery.`,
+    title: copy.title,
+    message: copy.message,
     entityType: "discoveries_post",
     entityId: args.postId,
   });
@@ -81,11 +97,13 @@ export async function notifyInviteAccepted(args: {
   inviteeName: string;
   invitationId: string;
 }) {
+  const locale = await getUserLocale(args.inviterId);
+  const copy = await buildInviteNotification(locale, "accepted", args.inviteeName);
   await notificationQueue.enqueue({
     userId: args.inviterId,
     type: NOTIFICATION_TYPES.INVITE_ACCEPTED,
-    title: "Invitation accepted",
-    message: `${args.inviteeName} accepted your invitation.`,
+    title: copy.title,
+    message: copy.message,
     entityType: "invitation",
     entityId: args.invitationId,
   });
@@ -95,11 +113,13 @@ export async function notifyInviteOpened(args: {
   inviterId: string;
   invitationId: string;
 }) {
+  const locale = await getUserLocale(args.inviterId);
+  const copy = await buildInviteNotification(locale, "opened");
   await notificationQueue.enqueue({
     userId: args.inviterId,
     type: NOTIFICATION_TYPES.INVITE_OPENED,
-    title: "Invitation opened",
-    message: "Someone opened your invitation link.",
+    title: copy.title,
+    message: copy.message,
     entityType: "invitation",
     entityId: args.invitationId,
     skipEmail: true,
@@ -111,11 +131,13 @@ export async function notifyInviteRegistered(args: {
   inviteeName: string;
   invitationId: string;
 }) {
+  const locale = await getUserLocale(args.inviterId);
+  const copy = await buildInviteNotification(locale, "registered", args.inviteeName);
   await notificationQueue.enqueue({
     userId: args.inviterId,
     type: NOTIFICATION_TYPES.INVITE_REGISTERED,
-    title: "Invitee registered",
-    message: `${args.inviteeName} completed registration via your invitation.`,
+    title: copy.title,
+    message: copy.message,
     entityType: "invitation",
     entityId: args.invitationId,
   });
@@ -127,12 +149,14 @@ export async function notifyDiscoveryMessage(args: {
   actorName: string;
   postId: string;
 }) {
+  const locale = await getUserLocale(args.postAuthorId);
+  const copy = await buildDiscoveryMessageNotification(locale, args.actorName);
   await notificationQueue.enqueue({
     userId: args.postAuthorId,
     actorId: args.actorId,
     type: NOTIFICATION_TYPES.DISCOVERY_MESSAGE,
-    title: "Message from discovery",
-    message: `${args.actorName} messaged you from your discovery.`,
+    title: copy.title,
+    message: copy.message,
     entityType: "discoveries_post",
     entityId: args.postId,
   });
@@ -145,12 +169,19 @@ export async function notifyTrustScoreIncreased(args: {
   newScore: number;
   sharedCount: number;
 }) {
+  const locale = await getUserLocale(args.userId);
+  const copy = await buildTrustScoreNotification(
+    locale,
+    args.otherName,
+    args.newScore,
+    args.sharedCount
+  );
   await notificationQueue.enqueue({
     userId: args.userId,
     actorId: args.otherUserId,
     type: NOTIFICATION_TYPES.TRUST_SCORE_INCREASED,
-    title: "Trust score increased",
-    message: `Your trust connection with ${args.otherName} is now ${args.newScore} (${args.sharedCount} shared introducers).`,
+    title: copy.title,
+    message: copy.message,
     entityType: "user",
     entityId: args.otherUserId,
   });
@@ -162,12 +193,18 @@ export async function notifySharedIntroducerDiscovered(args: {
   otherName: string;
   introducerName: string;
 }) {
+  const locale = await getUserLocale(args.userId);
+  const copy = await buildSharedIntroducerNotification(
+    locale,
+    args.otherName,
+    args.introducerName
+  );
   await notificationQueue.enqueue({
     userId: args.userId,
     actorId: args.otherUserId,
     type: NOTIFICATION_TYPES.SHARED_INTRODUCER_DISCOVERED,
-    title: "New shared introducer",
-    message: `You and ${args.otherName} now share ${args.introducerName} as an introducer.`,
+    title: copy.title,
+    message: copy.message,
     entityType: "user",
     entityId: args.otherUserId,
   });
@@ -177,18 +214,20 @@ export async function notifyVerification(args: {
   userId: string;
   kind: "phone" | "identity" | "approved" | "rejected";
 }) {
-  const map = {
-    phone: { type: NOTIFICATION_TYPES.PHONE_VERIFIED, title: "Phone verified", message: "Your phone number is verified." },
-    identity: { type: NOTIFICATION_TYPES.IDENTITY_VERIFIED, title: "Identity verified", message: "Your identity is verified." },
-    approved: { type: NOTIFICATION_TYPES.VERIFICATION_APPROVED, title: "Verification approved", message: "Your verification was approved." },
-    rejected: { type: NOTIFICATION_TYPES.VERIFICATION_REJECTED, title: "Verification rejected", message: "Your verification was rejected. Please try again." },
+  const locale = await getUserLocale(args.userId);
+  const copy = await buildVerificationNotification(locale, args.kind);
+  const typeMap = {
+    phone: NOTIFICATION_TYPES.PHONE_VERIFIED,
+    identity: NOTIFICATION_TYPES.IDENTITY_VERIFIED,
+    approved: NOTIFICATION_TYPES.VERIFICATION_APPROVED,
+    rejected: NOTIFICATION_TYPES.VERIFICATION_REJECTED,
   };
-  const m = map[args.kind];
+
   await notificationQueue.enqueue({
     userId: args.userId,
-    type: m.type,
-    title: m.title,
-    message: m.message,
+    type: typeMap[args.kind],
+    title: copy.title,
+    message: copy.message,
     entityType: "user",
     entityId: args.userId,
   });

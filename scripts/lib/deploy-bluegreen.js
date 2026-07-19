@@ -7,8 +7,9 @@
  *   {appRoot}/shared/.env
  */
 const { execSync } = require("child_process");
-const { existsSync, mkdirSync, readFileSync, writeFileSync, symlinkSync, unlinkSync, readdirSync } = require("fs");
+const { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync } = require("fs");
 const { join, resolve } = require("path");
+const { createSharedLink } = require("./platform-links");
 
 function loadEnvFiles(root) {
   for (const file of [".env.local", ".env"]) {
@@ -90,24 +91,23 @@ function writeReleaseManifest(releaseDir, meta) {
 }
 
 function symlinkCurrent(config, releaseDir) {
-  if (existsSync(config.currentLink)) {
-    try {
-      unlinkSync(config.currentLink);
-    } catch {
-      /* windows junction fallback not needed on linux */
-    }
-  }
-  symlinkSync(releaseDir, config.currentLink, "dir");
+  createSharedLink(releaseDir, config.currentLink, { type: "dir" });
 }
 
 function linkSharedPaths(releaseDir, config) {
   mkdirSync(config.sharedUploads, { recursive: true });
   mkdirSync(config.sharedDir, { recursive: true });
   const uploadsLink = join(releaseDir, "uploads");
-  if (!existsSync(uploadsLink)) symlinkSync(config.sharedUploads, uploadsLink, "dir");
+  createSharedLink(config.sharedUploads, uploadsLink, {
+    type: "dir",
+    protectPaths: [config.sharedUploads],
+  });
   if (existsSync(config.sharedEnv)) {
     const envLink = join(releaseDir, ".env");
-    if (!existsSync(envLink)) symlinkSync(config.sharedEnv, envLink, "file");
+    createSharedLink(config.sharedEnv, envLink, {
+      type: "file",
+      protectPaths: [config.sharedUploads],
+    });
   }
 }
 

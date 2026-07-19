@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { TranslateAction } from "@/components/i18n/TranslateAction";
+import { Link } from "@/lib/i18n/navigation";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { ChatContextPayload } from "@/types";
@@ -29,7 +30,10 @@ export function StoryReferenceCard({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium line-clamp-2">&ldquo;{story.caption}&rdquo;</p>
-          <p className="text-xs text-muted-foreground mt-0.5">by {story.author.name}</p>
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">by {story.author.name}</p>
+            <TranslateAction contentType="introduction" />
+          </div>
         </div>
       </div>
       <Link href={introductionDetailHref(story.id)}>

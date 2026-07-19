@@ -82,10 +82,27 @@ npm install
 
 ### 3. Configure environment
 
+Use the environment template that matches where you run BuddyIntro:
+
+**Development** (Windows, macOS, or Linux — coding, testing, creating releases):
+
 ```bash
-cp .env.example .env.local
-# fill in the values
+cp .env.development.example .env
+# fill in Supabase/database values
+npm run startup-check   # creates ./uploads automatically in development
+npm run dev
 ```
+
+**Production** (Ubuntu VPS — runs the live app):
+
+```bash
+mkdir -p /home/buddyintro/shared/uploads
+cp .env.production.example .env
+# fill in production secrets
+npm run startup-check
+```
+
+See `.env.example` for the full variable reference. Development uses `MEDIA_ROOT=./uploads` (resolved relative to the project). Production requires an absolute path such as `/home/buddyintro/shared/uploads`.
 
 ### 4. Push the schema and apply RLS
 

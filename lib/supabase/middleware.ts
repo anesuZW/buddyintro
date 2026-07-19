@@ -1,4 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { getPathnameWithoutLocale, prefixPathWithLocale } from "@/lib/i18n/resolve-locale";
+import { defaultLocale, isAppLocale } from "@/i18n/routing";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 import { setTrustedAuthHeaders, stripTrustedAuthHeaders } from "@/lib/auth-context";
@@ -67,7 +69,10 @@ export async function updateSession(request: NextRequest) {
     ? Math.max(0, getUserTotalMs - getUserNetworkMs - refreshNetworkMs)
     : 0;
 
-  const { pathname } = request.nextUrl;
+  const { pathname: rawPathname } = request.nextUrl;
+  const pathname = getPathnameWithoutLocale(rawPathname);
+  const localeSegment = rawPathname.startsWith("/") ? rawPathname.split("/")[1] : "";
+  const locale = isAppLocale(localeSegment) ? localeSegment : defaultLocale;
   const responseBuildStart = timingEnabled ? performance.now() : 0;
 
   if (user) {
@@ -100,12 +105,12 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && !isAuthPage && !isPublic) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/login";
+    redirectUrl.pathname = prefixPathWithLocale("/login", locale);
     redirectUrl.searchParams.set("next", pathname);
     finalResponse = NextResponse.redirect(redirectUrl);
   } else if (user && isAuthPage) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/home";
+    redirectUrl.pathname = prefixPathWithLocale("/home", locale);
     finalResponse = NextResponse.redirect(redirectUrl);
   } else {
     finalResponse = response;

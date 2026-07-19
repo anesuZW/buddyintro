@@ -1,0 +1,161 @@
+{
+  "common": {
+    "appName": "BuddyIntro",
+    "loading": "Cargando…",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "continue": "Continuar",
+    "back": "Atrás",
+    "or": "O",
+    "error": "Algo salió mal",
+    "success": "Éxito"
+  },
+  "nav": {
+    "home": "Inicio",
+    "discover": "Descubrir",
+    "intro": "Presentar",
+    "intros": "Presentaciones",
+    "me": "Yo",
+    "messages": "Mensajes",
+    "notifications": "Notificaciones",
+    "settings": "Ajustes",
+    "admin": "Admin"
+  },
+  "auth": {
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión…",
+    "signUp": "Registrarse",
+    "signOut": "Cerrar sesión",
+    "email": "Correo",
+    "password": "Contraseña",
+    "magicLink": "Enviar enlace mágico",
+    "magicLinkSent": "Enlace enviado — revisa tu correo",
+    "enterEmailFirst": "Introduce tu correo primero",
+    "loginFailed": "Error al iniciar sesión",
+    "magicLinkFailed": "No se pudo enviar el enlace",
+    "newHere": "¿Nuevo aquí?",
+    "startTrustedNetwork": "Comienza a construir tu red de confianza",
+    "discoverThroughIntros": "Descubre personas a través de presentaciones"
+  },
+  "forms": {
+    "name": "Name",
+    "required": "Required",
+    "optional": "Optional"
+  },
+  "validation": {
+    "required": "This field is required",
+    "emailInvalid": "Enter a valid email address",
+    "passwordMin": "Password must be at least 8 characters",
+    "nameMin": "Name must be at least 1 character",
+    "nameMax": "Name must be at most 80 characters"
+  },
+  "onboarding": {
+    "buildTrustedConnections": "Build Trusted Connections",
+    "joinFriendIntro": "Start Building Your Trusted Network",
+    "createHelper": "Introduce someone you know and help others discover trusted people through your recommendation.",
+    "step1Title": "Who would you like to introduce?",
+    "step2Title": "How do you know them?",
+    "step3Title": "Tell us about this person",
+    "step4Title": "Who should see this introduction?",
+    "step5Title": "Invite them now"
+  },
+  "profile": {
+    "language": "Idioma",
+    "languageHint": "Elige tu idioma preferido para la app, correos y notificaciones.",
+    "editProfile": "Editar perfil",
+    "notificationPreferences": "Preferencias de notificaciones",
+    "privacySettings": "Privacidad y datos",
+    "phoneVerification": "Verificación telefónica",
+    "trustNetwork": "Red de confianza"
+  },
+  "language": {
+    "label": "Idioma",
+    "updated": "Idioma actualizado"
+  },
+  "notifications": {
+    "introductionReceivedTitle": "Nueva presentación",
+    "introductionReceivedMessage": "{authorName} te presentó en {appName}.",
+    "messageReceivedTitle": "New message",
+    "messageReceivedMessage": "{senderName}: {preview}",
+    "discoveryLikedTitle": "Discovery liked",
+    "discoveryLikedMessage": "{actorName} liked your discovery.",
+    "discoveryCommentedTitle": "New comment",
+    "discoveryCommentedMessage": "{actorName} commented: {preview}",
+    "discoverySharedTitle": "Discovery shared",
+    "discoverySharedMessage": "{actorName} shared your discovery.",
+    "inviteAcceptedTitle": "Invitation accepted",
+    "inviteAcceptedMessage": "{inviteeName} accepted your invitation.",
+    "inviteOpenedTitle": "Invitation opened",
+    "inviteOpenedMessage": "Someone opened your invitation link.",
+    "inviteRegisteredTitle": "Invitee registered",
+    "inviteRegisteredMessage": "{inviteeName} completed registration via your invitation.",
+    "discoveryMessageTitle": "Message from discovery",
+    "discoveryMessageMessage": "{actorName} messaged you from your discovery.",
+    "trustScoreTitle": "Trust score increased",
+    "trustScoreMessage": "Your trust connection with {otherName} is now {score} ({count} shared introducers).",
+    "sharedIntroducerTitle": "New shared introducer",
+    "sharedIntroducerMessage": "You and {otherName} now share {introducerName} as an introducer.",
+    "phoneVerifiedTitle": "Phone verified",
+    "phoneVerifiedMessage": "Your phone number is verified.",
+    "identityVerifiedTitle": "Identity verified",
+    "identityVerifiedMessage": "Your identity is verified.",
+    "verificationApprovedTitle": "Verification approved",
+    "verificationApprovedMessage": "Your verification was approved.",
+    "verificationRejectedTitle": "Verification rejected",
+    "verificationRejectedMessage": "Your verification was rejected. Please try again."
+  },
+  "admin": {
+    "overview": "Overview",
+    "adminUsers": "Admin users",
+    "auditLog": "Audit log",
+    "jobs": "Jobs",
+    "storage": "Storage",
+    "security": "Security",
+    "trustRisk": "Trust & risk",
+    "systemHealth": "System health",
+    "system": "System",
+    "performance": "Performance"
+  },
+  "cookies": {
+    "title": "Preferencias de cookies",
+    "description": "Usamos cookies esenciales para ejecutar BuddyIntro.",
+    "acceptAll": "Aceptar todo",
+    "rejectNonEssential": "Rechazar no esenciales",
+    "customize": "Personalizar",
+    "analytics": "Analítica",
+    "savePreferences": "Guardar preferencias"
+  },
+  "legal": {
+    "privacy": "Política de privacidad",
+    "terms": "Términos de servicio",
+    "cookies": "Política de cookies"
+  },
+  "dialogs": {
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "areYouSure": "Are you sure?"
+  },
+  "ugc": {
+    "translate": "Traducir"
+  },
+  "email": {
+    "greeting": "Hi {name},",
+    "viewOnApp": "View on BuddyIntro",
+    "notificationSubject": "{title} — BuddyIntro"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "trustedIntroductions": "Trusted Introductions",
+    "recentIntroductions": "Recent Introductions"
+  },
+  "introductions": {
+    "title": "Introductions",
+    "create": "New Introduction",
+    "yourIntroductions": "Your Introductions",
+    "sharedIntroducers": "Shared Introducers"
+  },
+  "metadata": {
+    "description": "Presenta personas en las que confías. Descubre a otros mediante presentaciones mutuas."
+  }
+}

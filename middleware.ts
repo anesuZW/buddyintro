@@ -1,8 +1,12 @@
+import createIntlMiddleware from "next-intl/middleware";
 import { type NextRequest, NextResponse } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
+import { routing } from "@/i18n/routing";
 import { generateRequestId, REQUEST_ID_HEADER } from "@/lib/request-id";
 import { applySecurityHeaders, validateOrigin, originRejectedResponse } from "@/lib/security";
 import { recordHttpRequest } from "@/lib/metrics";
+import { updateSession } from "@/lib/supabase/middleware";
+
+const intlMiddleware = createIntlMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
   const requestId = request.headers.get(REQUEST_ID_HEADER) || generateRequestId();
@@ -14,13 +18,27 @@ export async function middleware(request: NextRequest) {
     return applySecurityHeaders(rejected);
   }
 
-  const response = await updateSession(request);
-  response.headers.set(REQUEST_ID_HEADER, requestId);
+  const intlResponse = intlMiddleware(request);
+  if (intlResponse.headers.get("location")) {
+    intlResponse.headers.set(REQUEST_ID_HEADER, requestId);
+    return applySecurityHeaders(intlResponse);
+  }
+
+  const authResponse = await updateSession(request);
+  authResponse.headers.set(REQUEST_ID_HEADER, requestId);
+
+  intlResponse.headers.forEach((value, key) => {
+    if (key.toLowerCase() === "set-cookie") {
+      authResponse.headers.append(key, value);
+    } else if (!authResponse.headers.has(key)) {
+      authResponse.headers.set(key, value);
+    }
+  });
 
   const durationMs = Math.round(performance.now() - startedAt);
-  recordHttpRequest(request.method, request.nextUrl.pathname, response.status, durationMs);
+  recordHttpRequest(request.method, request.nextUrl.pathname, authResponse.status, durationMs);
 
-  return applySecurityHeaders(response);
+  return applySecurityHeaders(authResponse);
 }
 
 export const config = {

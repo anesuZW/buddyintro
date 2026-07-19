@@ -14,6 +14,35 @@ Operational guide for BuddyIntro at scale.
 | Media | Local disk or S3-compatible providers |
 | Auth | Supabase Auth |
 
+## Deployment environments
+
+BuddyIntro separates **development** and **production** configuration.
+
+| Environment | Typical host | Purpose |
+|-------------|--------------|---------|
+| Development | Windows, macOS, Linux dev machine | Coding, testing, building release packages |
+| Production | Ubuntu VPS | Running BuddyIntro under PM2 |
+
+**Development**
+
+```bash
+cp .env.development.example .env
+npm run startup-check   # auto-creates ./uploads when missing
+npm run dev
+```
+
+**Production**
+
+```bash
+mkdir -p /home/buddyintro/shared/uploads
+cp .env.production.example .env
+npm run startup-check   # fails with mkdir guidance if storage is missing
+```
+
+Development resolves `MEDIA_ROOT=./uploads` to an absolute project path (for example `C:\dev\friendintro\uploads` on Windows). Production requires an absolute `MEDIA_ROOT` and never auto-creates media storage.
+
+Windows development machines prepare releases; the Ubuntu VPS runs production.
+
 ## Deployment
 
 ### CloudLinux / Passenger (existing)
@@ -46,6 +75,8 @@ npm run deploy:v3
 ```
 
 Flow: git archive → `npm ci` → `prisma migrate deploy` → build → smoke test → symlink switch → `pm2 reload` → health check → auto rollback on failure.
+
+**Cross-platform links:** Windows developer machines use **directory junctions** for shared paths during local deploy testing. Linux production uses **symbolic links**. Both are handled by `scripts/lib/platform-links.js` (`createSharedLink`).
 
 ### PM2
 
@@ -174,10 +205,12 @@ Terminate TLS at nginx. Proxy to PM2 on `127.0.0.1:3000`. Cache `/uploads/` and 
 
 ## Environment validation
 
-Production refuses to start if critical env vars are missing (`lib/env-validation.ts`). Run startup diagnostics manually:
+Production refuses to start if critical env vars are missing (`lib/env-validation.ts`) or if `MEDIA_ROOT` is not an absolute path. Run startup diagnostics manually:
 
 ```bash
 npm run startup-check
 ```
+
+Templates: `.env.development.example` (local dev, `MEDIA_ROOT=./uploads`) and `.env.production.example` (VPS, absolute `MEDIA_ROOT`).
 
 Required: `DATABASE_URL`, Supabase keys, `MEDIA_PROVIDER`, `NEXT_PUBLIC_APP_URL`, `MEDIA_ROOT` (local provider).

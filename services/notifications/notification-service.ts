@@ -4,6 +4,7 @@ import { getAdminSettings } from "@/services/admin";
 import { enqueueOrRun, jobProvider } from "@/services/jobs/job-service";
 import { JOB_TYPES, QUEUES } from "@/services/jobs/types";
 import "@/services/jobs/handlers";
+import { resolveAppLocale } from "@/lib/i18n/messages";
 import { sendNotificationEmail } from "@/services/notifications/notification-email";
 import { sendWebPushToUser } from "@/services/notifications/notification-push";
 import {
@@ -129,7 +130,7 @@ export const notificationService = {
     if (deliverEmail) {
       const user = await prisma.user.findUnique({
         where: { id: input.userId },
-        select: { email: true, name: true },
+        select: { email: true, name: true, preferredLanguage: true },
       });
       if (user?.email) {
         void sendNotificationEmail({
@@ -138,6 +139,7 @@ export const notificationService = {
           title: input.title,
           message: input.message,
           href: notificationHref(input.entityType, input.entityId, input.actorId),
+          locale: resolveAppLocale(user.preferredLanguage),
         }).catch((err) => console.error("[notifications] email failed", err));
       }
     }

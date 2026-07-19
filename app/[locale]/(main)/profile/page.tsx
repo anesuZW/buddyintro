@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { getTrustRecommendations } from "@/services/trust-recommendations";
 import { Avatar } from "@/components/ui/Avatar";
+import { LanguagePreferencesPanel } from "@/components/profile/LanguagePreferencesPanel";
 import { LogoutButton } from "@/components/profile/LogoutButton";
 import { ProfileEditor } from "@/components/profile/ProfileEditor";
 import { PrivacySettingsPanel } from "@/components/legal/PrivacySettingsPanel";
@@ -100,6 +101,8 @@ export default async function ProfilePage() {
           }}
           userId={user.id}
         />
+
+        <LanguagePreferencesPanel />
 
         <NotificationPreferencesPanel
           initialPreferences={toNotificationPreferencesSnapshot(notificationPreferences)}

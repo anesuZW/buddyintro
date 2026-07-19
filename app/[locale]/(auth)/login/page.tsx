@@ -1,16 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Link, useRouter } from "@/lib/i18n/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { appUrl } from "@/lib/utils";
-import { COPY } from "@/lib/copy";
 
 function LoginForm() {
+  const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/home";
@@ -28,14 +30,14 @@ function LoginForm() {
       if (error) throw error;
       router.replace(next);
     } catch (err: any) {
-      toast.error(err.message || "Login failed");
+      toast.error(err.message || t("loginFailed"));
     } finally {
       setLoading(false);
     }
   }
 
   async function loginWithMagicLink() {
-    if (!email) return toast.error("Enter your email first");
+    if (!email) return toast.error(t("enterEmailFirst"));
     setLoading(true);
     try {
       const supabase = createSupabaseBrowserClient();
@@ -44,9 +46,9 @@ function LoginForm() {
         options: { emailRedirectTo: appUrl(`/auth/callback?next=${encodeURIComponent(next)}`) },
       });
       if (error) throw error;
-      toast.success("Magic link sent — check your email!");
+      toast.success(t("magicLinkSent"));
     } catch (err: any) {
-      toast.error(err.message || "Could not send magic link");
+      toast.error(err.message || t("magicLinkFailed"));
     } finally {
       setLoading(false);
     }
@@ -54,43 +56,43 @@ function LoginForm() {
 
   return (
     <div className="card p-8">
-        <h1 className="text-2xl font-bold">{COPY.startTrustedNetwork}</h1>
-        <p className="text-muted-foreground mt-1">{COPY.discoverThroughIntros}</p>
+      <h1 className="text-2xl font-bold">{t("startTrustedNetwork")}</h1>
+      <p className="text-muted-foreground mt-1">{t("discoverThroughIntros")}</p>
 
       <form onSubmit={loginWithPassword} className="mt-6 space-y-4">
         <Input
           type="email"
-          placeholder="Email"
+          placeholder={t("email")}
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <Input
           type="password"
-          placeholder="Password"
+          placeholder={t("password")}
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
         <Button className="w-full h-12" disabled={loading}>
-          {loading ? "Signing in…" : "Sign in"}
+          {loading ? t("signingIn") : t("signIn")}
         </Button>
       </form>
 
       <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
         <div className="h-px flex-1 bg-border" />
-        OR
+        {tCommon("or")}
         <div className="h-px flex-1 bg-border" />
       </div>
 
       <Button variant="outline" className="w-full h-12" onClick={loginWithMagicLink} disabled={loading}>
-        Send magic link
+        {t("magicLink")}
       </Button>
 
       <p className="mt-6 text-sm text-center text-muted-foreground">
-        New here?{" "}
+        {t("newHere")}{" "}
         <Link href="/signup" className="text-primary font-medium">
-          {COPY.startTrustedNetwork}
+          {t("startTrustedNetwork")}
         </Link>
       </p>
     </div>
@@ -98,8 +100,9 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const tCommon = useTranslations("common");
   return (
-    <Suspense fallback={<div className="card p-8 text-center text-muted-foreground">Loading…</div>}>
+    <Suspense fallback={<div className="card p-8 text-center text-muted-foreground">{tCommon("loading")}</div>}>
       <LoginForm />
     </Suspense>
   );
