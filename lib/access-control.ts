@@ -136,8 +136,10 @@ export async function canAccessStoragePath(
       OR: [
         { mediaUrl: { endsWith: normalized } },
         { mediaUrl: { contains: normalized } },
+        { mediaUrl: { contains: `/uploads/${normalized}` } },
         { voiceNoteUrl: { endsWith: normalized } },
         { voiceNoteUrl: { contains: normalized } },
+        { voiceNoteUrl: { contains: `/uploads/${normalized}` } },
       ],
     },
     select: { id: true },
@@ -148,7 +150,11 @@ export async function canAccessStoragePath(
 
   const post = await prisma.discoveriesPost.findFirst({
     where: {
-      OR: [{ mediaUrl: { endsWith: normalized } }, { mediaUrl: { contains: normalized } }],
+      OR: [
+        { mediaUrl: { endsWith: normalized } },
+        { mediaUrl: { contains: normalized } },
+        { mediaUrl: { contains: `/uploads/${normalized}` } },
+      ],
     },
     select: { id: true },
   });

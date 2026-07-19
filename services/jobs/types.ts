@@ -39,6 +39,8 @@ export const JOB_TYPES = {
   VERIFICATION_PROCESS: "verification.process",
   ADMIN_BROADCAST: "admin.broadcast",
   SECURITY_SCAN: "security.scan",
+  MEDIA_PROCESS: "media.process",
+  MEDIA_CLEANUP: "media.cleanup",
 } as const;
 
 export const QUEUES = {
@@ -47,6 +49,7 @@ export const QUEUES = {
   ANALYTICS: "analytics",
   VERIFICATION: "verification",
   SECURITY: "security",
+  MEDIA: "media",
 } as const;
 
 export type JobPriority = "low" | "normal" | "high" | "critical";

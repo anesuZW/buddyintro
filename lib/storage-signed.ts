@@ -1,11 +1,9 @@
 import "server-only";
 
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { STORAGE_BUCKET } from "@/lib/constants";
 import { extractStoragePath } from "@/lib/storage-url";
+import { getStorageProvider } from "@/lib/storage/index";
 import {
   lookupSignedUrlCache,
-  setCachedSignedUrl,
   SIGNED_URL_EXPIRY_SECONDS,
 } from "@/lib/storage-signed-cache";
 
@@ -23,7 +21,10 @@ export async function signStoragePathDetailed(
   const path = extractStoragePath(storedOrPath) ?? storedOrPath;
   if (!path) return null;
 
-  const lookup = lookupSignedUrlCache(path);
+  const provider = getStorageProvider();
+  const lookup =
+    provider.name === "supabase" ? lookupSignedUrlCache(path) : { hit: false, cacheLookupMs: 0, signedUrl: "" };
+
   if (lookup.hit) {
     return {
       signedUrl: lookup.signedUrl,
@@ -34,25 +35,19 @@ export async function signStoragePathDetailed(
   }
 
   const signStart = performance.now();
-  const supabase = getSupabaseAdminClient();
-  const { data, error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .createSignedUrl(path, expiresInSeconds);
-
+  const signedUrl = await provider.getReadableUrl(path, { expiresInSeconds });
   const createSignedUrlMs = Math.round(performance.now() - signStart);
 
-  if (error || !data?.signedUrl) return null;
-
-  setCachedSignedUrl(path, data.signedUrl);
+  if (!signedUrl) return null;
 
   if (process.env.PROFILE_PHASE2 === "1" || process.env.PROFILE_API === "1") {
     console.log(
-      `[MEDIA-CACHE] store path=${path.replace(/^\/+/, "")} createSignedUrl=${createSignedUrlMs}ms ttl=${SIGNED_URL_EXPIRY_SECONDS - 600}s`
+      `[MEDIA-CACHE] store path=${path.replace(/^\/+/, "")} resolve=${createSignedUrlMs}ms provider=${provider.name}`
     );
   }
 
   return {
-    signedUrl: data.signedUrl,
+    signedUrl,
     cacheHit: false,
     cacheLookupMs: lookup.cacheLookupMs,
     createSignedUrlMs,
@@ -69,7 +64,14 @@ export async function signStoragePath(
 
 export async function signStoredMediaUrl(stored: string | null | undefined): Promise<string | null> {
   if (!stored) return null;
-  if (stored.startsWith("/api/media")) return stored;
+  if (stored.startsWith("/api/media") || stored.startsWith("/uploads/")) {
+    return signStoragePath(stored);
+  }
+  if (stored.startsWith("http://") || stored.startsWith("https://")) {
+    const path = extractStoragePath(stored);
+    if (path) return signStoragePath(path);
+    return stored;
+  }
   return signStoragePath(stored);
 }
 

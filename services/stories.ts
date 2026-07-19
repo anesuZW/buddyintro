@@ -301,8 +301,28 @@ export async function getStoryForViewer(
   return withProxiedMedia(story);
 }
 
+import { getStorageProvider } from "@/lib/storage/index";
+import { extractStoragePath } from "@/lib/storage-url";
+
 export async function deleteStory(id: string, ownerId: string) {
+  const story = await prisma.story.findFirst({
+    where: { id, userId: ownerId },
+    select: { mediaUrl: true, voiceNoteUrl: true },
+  });
+
   await prisma.story.deleteMany({ where: { id, userId: ownerId } });
+
+  if (!story) return;
+
+  const provider = getStorageProvider();
+  const paths = [story.mediaUrl, story.voiceNoteUrl].filter(Boolean) as string[];
+  await Promise.all(
+    paths.map((stored) =>
+      provider.delete(stored).catch(() => {
+        /* best-effort cleanup */
+      })
+    )
+  );
 }
 
 export async function expireStories() {

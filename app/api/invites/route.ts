@@ -46,7 +46,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const me = await requireUser();
 
-  const limited = enforceRateLimit(me.id, "invites:post");
+  const limited = await enforceRateLimit(me.id, "invites:post");
   if (limited) return limited;
   const parsed = Schema.safeParse(await request.json());
   if (!parsed.success) {

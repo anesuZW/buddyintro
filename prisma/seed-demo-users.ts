@@ -31,7 +31,6 @@ loadEnvFile();
 
 const DEMO_PASSWORD = "123456";
 const SEED_PREFIX = "[demo-seed]";
-const BUCKET = process.env.NEXT_PUBLIC_STORAGE_BUCKET || "friendintro";
 
 const DEMO_USERS = [
   { email: "user1@friendintro.com", name: "Alex Rivera" },
@@ -80,11 +79,7 @@ async function findAuthUserIdByEmail(
   return null;
 }
 
-async function uploadAvatar(
-  supabase: ReturnType<typeof createClient<any>>,
-  userId: string,
-  name: string
-): Promise<string> {
+async function uploadAvatar(userId: string, name: string): Promise<string> {
   const fallback = avatarFallback(name);
   try {
     const res = await fetch(
@@ -92,14 +87,15 @@ async function uploadAvatar(
     );
     if (!res.ok) return fallback;
     const buffer = Buffer.from(await res.arrayBuffer());
-    const path = `${userId}/image/demo-avatar.png`;
-    const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, {
+    const { getStorageProvider } = await import("../lib/storage/index");
+    const provider = getStorageProvider();
+    const result = await provider.upload(buffer, {
+      userId,
+      kind: "image",
+      ext: "png",
       contentType: "image/png",
-      upsert: true,
     });
-    if (error) return fallback;
-    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-    return data.publicUrl;
+    return result.publicUrl;
   } catch {
     return fallback;
   }
@@ -134,7 +130,7 @@ async function ensureDbUser(
   name: string
 ) {
   const id = await ensureAuthUser(supabase, email, name);
-  const avatar = await uploadAvatar(supabase, id, name);
+  const avatar = await uploadAvatar(id, name);
   await prisma.user.upsert({
     where: { id },
     create: {

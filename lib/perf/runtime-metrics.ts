@@ -1,6 +1,6 @@
 import "server-only";
 
-import { monitorEventLoopDelay, type IntervalHistogram } from "perf_hooks";
+import type { IntervalHistogram } from "perf_hooks";
 import { getPerfSummary } from "@/lib/perf/store";
 import {
   readRuntimeCounters,
@@ -54,6 +54,8 @@ let lastCpuAt = performance.now();
 
 function ensureLoopMonitor(): IntervalHistogram {
   if (!loopMonitor) {
+    // Lazy require — avoid evaluating perf_hooks during Next.js compilation.
+    const { monitorEventLoopDelay } = require("perf_hooks") as typeof import("perf_hooks");
     loopMonitor = monitorEventLoopDelay({ resolution: 20 });
     loopMonitor.enable();
   }

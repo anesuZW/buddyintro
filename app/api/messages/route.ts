@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const me = await requireUser();
 
-  const limited = enforceRateLimit(me.id, "messages:post");
+  const limited = await enforceRateLimit(me.id, "messages:post");
   if (limited) return limited;
 
   const data = Schema.parse(await request.json());

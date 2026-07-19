@@ -16,21 +16,18 @@ export async function GET() {
   });
 }
 
+import { storedMediaUrlSchema, optionalStoredMediaUrlSchema } from "@/lib/storage/validation";
+
 const TagSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("user"), userId: z.string().uuid() }),
   z.object({ kind: z.literal("external"), email: z.string().email() }),
   z.object({ kind: z.literal("phone"), phone: z.string().min(8) }),
 ]);
 
-const mediaUrlSchema = z.union([
-  z.string().url(),
-  z.string().regex(/^\/api\/media\?path=/),
-]);
-
 const PostSchema = z.object({
-  mediaUrl: mediaUrlSchema,
+  mediaUrl: storedMediaUrlSchema,
   mediaType: z.enum(["image", "video"]),
-  voiceNoteUrl: z.string().url().optional(),
+  voiceNoteUrl: optionalStoredMediaUrlSchema,
   text: z.string().max(280).nullable().optional(),
   tags: z.array(TagSchema).min(1, "Tag at least one person"),
   expiresInHours: z.number().int().positive().max(72).optional(),
@@ -47,7 +44,7 @@ const PostSchema = z.object({
 export async function POST(request: Request) {
   const user = await requireUser();
 
-  const limited = enforceRateLimit(user.id, "stories:post");
+  const limited = await enforceRateLimit(user.id, "stories:post");
   if (limited) return limited;
 
   const gate = await checkVerificationGate(user, "create_introduction");

@@ -118,6 +118,40 @@ export function registerJobHandlers() {
 
   });
 
+
+
+  jobProvider.register(JOB_TYPES.MEDIA_PROCESS, async (payload) => {
+
+    const { processMediaObject } = await import("@/services/media/media-processor");
+
+    await processMediaObject({
+
+      mediaObjectId: String(payload.mediaObjectId),
+
+      storagePath: String(payload.storagePath),
+
+      kind: payload.kind as "image" | "video" | "audio",
+
+    });
+
+  });
+
+
+
+  jobProvider.register(JOB_TYPES.MEDIA_CLEANUP, async (payload) => {
+
+    const { runMediaCleanup } = await import("@/services/media/media-cleanup");
+
+    await runMediaCleanup({
+
+      dryRun: Boolean(payload.dryRun),
+
+      maxAgeHours: payload.maxAgeHours ? Number(payload.maxAgeHours) : undefined,
+
+    });
+
+  });
+
 }
 
 

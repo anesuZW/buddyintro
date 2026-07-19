@@ -12,8 +12,7 @@ export type DeploymentBuildInfo = {
   deploymentId?: string;
 };
 
-export function readDeploymentBuildInfo(): DeploymentBuildInfo | null {
-  const cwd = process.cwd();
+export function readDeploymentBuildInfo(cwd = process.cwd()): DeploymentBuildInfo | null {
   const paths = [
     join(cwd, "deployment", "build.json"),
     join(cwd, "build", "build.json"),

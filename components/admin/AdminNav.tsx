@@ -9,9 +9,11 @@ const links = [
   { href: "/maindash/admin-users", label: "Admin users" },
   { href: "/maindash/audit", label: "Audit log" },
   { href: "/maindash/jobs", label: "Jobs" },
+  { href: "/maindash/storage", label: "Storage" },
   { href: "/maindash/security", label: "Security" },
   { href: "/maindash/trust-risk", label: "Trust risk" },
   { href: "/maindash/system-health", label: "System health" },
+  { href: "/maindash/system", label: "System" },
   { href: "/maindash/performance", label: "Performance" },
 ];
 

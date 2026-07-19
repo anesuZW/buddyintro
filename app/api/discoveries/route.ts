@@ -35,12 +35,11 @@ export async function GET(request: Request) {
   });
 }
 
+import { optionalStoredMediaUrlSchema } from "@/lib/storage/validation";
+
 const CreateSchema = z.object({
   content: z.string().max(2000).nullable().optional(),
-  mediaUrl: z
-    .union([z.string().url(), z.string().regex(/^\/api\/media\?path=/)])
-    .nullable()
-    .optional(),
+  mediaUrl: optionalStoredMediaUrlSchema,
   mediaType: z.enum(["image", "video"]).nullable().optional(),
   visibility: z.enum(["network", "public"]).optional(),
 });
@@ -51,7 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const limited = enforceRateLimit(user.id, "discoveries:post");
+  const limited = await enforceRateLimit(user.id, "discoveries:post");
   if (limited) return limited;
 
   const gate = await checkVerificationGate(user, "create_discovery");

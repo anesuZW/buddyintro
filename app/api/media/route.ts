@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { canAccessStoragePath } from "@/lib/access-control";
+import { getStorageProvider } from "@/lib/storage/index";
+import { isLocalMediaProvider } from "@/lib/storage/config";
 import { signStoragePathDetailed } from "@/lib/storage-signed";
 import { Phase2Profiler, runWithPhase2Profile } from "@/lib/profile/phase2-profiler";
 
@@ -14,7 +16,6 @@ const PROFILE_HEADERS = process.env.PROFILE_PHASE2 === "1" || process.env.PROFIL
 async function handleGet(request: Request) {
   return runWithPhase2Profile("/api/media", async () => {
     const p = new Phase2Profiler("/api/media");
-
     const user = await p.timeRouteAuth(() => requireUser());
 
     const { searchParams } = new URL(request.url);
@@ -34,6 +35,24 @@ async function handleGet(request: Request) {
     if (!allowed) {
       p.log({ response: 0 });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const provider = getStorageProvider();
+
+    if (isLocalMediaProvider()) {
+      const file = await p.time("readFile", () => provider.readFile(path));
+      if (!file) {
+        p.log({ response: 0 });
+        return NextResponse.json({ error: "Media unavailable" }, { status: 404 });
+      }
+
+      p.log({ response: 1, cacheHit: 1, cacheLookup: 0, createSignedUrl: 0, external: 0 });
+      return new NextResponse(new Uint8Array(file.data), {
+        headers: {
+          "Content-Type": file.contentType,
+          "Cache-Control": "private, max-age=300",
+        },
+      });
     }
 
     const signed = await p.time("signUrl", () => signStoragePathDetailed(path));

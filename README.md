@@ -161,11 +161,22 @@ BuddyIntro uses **CloudLinux v6 atomic app-root deployment**. Packages are valid
 npm run deploy              # Full: local build → package → staging deploy → atomic sync
 npm run deploy:build        # Local build + package only
 npm run deploy:upload       # Upload latest standalone package
+npm run deploy:verify       # Pre-flight: migrations, build artifacts, git integrity
+npm run deploy:backup       # Remote tar.gz backup without deploying
+npm run deploy:uploads      # Rsync MEDIA_ROOT uploads to server
+npm run deploy:health       # Poll DEPLOY_HEALTH_URL
+npm run deploy:release      # Write deployment/manifest.json metadata
 npm run deploy:rollback     # Restore a .tar.gz backup archive
 npm run deploy:clean        # Remove old server backup archives (keep last 5)
+npm run media-worker        # Background image/video optimization queue
+npm run media:cleanup       # Delete unreferenced orphan uploads (>24h)
+npm run deploy:v3             # Blue/green zero-downtime (PM2 + Ubuntu VPS)
+npm run backup:nightly        # Database + uploads + config backup
+npm run restore               # Disaster recovery restore utility
 ```
 
-See **[docs/DEPLOYMENT_CLOUDLINUX.md](docs/DEPLOYMENT_CLOUDLINUX.md)** for InterServer CloudLinux setup.
+See **[docs/PRODUCTION_OPERATIONS.md](docs/PRODUCTION_OPERATIONS.md)** for PM2, monitoring, backups, and scaling.
+See **[docs/DEPLOYMENT_CLOUDLINUX.md](docs/DEPLOYMENT_CLOUDLINUX.md)** for InterServer CloudLinux setup and **[docs/MEDIA_ARCHITECTURE.md](docs/MEDIA_ARCHITECTURE.md)** for the media platform.
 
 ---
 

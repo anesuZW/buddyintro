@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { STORAGE_BUCKET } from "@/lib/constants";
-import { mediaProxyPath } from "@/lib/storage-url";
+import type { MediaVariantUrls } from "@/lib/storage/types";
 
 export type UploadKind = "image" | "video" | "audio";
+
+export type UploadResult = {
+  url: string;
+  path: string;
+  variants?: MediaVariantUrls;
+  contentType?: string;
+};
 
 export function useUpload() {
   const [uploading, setUploading] = useState(false);
@@ -14,38 +19,39 @@ export function useUpload() {
   async function upload(
     file: Blob | File,
     opts: { userId: string; kind: UploadKind; ext?: string }
-  ): Promise<{ url: string; path: string }> {
+  ): Promise<UploadResult> {
     setUploading(true);
-    setProgress(0);
+    setProgress(10);
     try {
-      const supabase = createSupabaseBrowserClient();
-      const ext =
-        opts.ext ||
-        (file instanceof File && file.name.includes(".")
-          ? file.name.split(".").pop()
-          : opts.kind === "audio"
-            ? "webm"
-            : opts.kind === "video"
-              ? "mp4"
-              : "jpg");
+      const form = new FormData();
+      form.append("file", file, file instanceof File ? file.name : `${opts.kind}.${opts.ext || "bin"}`);
+      form.append("kind", opts.kind);
+      if (opts.ext) form.append("ext", opts.ext);
 
-      const path = `${opts.userId}/${opts.kind}/${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2, 8)}.${ext}`;
+      const res = await fetch("/api/media/upload", {
+        method: "POST",
+        body: form,
+      });
 
-      const { error } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .upload(path, file, {
-          cacheControl: "3600",
-          contentType:
-            file instanceof File ? file.type || undefined : (file as Blob).type,
-          upsert: false,
-        });
+      setProgress(90);
 
-      if (error) throw error;
+      const body = (await res.json().catch(() => ({}))) as UploadResult & { error?: string };
+
+      if (!res.ok) {
+        throw new Error(body.error || `Upload failed (${res.status})`);
+      }
+
+      if (!body.url || !body.path) {
+        throw new Error("Upload response missing url/path");
+      }
+
       setProgress(100);
-
-      return { url: mediaProxyPath(path), path };
+      return {
+        url: body.url,
+        path: body.path,
+        variants: body.variants,
+        contentType: body.contentType,
+      };
     } finally {
       setUploading(false);
     }

@@ -169,6 +169,7 @@ model User {
   rolesGranted                UserRole[] @relation("RoleGranter")
   adminAuditLogs              AdminAuditLog[] @relation("AdminAuditActor")
   securityEvents              SecurityEvent[]
+  mediaObjects                MediaObject[]
 
   @@map("users")
   @@index([email])
@@ -688,6 +689,36 @@ model ContentReport {
   @@index([status, createdAt])
   @@index([targetType, targetId])
   @@index([reporterId])
+}
+
+enum MediaProcessingStatus {
+  pending
+  processing
+  ready
+  failed
+}
+
+model MediaObject {
+  id            String                @id @default(uuid()) @db.Uuid
+  contentHash   String                @unique @map("content_hash")
+  storagePath   String                @map("storage_path")
+  kind          String
+  mimeType      String?               @map("mime_type")
+  byteSize      Int                   @map("byte_size")
+  refCount      Int                   @default(1) @map("ref_count")
+  status        MediaProcessingStatus @default(pending)
+  variants      Json                  @default("{}")
+  ownerId       String                @map("owner_id") @db.Uuid
+  createdAt     DateTime              @default(now()) @map("created_at")
+  processedAt   DateTime?             @map("processed_at")
+  lastError     String?               @map("last_error")
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("media_objects")
+  @@index([ownerId, createdAt])
+  @@index([status, createdAt])
+  @@index([storagePath])
 }
 
 model BackgroundJob {

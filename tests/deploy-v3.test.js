@@ -21,6 +21,8 @@ const {
 const {
   parseBuildVerifyOutput,
   verifyBuildCommand,
+  verifyLocalStandaloneBuild,
+  LOCAL_DEPLOY_ARTIFACTS,
 } = require("../scripts/lib/build-integrity");
 
 const {
@@ -217,6 +219,23 @@ describe("Phase 2 — Build integrity", () => {
     assert.ok(cmd.includes("test -f server.js"));
     assert.ok(cmd.includes("test -f .next/BUILD_ID"));
     assert.ok(!cmd.includes("current"));
+  });
+
+  it("verifyLocalStandaloneBuild reports missing artifacts explicitly", () => {
+    const root = join(tmpdir(), `deploy-artifacts-${Date.now()}`);
+    mkdirSync(join(root, ".next", "standalone"), { recursive: true });
+    writeFileSync(join(root, ".next", "standalone", "server.js"), "");
+    assert.throws(
+      () => verifyLocalStandaloneBuild({ root, quiet: true }),
+      /Local standalone build incomplete/
+    );
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it("LOCAL_DEPLOY_ARTIFACTS marks release manifest as optional", () => {
+    const manifest = LOCAL_DEPLOY_ARTIFACTS.find((a) => a.path === "deployment/manifest.json");
+    assert.ok(manifest);
+    assert.equal(manifest.required, false);
   });
 
   it("successful build verify returns BUILD_ID", () => {

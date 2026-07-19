@@ -3,9 +3,11 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+import { optionalStoredMediaUrlSchema } from "@/lib/storage/validation";
+
 const Schema = z.object({
   name: z.string().min(1).max(80),
-  profilePicture: z.string().url().nullable().optional(),
+  profilePicture: optionalStoredMediaUrlSchema,
 });
 
 export async function PATCH(request: Request) {

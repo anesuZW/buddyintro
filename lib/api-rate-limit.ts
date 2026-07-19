@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { trackSecurityEvent, SECURITY_EVENT_TYPES } from "@/services/security-events";
 
-export function enforceRateLimit(userId: string, action: Parameters<typeof checkRateLimit>[1]) {
-  const result = checkRateLimit(userId, action);
+export async function enforceRateLimit(userId: string, action: Parameters<typeof checkRateLimit>[1]) {
+  const result = await checkRateLimit(userId, action);
   if (!result.ok) {
     void trackSecurityEvent({
       userId,

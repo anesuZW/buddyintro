@@ -1,23 +1,67 @@
 /**
  * Local build verification — standalone output only (no server-side build).
  */
-const { existsSync } = require("fs");
+const { existsSync, statSync } = require("fs");
 const { join } = require("path");
 const { ROOT } = require("./paths");
 const { runNpm, spawnCommand, CommandError } = require("./exec");
 
-function verifyLocalStandaloneBuild() {
-  const required = [
-    join(ROOT, ".next", "standalone", "server.js"),
-    join(ROOT, ".next", "BUILD_ID"),
-    join(ROOT, "build", "version.json"),
-  ];
-  const missing = required.filter((p) => !existsSync(p));
+/**
+ * Required after `npm run build` (Next standalone + write-build-version.js).
+ * deployment/manifest.json is optional here — it is written during release packaging.
+ */
+const LOCAL_DEPLOY_ARTIFACTS = [
+  { path: ".next", type: "directory", required: true },
+  { path: ".next/standalone", type: "directory", required: true },
+  { path: ".next/standalone/server.js", type: "file", required: true },
+  { path: ".next/static", type: "directory", required: true },
+  { path: ".next/BUILD_ID", type: "file", required: true },
+  { path: "deployment", type: "directory", required: true },
+  { path: "deployment/build.json", type: "file", required: true },
+  { path: "build/version.json", type: "file", required: true },
+  { path: "deployment/manifest.json", type: "file", required: false },
+];
+
+function artifactExists(root, artifact) {
+  const absolute = join(root, artifact.path);
+  if (!existsSync(absolute)) return false;
+  if (artifact.type === "directory") {
+    return statSync(absolute).isDirectory();
+  }
+  return statSync(absolute).isFile();
+}
+
+function verifyLocalStandaloneBuild(options = {}) {
+  const root = options.root || ROOT;
+  const missing = [];
+  const optionalMissing = [];
+
+  for (const artifact of LOCAL_DEPLOY_ARTIFACTS) {
+    if (artifactExists(root, artifact)) continue;
+    const label = artifact.path;
+    if (artifact.required) {
+      missing.push(label);
+      console.error(`✗ Missing ${label}`);
+    } else {
+      optionalMissing.push(label);
+    }
+  }
+
+  if (optionalMissing.length && !options.quiet) {
+    for (const label of optionalMissing) {
+      console.log(`○ Optional artifact not present: ${label} (written during release packaging)`);
+    }
+  }
+
   if (missing.length) {
     throw new Error(
-      `Local standalone build incomplete:\n  ${missing.join("\n  ")}\n` +
+      `Local standalone build incomplete. Missing ${missing.length} required artifact(s).\n` +
         "Run `npm run build` locally before deploying."
     );
+  }
+
+  if (!options.quiet) {
+    console.log("✓ Local build artifacts verified");
   }
 }
 
@@ -115,6 +159,7 @@ function remoteBuildIdCheckCommand(releasePath) {
 }
 
 module.exports = {
+  LOCAL_DEPLOY_ARTIFACTS,
   verifyLocalStandaloneBuild,
   parseBuildVerifyOutput,
   runLocalInstall,

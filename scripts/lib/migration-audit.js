@@ -16,6 +16,7 @@ const MIGRATION_ORDER = [
   "0005_moderation",
   "0006_platform",
   "0007_security_rbac",
+  "0008_media_platform",
 ];
 
 const TABLE_MIGRATION = {
@@ -50,6 +51,7 @@ const TABLE_MIGRATION = {
   user_roles: "0007_security_rbac",
   admin_audit_logs: "0007_security_rbac",
   security_events: "0007_security_rbac",
+  media_objects: "0008_media_platform",
 };
 
 function listMigrationSql() {
