@@ -20,7 +20,29 @@ Fresh migration history generated from `schema.prisma` using `prisma migrate dif
 0005_moderation        Phone verification, blocks, content reports
 0006_platform          Background jobs
 0007_security_rbac     RBAC, audit logs, security events (+ role seed)
+0008_media_platform    Media registry, processing status, deduplication
+0009_i18n              User preferredLanguage column for i18n
 ```
+
+## Production baseline (existing live database)
+
+If production was created **before** the 2026-07-14 migration rebuild (via `db push`, manual SQL, or archived migrations in `prisma/migrations_archive/`), `npx prisma migrate deploy` fails with:
+
+```
+Error: P3005
+The database schema is not empty.
+```
+
+**Do not** use `migrate reset`, drop the database, or delete `_prisma_migrations` rows manually.
+
+Use Prisma's supported baseline workflow:
+
+```bash
+npm run check:migration-sync   # requires DIRECT_URL
+psql "$DIRECT_URL" -f scripts/sql/verify-migration-baseline.sql
+```
+
+See [Production Database Baseline](../docs/PRODUCTION_OPERATIONS.md#production-database-baseline) in `docs/PRODUCTION_OPERATIONS.md`.
 
 ## Fresh database bootstrap
 

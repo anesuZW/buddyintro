@@ -177,6 +177,7 @@ model User {
   @@index([phone])
   @@index([verificationLevel])
   @@index([trustedUser])
+  @@index([preferredLanguage], map: "users_preferred_language_idx")
 }
 
 model Story {

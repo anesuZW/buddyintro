@@ -75,6 +75,7 @@
     "audit:region-latency": "tsx scripts/audit-region-latency.ts",
     "test": "tsx --test tests/**/*.test.ts && node --test tests/**/*.test.js",
     "validate:migrations": "node scripts/validate-migrations.js",
+    "check:migration-sync": "node scripts/check-migration-sync.js",
     "certify:migrations": "node scripts/run-certification.js",
     "test:watch": "tsx --test --watch tests/**/*.test.ts",
     "rebuild-connections": "tsx scripts/rebuild-connections.ts",

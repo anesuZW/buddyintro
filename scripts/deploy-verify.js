@@ -15,6 +15,13 @@ async function main() {
   console.log("→ Validating migrations");
   execSync("node scripts/validate-migrations.js", { stdio: "inherit" });
 
+  if (process.env.DIRECT_URL || process.env.MIGRATION_SYNC_URL) {
+    console.log("→ Checking migration history synchronization");
+    execSync("node scripts/check-migration-sync.js", { stdio: "inherit" });
+  } else {
+    console.log("○ Skipped migration sync check (set DIRECT_URL for production DB verification)");
+  }
+
   console.log("→ Verifying local build artifacts");
   verifyLocalStandaloneBuild();
 
