@@ -23,7 +23,7 @@ const ROOT = path.resolve(import.meta.dirname, "..");
 const MIGRATIONS = path.join(ROOT, "prisma", "migrations");
 
 describe("Migration ordering", () => {
-  it("uses deterministic 0001–0009 chain", () => {
+  it("uses deterministic 0001–0010 chain", () => {
     const folders = fs
       .readdirSync(MIGRATIONS)
       .filter((e) => fs.statSync(path.join(MIGRATIONS, e)).isDirectory())

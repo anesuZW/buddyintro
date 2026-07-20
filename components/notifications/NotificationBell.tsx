@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { timeAgo } from "@/lib/utils";
 import type { NotificationPayload } from "@/types";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { updateAppBadge } from "@/hooks/usePwa";
 
 export function NotificationBell({
   userId,
@@ -50,6 +51,10 @@ export function NotificationBell({
       });
     }
   }, [latest]);
+
+  useEffect(() => {
+    void updateAppBadge(unread);
+  }, [unread]);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {

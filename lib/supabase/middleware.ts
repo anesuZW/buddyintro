@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { getPathnameWithoutLocale, prefixPathWithLocale } from "@/lib/i18n/resolve-locale";
+import { isAuthPublicPath } from "@/lib/middleware-public-paths";
 import { defaultLocale, isAppLocale } from "@/i18n/routing";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
@@ -88,18 +89,7 @@ export async function updateSession(request: NextRequest) {
   const isAuthPage =
     pathname.startsWith("/login") || pathname.startsWith("/signup");
 
-  const isPublic =
-    pathname === "/" ||
-    pathname.startsWith("/invite/") ||
-    pathname.startsWith("/invite-preview/") ||
-    pathname.startsWith("/privacy") ||
-    pathname.startsWith("/terms") ||
-    pathname.startsWith("/cookies") ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname.startsWith("/api/public") ||
-    pathname.startsWith("/api/auth/") ||
-    pathname.startsWith("/auth/");
+  const isPublic = isAuthPublicPath(pathname);
 
   let finalResponse: NextResponse;
 

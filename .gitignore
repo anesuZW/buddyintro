@@ -8,6 +8,9 @@ dist/
 .cache/
 .turbo/
 .vercel/
+.lighthouseci/
+.lighthouse-tmp/
+.lighthouse-chrome/
 
 # Environment (never commit secrets)
 .env

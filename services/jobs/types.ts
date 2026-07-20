@@ -45,6 +45,7 @@ export const JOB_TYPES = {
 
 export const QUEUES = {
   NOTIFICATIONS: "notifications",
+  PUSH: "push-notifications",
   TRUST: "trust",
   ANALYTICS: "analytics",
   VERIFICATION: "verification",

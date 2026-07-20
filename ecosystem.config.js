@@ -43,6 +43,21 @@ module.exports = {
       out_file: resolve(appRoot, "../shared/logs/media-worker-out.log"),
     },
     {
+      name: "buddyintro-push-worker",
+      cwd: resolve(appRoot),
+      script: "node_modules/tsx/dist/cli.mjs",
+      args: "scripts/push-worker.ts",
+      instances: 1,
+      exec_mode: "fork",
+      autorestart: true,
+      max_memory_restart: "256M",
+      env: {
+        NODE_ENV: "production",
+      },
+      error_file: resolve(appRoot, "../shared/logs/push-worker-error.log"),
+      out_file: resolve(appRoot, "../shared/logs/push-worker-out.log"),
+    },
+    {
       name: "buddyintro-job-worker",
       cwd: resolve(appRoot),
       script: "node_modules/tsx/dist/cli.mjs",

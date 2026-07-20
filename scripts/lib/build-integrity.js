@@ -19,6 +19,8 @@ const LOCAL_DEPLOY_ARTIFACTS = [
   { path: "deployment", type: "directory", required: true },
   { path: "deployment/build.json", type: "file", required: true },
   { path: "build/version.json", type: "file", required: true },
+  { path: "public/sw.js", type: "file", required: true },
+  { path: "public/workbox/workbox-sw.js", type: "file", required: true },
   { path: "deployment/manifest.json", type: "file", required: false },
 ];
 

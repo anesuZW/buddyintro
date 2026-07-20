@@ -23,7 +23,7 @@ export type WorkerStatusSnapshot = {
 
 const HEARTBEAT_KEY = "worker:heartbeat";
 
-export async function recordWorkerHeartbeat(source: "media" | "jobs" = "media"): Promise<void> {
+export async function recordWorkerHeartbeat(source: "media" | "jobs" | "push" = "media"): Promise<void> {
   const { getRedis } = await import("@/lib/redis");
   const redis = await getRedis();
   const payload = JSON.stringify({ source, at: new Date().toISOString() });

@@ -18,7 +18,7 @@ export function BottomNav({ introBadge = 0 }: { introBadge?: number }) {
   ] as const;
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-30 glass border-t border-border rtl-nav">
+    <nav className="fixed bottom-0 inset-x-0 z-30 glass border-t border-border rtl-nav safe-area-pb">
       <div className="max-w-2xl mx-auto px-1 h-16 flex items-center justify-between">
         {items.map(({ href, label, icon: Icon, ...rest }) => {
           const primary = "primary" in rest && rest.primary;

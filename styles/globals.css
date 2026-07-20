@@ -114,3 +114,17 @@
 [dir="rtl"] select {
   text-align: start;
 }
+
+.safe-area-pb {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.safe-area-pt {
+  padding-top: max(0px, env(safe-area-inset-top));
+}
+
+@supports (padding: max(0px)) {
+  .pb-nav {
+    padding-bottom: max(6rem, calc(env(safe-area-inset-bottom) + 4.5rem));
+  }
+}

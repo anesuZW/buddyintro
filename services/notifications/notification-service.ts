@@ -6,7 +6,8 @@ import { JOB_TYPES, QUEUES } from "@/services/jobs/types";
 import "@/services/jobs/handlers";
 import { resolveAppLocale } from "@/lib/i18n/messages";
 import { sendNotificationEmail } from "@/services/notifications/notification-email";
-import { sendWebPushToUser } from "@/services/notifications/notification-push";
+import { buildPushPayload } from "@/lib/pwa/push-payload";
+import { enqueuePushNotification } from "@/services/notifications/push-service";
 import {
   getAdminCategoryField,
   getCategoryPrefField,
@@ -145,11 +146,17 @@ export const notificationService = {
     }
 
     if (deliverPush) {
-      void sendWebPushToUser(input.userId, {
+      const pushPayload = buildPushPayload({
+        type: input.type,
         title: input.title,
-        body: input.message,
-        url: notificationHref(input.entityType, input.entityId, input.actorId),
-      }).catch((err) => console.error("[notifications] push failed", err));
+        message: input.message,
+        entityType: input.entityType,
+        entityId: input.entityId,
+        actorId: input.actorId,
+      });
+      void enqueuePushNotification(input.userId, pushPayload).catch((err) =>
+        console.error("[notifications] push failed", err)
+      );
     }
 
     return notification;
@@ -255,20 +262,17 @@ export const notificationService = {
     userId: string,
     sub: { endpoint: string; keys: { p256dh: string; auth: string } }
   ) {
-    return prisma.pushSubscription.upsert({
-      where: { endpoint: sub.endpoint },
-      create: {
-        userId,
-        endpoint: sub.endpoint,
-        p256dh: sub.keys.p256dh,
-        auth: sub.keys.auth,
-      },
-      update: { userId, p256dh: sub.keys.p256dh, auth: sub.keys.auth },
-    });
+    const { pushSubscriptionService } = await import(
+      "@/services/notifications/push-subscription-service"
+    );
+    return pushSubscriptionService.save(userId, sub);
   },
 
   async removePushSubscription(userId: string, endpoint: string) {
-    return prisma.pushSubscription.deleteMany({ where: { userId, endpoint } });
+    const { pushSubscriptionService } = await import(
+      "@/services/notifications/push-subscription-service"
+    );
+    return pushSubscriptionService.remove(userId, endpoint);
   },
 
   async broadcastAnnouncement(args: { title: string; message: string; type?: string }) {
