@@ -14,6 +14,10 @@ const LOCAL_DEPLOY_ARTIFACTS = [
   { path: ".next", type: "directory", required: true },
   { path: ".next/standalone", type: "directory", required: true },
   { path: ".next/standalone/server.js", type: "file", required: true },
+  { path: ".next/standalone/deployment/build.json", type: "file", required: true },
+  { path: ".next/standalone/build/version.json", type: "file", required: true },
+  { path: ".next/standalone/.next/static", type: "directory", required: true },
+  { path: ".next/standalone/public", type: "directory", required: true },
   { path: ".next/static", type: "directory", required: true },
   { path: ".next/BUILD_ID", type: "file", required: true },
   { path: "deployment", type: "directory", required: true },
@@ -139,6 +143,8 @@ function runLocalBuildPipeline(logger, { skipInstall = false } = {}) {
   }
   timings.build = runLocalBuild(logger).durationMs;
   verifyLocalStandaloneBuild();
+  const { verifyStandaloneManifestIntegrity } = require("./standalone-sync");
+  verifyStandaloneManifestIntegrity();
   return timings;
 }
 

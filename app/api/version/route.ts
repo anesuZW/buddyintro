@@ -34,10 +34,9 @@ function readJson<T>(path: string): T | null {
 }
 
 function loadManifest(): VersionManifest | null {
+  // PM2 cwd is .next/standalone — manifests must live inside the deployed bundle.
   const cwd = process.cwd();
-  const buildJson =
-    readJson<BuildJson>(join(cwd, "deployment", "build.json")) ||
-    readJson<BuildJson>(join(cwd, "build", "build.json"));
+  const buildJson = readJson<BuildJson>(join(cwd, "deployment", "build.json"));
   if (buildJson) {
     return {
       commit: buildJson.gitCommit,

@@ -27,6 +27,7 @@ const { join } = require("path");
 const { ROOT, STAGING_DIR, DEPLOYMENT_DIR } = require("./paths");
 
 const { writeBuildMetadata } = require("./deploy-metadata");
+const { syncStandaloneBundle } = require("./standalone-sync");
 
 const { createTarGzArchive } = require("./archive");
 
@@ -131,6 +132,9 @@ function formatBytes(bytes) {
 function assembleReleaseStaging(releaseId) {
 
   verifyLocalStandaloneBuild();
+
+  // Ensure repo standalone is fully materialized before packaging.
+  syncStandaloneBundle(ROOT);
 
 
 

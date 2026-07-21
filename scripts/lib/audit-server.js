@@ -73,25 +73,13 @@ async function waitForServer(base, timeoutMs = 120_000) {
 }
 
 function prepareStandaloneRuntime() {
-  const standaloneDir = path.join(ROOT, ".next", "standalone");
-  const serverJs = path.join(standaloneDir, "server.js");
-  if (!fs.existsSync(serverJs)) {
+  const { syncStandaloneBundle, standalonePaths } = require("./standalone-sync");
+  const paths = standalonePaths(ROOT);
+  if (!require("fs").existsSync(paths.serverJs)) {
     return null;
   }
-
-  const targetStatic = path.join(standaloneDir, ".next", "static");
-  const targetPublic = path.join(standaloneDir, "public");
-  const sourceStatic = path.join(ROOT, ".next", "static");
-  const sourcePublic = path.join(ROOT, "public");
-
-  if (fs.existsSync(sourceStatic) && !fs.existsSync(targetStatic)) {
-    fs.cpSync(sourceStatic, targetStatic, { recursive: true });
-  }
-  if (fs.existsSync(sourcePublic) && !fs.existsSync(targetPublic)) {
-    fs.cpSync(sourcePublic, targetPublic, { recursive: true });
-  }
-
-  return { standaloneDir, serverJs };
+  syncStandaloneBundle(ROOT);
+  return { standaloneDir: paths.standalone, serverJs: paths.serverJs };
 }
 
 function startProductionServer(port, auditBase) {
