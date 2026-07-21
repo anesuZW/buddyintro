@@ -36,7 +36,7 @@ export function securityHeaders(): Record<string, string> {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "media-src 'self' blob: https:",
-    "connect-src 'self' https:",
+    "connect-src 'self' https: wss://*.supabase.co wss://*.supabase.in ws://localhost:* ws://127.0.0.1:*",
     "font-src 'self' data:",
     "frame-ancestors 'none'",
     "base-uri 'self'",
