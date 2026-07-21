@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import {
   createInvitation,
   inviteLink,
@@ -20,7 +20,9 @@ const Schema = z.object({
 }).refine((d) => d.email || d.phone, { message: "Provide email or phone" });
 
 export async function GET(request: Request) {
-  const me = await requireUser();
+  const meAuth = await requireUserApi();
+  if (meAuth instanceof NextResponse) return meAuth;
+  const me = meAuth;
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor");
   const limit = clampLimit(Number(searchParams.get("limit") ?? undefined));
@@ -44,7 +46,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const me = await requireUser();
+  const meAuth = await requireUserApi();
+  if (meAuth instanceof NextResponse) return meAuth;
+  const me = meAuth;
 
   const limited = await enforceRateLimit(me.id, "invites:post");
   if (limited) return limited;

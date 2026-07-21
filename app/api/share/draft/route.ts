@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 
 /** Returns Web Share Target draft stored in httpOnly cookie. */
 export async function GET() {
-  await requireUser();
+  const authResult = await requireUserApi();
+
+  if (authResult instanceof NextResponse) return authResult;
   const raw = cookies().get("fi-share-draft")?.value;
   if (!raw) {
     return NextResponse.json({ draft: null });

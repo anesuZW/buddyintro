@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 import { optionalStoredMediaUrlSchema } from "@/lib/storage/validation";
@@ -11,7 +11,9 @@ const Schema = z.object({
 });
 
 export async function PATCH(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const body = Schema.parse(await request.json());
   const updated = await prisma.user.update({
     where: { id: user.id },

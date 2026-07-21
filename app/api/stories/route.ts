@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { createStoryWithTags, getVisibleStories } from "@/services/stories";
 import { checkVerificationGate } from "@/lib/verification-gates";
 import { enforceRateLimit } from "@/lib/api-rate-limit";
@@ -9,7 +9,9 @@ import { STORY_VISIBILITY_MODES } from "@/lib/story-visibility";
 import { withProxiedMedia } from "@/lib/storage-url";
 
 export async function GET() {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const stories = await getVisibleStories(user.id);
   return NextResponse.json({
     stories: stories.slice(0, clampLimit()).map(withProxiedMedia),
@@ -42,7 +44,9 @@ const PostSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
 
   const limited = await enforceRateLimit(user.id, "stories:post");
   if (limited) return limited;

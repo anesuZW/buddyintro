@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { createPost } from "@/services/feed";
 import { getAdminSettings } from "@/services/admin";
 
@@ -10,7 +10,9 @@ const Schema = z.object({
 });
 
 export async function POST(request: Request) {
-  const me = await requireUser();
+  const meAuth = await requireUserApi();
+  if (meAuth instanceof NextResponse) return meAuth;
+  const me = meAuth;
   const data = Schema.parse(await request.json());
   const settings = await getAdminSettings();
   const post = await createPost({

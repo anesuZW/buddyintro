@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import {
   addDiscoveriesComment,
   getDiscoveriesComments,
@@ -10,7 +10,9 @@ export async function GET(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   try {
     const comments = await getDiscoveriesComments(params.id, user.id);
     return NextResponse.json({ comments });
@@ -28,7 +30,9 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const parsed = Schema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid comment" }, { status: 400 });

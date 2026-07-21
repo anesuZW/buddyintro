@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { PushSubscribeSchema } from "@/lib/pwa/push-schemas";
 import { pushSubscriptionService } from "@/services/notifications/push-subscription-service";
 import { getVapidPublicKey } from "@/services/notifications/push-service";
@@ -11,7 +11,9 @@ import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 const SubscribeSchema = PushSubscribeSchema;
 
 export async function POST(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const body = SubscribeSchema.parse(await request.json());
   await pushSubscriptionService.save(user.id, body);
   void analyticsService.track({
@@ -22,7 +24,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const { searchParams } = new URL(request.url);
   const endpoint = searchParams.get("endpoint");
   if (!endpoint) {

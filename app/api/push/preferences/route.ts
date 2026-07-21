@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { notificationService } from "@/services/notifications/notification-service";
 
 const PreferencesSchema = z.object({
@@ -20,13 +20,17 @@ const PreferencesSchema = z.object({
 });
 
 export async function GET() {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const preferences = await notificationService.getPreferences(user.id);
   return NextResponse.json({ preferences });
 }
 
 export async function PATCH(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const body = PreferencesSchema.parse(await request.json());
   const preferences = await notificationService.updatePreferences(user.id, body);
   return NextResponse.json({ preferences });

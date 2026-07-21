@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { PushSubscribeSchema } from "@/lib/pwa/push-schemas";
 import { pushSubscriptionService } from "@/services/notifications/push-subscription-service";
 import { getVapidPublicKey } from "@/services/notifications/push-service";
@@ -11,7 +11,9 @@ export async function GET() {
   let subscribed = false;
 
   try {
-    const user = await requireUser();
+    const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
     subscribed = (await pushSubscriptionService.listForUser(user.id)).length > 0;
   } catch {
     /* unauthenticated — return public key only */
@@ -21,7 +23,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const body = PushSubscribeSchema.parse(await request.json());
   await pushSubscriptionService.save(user.id, body);
   void analyticsService.track({ userId: user.id, eventType: ANALYTICS_EVENTS.PUSH_ENABLED });
@@ -29,7 +33,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const endpoint = new URL(request.url).searchParams.get("endpoint");
   if (!endpoint) {
     return NextResponse.json({ error: "endpoint required" }, { status: 400 });

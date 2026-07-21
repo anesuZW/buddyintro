@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { sendMessage, ensureConversationContext, getConversationList } from "@/services/messages";
 import { meetsInviteGate } from "@/services/invites";
 import { getAdminSettings } from "@/services/admin";
@@ -17,7 +17,9 @@ const Schema = z.object({
 });
 
 export async function GET(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor") ?? undefined;
   const limit = clampLimit(Number(searchParams.get("limit") ?? undefined));
@@ -27,7 +29,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const me = await requireUser();
+  const meAuth = await requireUserApi();
+  if (meAuth instanceof NextResponse) return meAuth;
+  const me = meAuth;
 
   const limited = await enforceRateLimit(me.id, "messages:post");
   if (limited) return limited;

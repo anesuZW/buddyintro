@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { analyticsService } from "@/services/analytics/analytics-service";
 import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 
@@ -26,7 +26,9 @@ const Schema = z.object({
 });
 
 export async function POST(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const body = Schema.parse(await request.json());
 
   if (!CLIENT_EVENTS.has(body.eventType)) {

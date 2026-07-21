@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 
 import { getTrustProfile } from "@/services/trust-profile";
 
@@ -20,7 +20,9 @@ export async function GET(
 
 ) {
 
-  const viewer = await requireUser();
+  const viewerAuth = await requireUserApi();
+  if (viewerAuth instanceof NextResponse) return viewerAuth;
+  const viewer = viewerAuth;
 
   if (!(await canViewTrustProfile(viewer.id, params.userId))) {
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getIntroductionEvidence, getConnectionReason } from "@/lib/introduction-graph";
 import { serializeConnectionReason, serializeEvidence } from "@/lib/connection-reason";
@@ -11,7 +11,9 @@ const QuerySchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const me = await requireUser();
+  const meAuth = await requireUserApi();
+  if (meAuth instanceof NextResponse) return meAuth;
+  const me = meAuth;
   const { searchParams } = new URL(request.url);
   const parsed = QuerySchema.safeParse({ users: searchParams.get("users") ?? "" });
 

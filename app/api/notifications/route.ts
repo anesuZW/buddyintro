@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { notificationService } from "@/services/notifications/notification-service";
 
 export async function GET(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor") ?? undefined;
   const type = searchParams.get("type") ?? undefined;
@@ -26,7 +28,9 @@ const PatchSchema = z.discriminatedUnion("action", [
 ]);
 
 export async function PATCH(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const body = PatchSchema.parse(await request.json());
 
   if (body.action === "mark_read") {

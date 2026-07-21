@@ -94,10 +94,17 @@ export async function updateSession(request: NextRequest) {
   let finalResponse: NextResponse;
 
   if (!user && !isAuthPage && !isPublic) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = prefixPathWithLocale("/login", locale);
-    redirectUrl.searchParams.set("next", pathname);
-    finalResponse = NextResponse.redirect(redirectUrl);
+    if (pathname.startsWith("/api/")) {
+      finalResponse = NextResponse.json(
+        { error: "Unauthorized", code: "unauthenticated" },
+        { status: 401 }
+      );
+    } else {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = prefixPathWithLocale("/login", locale);
+      redirectUrl.searchParams.set("next", pathname);
+      finalResponse = NextResponse.redirect(redirectUrl);
+    }
   } else if (user && isAuthPage) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = prefixPathWithLocale("/home", locale);

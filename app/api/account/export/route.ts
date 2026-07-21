@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { exportUserData } from "@/services/consent";
 
 export async function GET() {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const data = await exportUserData(user.id);
   return new NextResponse(JSON.stringify(data, null, 2), {
     headers: {

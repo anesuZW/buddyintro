@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getConnectionReason } from "@/lib/introduction-graph";
 import { serializeConnectionReason } from "@/lib/connection-reason";
@@ -10,7 +10,9 @@ export async function GET(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
-  const me = await requireUser();
+  const meAuth = await requireUserApi();
+  if (meAuth instanceof NextResponse) return meAuth;
+  const me = meAuth;
   const user = await prisma.user.findUnique({
     where: { id: params.id },
     select: { id: true, name: true, profilePicture: true },

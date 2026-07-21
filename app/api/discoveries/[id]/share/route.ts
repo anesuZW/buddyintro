@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { recordDiscoveriesShare } from "@/services/discoveries";
 
 export async function POST(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   try {
     await recordDiscoveriesShare(params.id, user.id);
     return NextResponse.json({ ok: true });

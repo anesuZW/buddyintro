@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { canAccessStoragePath } from "@/lib/access-control";
 import { getStorageProvider } from "@/lib/storage/index";
 import { isLocalMediaProvider } from "@/lib/storage/config";
@@ -14,9 +14,12 @@ const QuerySchema = z.object({
 const PROFILE_HEADERS = process.env.PROFILE_PHASE2 === "1" || process.env.PROFILE_API === "1";
 
 async function handleGet(request: Request) {
+  const authResult = await requireUserApi();
+  if (authResult instanceof NextResponse) return authResult;
+  const user = authResult;
+
   return runWithPhase2Profile("/api/media", async () => {
     const p = new Phase2Profiler("/api/media");
-    const user = await p.timeRouteAuth(() => requireUser());
 
     const { searchParams } = new URL(request.url);
     const parsed = QuerySchema.safeParse({ path: searchParams.get("path") ?? "" });

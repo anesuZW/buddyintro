@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireUser } from "@/lib/auth";
+import { requireUserApi } from "@/lib/auth";
 
 import { listIntroductionCategories } from "@/services/introduction-categories";
 
@@ -10,13 +10,15 @@ import { Phase2Profiler, runWithPhase2Profile } from "@/lib/profile/phase2-profi
 
 async function handleGet() {
 
+  const authResult = await requireUserApi();
+
+  if (authResult instanceof NextResponse) return authResult;
+
+
+
   return runWithPhase2Profile("/api/introduction-categories", async () => {
 
     const p = new Phase2Profiler("/api/introduction-categories");
-
-
-
-    await p.timeRouteAuth(() => requireUser());
 
 
 
@@ -61,5 +63,3 @@ async function handleGet() {
 
 
 export const GET = handleGet;
-
-

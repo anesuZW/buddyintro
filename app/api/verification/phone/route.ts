@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import {
   confirmPhoneVerification,
   requestPhoneVerification,
@@ -16,7 +16,9 @@ const VerifySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const body = RequestSchema.parse(await request.json());
   try {
     const result = await requestPhoneVerification(user.id, body.phone);
@@ -28,7 +30,9 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   const body = VerifySchema.parse(await request.json());
   try {
     const result = await confirmPhoneVerification(user.id, body.phone, body.code);
@@ -40,7 +44,9 @@ export async function PATCH(request: Request) {
 }
 
 export async function GET() {
-  const user = await requireUser();
+  const userAuth = await requireUserApi();
+  if (userAuth instanceof NextResponse) return userAuth;
+  const user = userAuth;
   return NextResponse.json({
     phone: user.phone,
     phoneVerified: user.phoneVerified,

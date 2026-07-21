@@ -11,11 +11,22 @@ const intlMiddleware = createIntlMiddleware(routing);
 export async function middleware(request: NextRequest) {
   const requestId = request.headers.get(REQUEST_ID_HEADER) || generateRequestId();
   const startedAt = performance.now();
+  const pathname = request.nextUrl.pathname;
+  const isApiRoute = pathname.startsWith("/api/");
 
   if (!validateOrigin(request)) {
     const rejected = originRejectedResponse(requestId);
     rejected.headers.set(REQUEST_ID_HEADER, requestId);
     return applySecurityHeaders(rejected);
+  }
+
+  // API routes: session refresh + JSON auth only — never locale rewrite or login redirect.
+  if (isApiRoute) {
+    const authResponse = await updateSession(request);
+    authResponse.headers.set(REQUEST_ID_HEADER, requestId);
+    const durationMs = Math.round(performance.now() - startedAt);
+    recordHttpRequest(request.method, pathname, authResponse.status, durationMs);
+    return applySecurityHeaders(authResponse);
   }
 
   const intlResponse = intlMiddleware(request);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { analyticsService } from "@/services/analytics/analytics-service";
 import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 import { PWA_ANALYTICS } from "@/lib/pwa/analytics";
@@ -29,7 +29,7 @@ const EVENT_MAP: Record<string, string> = {
 };
 
 export async function POST(request: Request) {
-  const user = await requireUser().catch(() => null);
+  const user = await getCurrentUser();
   const body = Schema.parse(await request.json());
   const eventType = EVENT_MAP[body.event] ?? body.event;
 

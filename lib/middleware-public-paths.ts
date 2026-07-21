@@ -60,6 +60,7 @@ export const AUTH_PUBLIC_PATH_PREFIXES = [
   "/api/health",
   "/api/version",
   "/api/metrics",
+  "/api/share/target",
   "/auth/",
 ] as const;
 

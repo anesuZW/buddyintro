@@ -233,7 +233,31 @@ export async function requireUser(): Promise<DbUser> {
 
 export type ApiAuthResult = DbUser | NextResponse;
 
+export function isApiAuthError(result: ApiAuthResult): result is NextResponse {
+  return result instanceof NextResponse;
+}
 
+/** Returns 401/403 JSON for API route handlers instead of redirecting. */
+export async function requireUserApi(): Promise<ApiAuthResult> {
+  const profile = isAuthProfileEnabled();
+  const requestId = profile ? readAuthProfileRequestId() : null;
+  const totalStart = profile ? performance.now() : 0;
+
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (user.suspendedAt || user.bannedAt) {
+    return NextResponse.json({ error: "Account suspended" }, { status: 403 });
+  }
+
+  if (profile) {
+    logAuthProfile(requestId, "requireUserApi", {
+      total: Math.round(performance.now() - totalStart),
+    });
+  }
+  return user;
+}
 
 async function userIsAdmin(user: DbUser): Promise<boolean> {
 
