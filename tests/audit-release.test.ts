@@ -31,6 +31,7 @@ describe("RC1 release audit scripts", () => {
     assert.ok(pkg.scripts["audit:release"]);
     assert.ok(pkg.scripts["audit:pwa"]);
     assert.ok(pkg.scripts["audit:lighthouse"]);
+    assert.ok(pkg.scripts["audit:api"]);
   });
 
   it("lighthouserc defines category score thresholds", () => {

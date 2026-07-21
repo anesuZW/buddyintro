@@ -49,6 +49,7 @@ describe("production certification — middleware public paths", () => {
       "/icons/icon-192.png",
       "/uploads/avatar.jpg",
       "/workbox/workbox-sw.js",
+      "/api/share/target",
     ];
     for (const p of publicPaths) {
       assert.equal(isAuthPublicPath(p), true, `expected public: ${p}`);
@@ -65,7 +66,19 @@ describe("production certification — middleware public paths", () => {
   it("supabase middleware uses isAuthPublicPath", () => {
     const sm = read("lib/supabase/middleware.ts");
     assert.match(sm, /isAuthPublicPath/);
+    assert.match(sm, /pathname\.startsWith\("\/api\/"\)/);
     assert.doesNotMatch(sm, /pathname\.startsWith\("\/sw\.js"\)/);
+  });
+
+  it("middleware skips locale routing for API paths", () => {
+    const mw = read("middleware.ts");
+    assert.match(mw, /pathname\.startsWith\("\/api\/"\)/);
+    assert.match(mw, /isApiRoute/);
+  });
+
+  it("CSP allows Supabase realtime websockets", () => {
+    const sec = read("lib/security.ts");
+    assert.match(sec, /wss:\/\/\*\.supabase\.co/);
   });
 });
 

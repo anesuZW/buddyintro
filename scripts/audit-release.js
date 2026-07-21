@@ -51,6 +51,7 @@ async function main() {
 
   try {
     runStep("PWA runtime audit", "node", ["scripts/audit-pwa.js", ...urlFlag]);
+    runStep("API JSON smoke test", "node", ["scripts/audit-api-json.js", ...urlFlag]);
 
     if (!skipLighthouse) {
       runStep("Lighthouse CI audit", "node", ["scripts/audit-lighthouse.js", ...urlFlag]);

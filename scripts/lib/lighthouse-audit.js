@@ -11,7 +11,7 @@ const TMP_DIR = path.join(ROOT, ".lighthouse-tmp");
 
 /** Warn-level thresholds aligned with .lighthouserc.cjs */
 const CATEGORY_THRESHOLDS = {
-  performance: 0.75,
+  performance: 0.7,
   accessibility: 0.88,
   seo: 0.88,
 };

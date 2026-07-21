@@ -194,7 +194,7 @@ function buildHttpChecks(base) {
     }),
 
     assertCheck("login page links manifest", async () => {
-      const res = await fetchOk(`${base}/en/login`);
+      const res = await fetchOk(`${base}/login`);
       const html = await res.text();
       if (!html.includes("manifest")) throw new Error("login HTML missing manifest reference");
     }),

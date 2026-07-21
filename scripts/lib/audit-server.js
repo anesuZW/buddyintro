@@ -2,11 +2,42 @@
  * Bootstrap a production Next.js server for runtime audits.
  */
 const { spawn } = require("child_process");
+const fs = require("fs");
 const net = require("net");
 const path = require("path");
 const { ROOT } = require("./paths");
 
 const PREFERRED_PORTS = Array.from({ length: 10 }, (_, i) => 3001 + i).concat([3099, 3100]);
+
+function readEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return {};
+  const out = {};
+  for (const line of fs.readFileSync(filePath, "utf8").split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let val = trimmed.slice(eq + 1).trim();
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
+    }
+    out[key] = val;
+  }
+  return out;
+}
+
+/** Merge project .env files so standalone SSR routes work during audits. */
+function projectEnv(extra = {}) {
+  const merged = { ...process.env };
+  for (const name of [".env", ".env.local", ".env.production", ".env.production.local"]) {
+    Object.assign(merged, readEnvFile(path.join(ROOT, name)));
+  }
+  return { ...merged, ...extra };
+}
 
 async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -41,11 +72,49 @@ async function waitForServer(base, timeoutMs = 120_000) {
   return false;
 }
 
-function startProductionServer(port) {
+function prepareStandaloneRuntime() {
+  const standaloneDir = path.join(ROOT, ".next", "standalone");
+  const serverJs = path.join(standaloneDir, "server.js");
+  if (!fs.existsSync(serverJs)) {
+    return null;
+  }
+
+  const targetStatic = path.join(standaloneDir, ".next", "static");
+  const targetPublic = path.join(standaloneDir, "public");
+  const sourceStatic = path.join(ROOT, ".next", "static");
+  const sourcePublic = path.join(ROOT, "public");
+
+  if (fs.existsSync(sourceStatic) && !fs.existsSync(targetStatic)) {
+    fs.cpSync(sourceStatic, targetStatic, { recursive: true });
+  }
+  if (fs.existsSync(sourcePublic) && !fs.existsSync(targetPublic)) {
+    fs.cpSync(sourcePublic, targetPublic, { recursive: true });
+  }
+
+  return { standaloneDir, serverJs };
+}
+
+function startProductionServer(port, auditBase) {
+  const appUrl = auditBase || `http://localhost:${port}`;
+  const standalone = prepareStandaloneRuntime();
+  if (standalone) {
+    return spawn(process.execPath, [standalone.serverJs], {
+      cwd: standalone.standaloneDir,
+      env: projectEnv({
+        NODE_ENV: "production",
+        PORT: String(port),
+        HOSTNAME: "localhost",
+        NEXT_PUBLIC_APP_URL: appUrl,
+      }),
+      stdio: "pipe",
+    });
+  }
+
   const nextBin = path.join(ROOT, "node_modules", "next", "dist", "bin", "next");
-  return spawn(process.execPath, [nextBin, "start", "-p", String(port)], {
+  console.warn("⚠ Standalone build missing — falling back to `next start` (run npm run build for production parity)");
+  return spawn(process.execPath, [nextBin, "start", "-p", String(port), "-H", "localhost"], {
     cwd: ROOT,
-    env: { ...process.env, NODE_ENV: "production" },
+    env: projectEnv({ NODE_ENV: "production", NEXT_PUBLIC_APP_URL: appUrl }),
     stdio: "pipe",
   });
 }
@@ -85,7 +154,7 @@ async function ensureProductionServer(options = {}) {
     if (!(await isPortFree(port))) continue;
 
     const base = `http://localhost:${port}`;
-    const child = startProductionServer(port);
+    const child = startProductionServer(port, base);
     child.stdout?.on("data", (d) => process.stdout.write(d));
     child.stderr?.on("data", (d) => process.stderr.write(d));
 
