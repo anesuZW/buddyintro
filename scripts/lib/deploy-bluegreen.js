@@ -112,7 +112,8 @@ function linkSharedPaths(releaseDir, config) {
 }
 
 function smokeTest(releaseDir, config) {
-  sh("node -e \"require('fs').accessSync('.next/BUILD_ID')\"", releaseDir);
+  sh("node -e \"require('fs').accessSync('.next/standalone/server.js')\"", releaseDir);
+  sh("node scripts/verify-standalone-build.js", releaseDir);
   if (existsSync(join(releaseDir, "scripts", "verify.js"))) {
     sh("node scripts/verify.js", releaseDir);
   }

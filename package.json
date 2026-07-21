@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && node scripts/generate-pwa-icons.js && next build && node scripts/build-sw.js && node scripts/write-build-version.js",
+    "build": "node scripts/clean-build.js && prisma generate && node scripts/generate-pwa-icons.js && next build && node scripts/build-sw.js && node scripts/write-build-version.js && node scripts/sync-standalone.js && node scripts/verify-standalone-build.js",
     "build:sw": "node scripts/build-sw.js",
     "generate:pwa-icons": "node scripts/generate-pwa-icons.js",
     "start": "next start",
@@ -55,6 +55,8 @@
     "deploy:rollback": "node scripts/deploy-rollback.js",
     "deploy:clean": "node scripts/deploy-clean.js",
     "deploy:verify": "node scripts/deploy-verify.js",
+    "deploy:verify-runtime": "node scripts/verify-deployment.js",
+    "deploy:production": "node scripts/deploy-production.js",
     "deploy:backup": "node scripts/deploy-backup.js",
     "deploy:uploads": "node scripts/deploy-uploads.js",
     "deploy:health": "node scripts/deploy-health.js",

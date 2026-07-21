@@ -100,6 +100,9 @@ async function main() {
     process.exit(1);
   }
 
+  console.log("→ Runtime version verification");
+  sh("node scripts/verify-deployment.js", config.currentLink);
+
   appendHistory(config, {
     releaseId,
     status: "success",
