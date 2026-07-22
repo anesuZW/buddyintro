@@ -7,8 +7,8 @@ const { ROOT } = require("./paths");
 const { runNpm, spawnCommand, CommandError } = require("./exec");
 
 /**
- * Required after `npm run build` (Next standalone + write-build-version.js).
- * deployment/manifest.json is optional here — it is written during release packaging.
+ * Required after `npm run build` (Next standalone + sync-standalone.js).
+ * Version manifests live under .next/standalone only — not the repo root.
  */
 const LOCAL_DEPLOY_ARTIFACTS = [
   { path: ".next", type: "directory", required: true },
@@ -20,12 +20,8 @@ const LOCAL_DEPLOY_ARTIFACTS = [
   { path: ".next/standalone/public", type: "directory", required: true },
   { path: ".next/static", type: "directory", required: true },
   { path: ".next/BUILD_ID", type: "file", required: true },
-  { path: "deployment", type: "directory", required: true },
-  { path: "deployment/build.json", type: "file", required: true },
-  { path: "build/version.json", type: "file", required: true },
   { path: "public/sw.js", type: "file", required: true },
   { path: "public/workbox/workbox-sw.js", type: "file", required: true },
-  { path: "deployment/manifest.json", type: "file", required: false },
 ];
 
 function artifactExists(root, artifact) {

@@ -48,7 +48,7 @@ function buildDiagnosticsCommand(appPath) {
     'echo "=== CLOUDLINUX SELECTOR ==="',
     'cloudlinux-selector get --json --interpreter nodejs 2>/dev/null || echo "cloudlinux-selector unavailable"',
     'cloudlinux-selector status --json --interpreter nodejs 2>/dev/null || true',
-    'test -f build/version.json && echo "=== build/version.json ===" && cat build/version.json || echo "build/version.json missing"',
+    'test -f .next/standalone/build/version.json && echo "=== standalone/build/version.json ===" && cat .next/standalone/build/version.json || echo "standalone version manifest missing"',
     'test -f deployment/manifest.json && echo "=== deployment/manifest.json ===" && cat deployment/manifest.json || true',
   ]);
 }

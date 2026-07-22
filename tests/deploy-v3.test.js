@@ -232,10 +232,11 @@ describe("Phase 2 — Build integrity", () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  it("LOCAL_DEPLOY_ARTIFACTS marks release manifest as optional", () => {
-    const manifest = LOCAL_DEPLOY_ARTIFACTS.find((a) => a.path === "deployment/manifest.json");
-    assert.ok(manifest);
-    assert.equal(manifest.required, false);
+  it("LOCAL_DEPLOY_ARTIFACTS requires standalone version manifests", () => {
+    const version = LOCAL_DEPLOY_ARTIFACTS.find((a) => a.path === ".next/standalone/build/version.json");
+    const buildMeta = LOCAL_DEPLOY_ARTIFACTS.find((a) => a.path === ".next/standalone/deployment/build.json");
+    assert.ok(version?.required);
+    assert.ok(buildMeta?.required);
   });
 
   it("successful build verify returns BUILD_ID", () => {

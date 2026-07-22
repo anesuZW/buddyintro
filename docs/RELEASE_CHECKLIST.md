@@ -30,7 +30,7 @@ Individual audit steps (for debugging):
 - [ ] `.next/BUILD_ID` present
 - [ ] `public/sw.js` built with Workbox precache
 - [ ] `public/workbox/workbox-sw.js` present
-- [ ] `build/version.json` + `deployment/build.json` written
+- [ ] `.next/standalone/build/version.json` + `.next/standalone/deployment/build.json` written (repo-root copies are gitignored)
 
 ### 2. Static certification (`certify:production`)
 - [ ] Middleware excludes SW, manifest, icons, uploads, `_next/static`

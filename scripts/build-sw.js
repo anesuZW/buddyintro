@@ -56,13 +56,9 @@ function collectAdditionalPrecache() {
   ];
 
   let buildVersion = "dev";
-  const versionPath = path.join(ROOT, "build", "version.json");
-  if (fs.existsSync(versionPath)) {
-    try {
-      buildVersion = JSON.parse(fs.readFileSync(versionPath, "utf8")).releaseId || buildVersion;
-    } catch {
-      /* ignore */
-    }
+  const buildIdPath = path.join(ROOT, ".next", "BUILD_ID");
+  if (fs.existsSync(buildIdPath)) {
+    buildVersion = fs.readFileSync(buildIdPath, "utf8").trim();
   }
 
   entries.forEach((e) => {

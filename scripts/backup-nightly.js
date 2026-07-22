@@ -64,9 +64,12 @@ function main() {
     if (existsSync(src)) copyFileSync(src, join(nightlyDir, envFile));
   }
 
-  for (const manifest of ["deployment/manifest.json", "build/build.json"]) {
+  for (const manifest of [
+    ".next/standalone/deployment/build.json",
+    ".next/standalone/build/version.json",
+  ]) {
     const src = join(ROOT, manifest);
-    if (existsSync(src)) copyFileSync(src, join(nightlyDir, manifest.replace("/", "-")));
+    if (existsSync(src)) copyFileSync(src, join(nightlyDir, manifest.replace(/[\\/]/g, "-")));
   }
 
   writeFileSync(

@@ -27,6 +27,8 @@ deployment/releases/*.zip
 deployment/staging/
 deployment/failures/*
 !deployment/failures/.gitkeep
+deployment/build.json
+deployment/manifest.json
 prisma/_*.sql
 !deployment/releases/.gitkeep
 !deployment/releases/RELEASE_NOTES_*.md
@@ -62,6 +64,9 @@ node_modules/
 out/
 dist/
 build/
+
+# Generated PWA output (source: scripts/pwa/sw-source.js)
+public/sw.js
 
 # ==========================
 # Environment

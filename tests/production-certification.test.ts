@@ -240,6 +240,6 @@ describe("production certification — deployment", () => {
     const pkg = JSON.parse(read("package.json"));
     assert.match(pkg.scripts.build, /generate-pwa-icons/);
     assert.match(pkg.scripts.build, /build-sw/);
-    assert.match(pkg.scripts.build, /write-build-version/);
+    assert.match(pkg.scripts.build, /sync-standalone/);
   });
 });

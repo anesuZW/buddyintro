@@ -1,17 +1,7 @@
 #!/usr/bin/env node
 /**
- * Write build/version.json and deployment/build.json after next build.
+ * @deprecated Version manifests are written into .next/standalone by sync-standalone.js.
+ * Kept as a thin alias for older docs/scripts.
  */
-const { createReleaseId, writeBuildMetadata } = require("./lib/deploy-metadata");
-const { join } = require("path");
-const { ROOT } = require("./lib/paths");
-
-function main() {
-  const releaseId = process.env.DEPLOY_RELEASE_ID || createReleaseId();
-  const { meta } = writeBuildMetadata(ROOT, releaseId);
-  console.log(
-    `✓ build/version.json + deployment/build.json (commit ${meta.gitCommit.slice(0, 7)}, release ${releaseId})`
-  );
-}
-
-main();
+console.warn("write-build-version.js is deprecated — running sync-standalone.js instead");
+require("./sync-standalone.js");

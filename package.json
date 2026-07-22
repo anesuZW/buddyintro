@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/clean-build.js && prisma generate && node scripts/generate-pwa-icons.js && next build && node scripts/build-sw.js && node scripts/write-build-version.js && node scripts/sync-standalone.js && node scripts/verify-standalone-build.js",
+    "build": "node scripts/clean-build.js && prisma generate && node scripts/generate-pwa-icons.js && next build && node scripts/build-sw.js && node scripts/sync-standalone.js && node scripts/verify-standalone-build.js",
     "build:sw": "node scripts/build-sw.js",
     "generate:pwa-icons": "node scripts/generate-pwa-icons.js",
     "start": "next start",

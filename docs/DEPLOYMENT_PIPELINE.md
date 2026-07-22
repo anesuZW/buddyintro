@@ -8,7 +8,7 @@ Production reported commit `ce43c13` via `GET /api/version` while the repository
 
 **Proven cause:**
 
-1. `npm run build` wrote version manifests only to the **repository root** (`deployment/build.json`, `build/version.json`).
+1. `npm run build` writes version manifests only into **`.next/standalone/`** (not the repo root).
 2. Next.js `output: "standalone"` emits `.next/standalone/server.js` but does **not** copy static assets, `public/`, or custom manifests into the bundle.
 3. PM2 previously used an ambiguous working directory (`APP_ROOT || process.cwd()`) with `script: "server.js"`. When cwd pointed at a stale or partially updated standalone tree, `/api/version` read old manifests inside that tree while root manifests were updated on disk.
 4. Packaging scripts (`deploy-package.js`) copied manifests into release staging, but a plain `npm run build` + `pm2 restart` on the VPS did not guarantee standalone sync or runtime verification.
@@ -34,10 +34,7 @@ npm run build
     ├─► next build
     │       creates .next/standalone/server.js (Next.js standalone output)
     │
-    ├─► scripts/build-sw.js
-    │
-    ├─► scripts/write-build-version.js
-    │       writes deployment/build.json + build/version.json at repo ROOT
+    ├─► scripts/build-sw.js             (generates public/sw.js — gitignored)
     │
     ├─► scripts/sync-standalone.js
     │       scripts/lib/standalone-sync.js:
@@ -76,7 +73,7 @@ There is no hidden copy step, no manual `APP_ROOT`, and no reuse of a previous s
 
 1. `clean-build.js` → delete `.next`
 2. `next build` → create `.next/standalone/server.js` + traced node_modules
-3. `write-build-version.js` → root manifests
+3. `build-sw.js` → generate `public/sw.js` (gitignored build output)
 4. `sync-standalone.js` → materialize runnable bundle under `.next/standalone`
 5. `verify-standalone-build.js` → assert manifests match `git HEAD`
 
@@ -91,7 +88,7 @@ There is no hidden copy step, no manual `APP_ROOT`, and no reuse of a previous s
 | `deployment/build.json` | Full build metadata (commit, branch, versions, deploymentId) |
 | `build/version.json` | Slim version payload for `/api/version` fallback |
 
-Both exist at **repo root** (for packaging/audits) and inside **`.next/standalone/`** (for runtime).
+Both exist inside **`.next/standalone/`** at runtime. Repo-root `build/` and `deployment/build.json` / `deployment/manifest.json` are **generated** and gitignored — do not commit them.
 
 ### Runtime behavior
 
