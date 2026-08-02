@@ -101,7 +101,7 @@ export default async function ProfilePage() {
           )}
         />
 
-        <div className="mt-6">
+        <div className="mt-6 pb-10">
           <LogoutButton />
         </div>
       </div>
