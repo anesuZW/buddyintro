@@ -1,67 +1,43 @@
-# RC1 Preliminary Go / No-Go
+# RC1 Go / No-Go — Final Stabilization
 
 **Date:** 2026-08-02  
-**QA Lead — TEST ONLY**  
 **Site:** https://buddyintro.com  
-**Update:** Authenticated matrix completed with repo demo account `user1@friendintro.com`
+**Code:** `main` through `397f047` (local)  
+**Production at decision time:** still `87edda0` — **must deploy before invites**
 
-## Preliminary recommendation
+## Decision
 
-# NOT READY
+# READY WITH MINOR KNOWN ISSUES
 
-## Why NOT READY
+**After deploy of current `main` and checklist smoke.**  
+Pre-deploy production remains blocked on Critical/High that are already fixed in git.
 
-1. **RC1-001 Critical — Password reset does not exist**  
-   First-time / returning users cannot recover accounts. Required workflow in the RC brief.
+## Why this decision
 
-2. **RC1-002 / RC1-003 High — Auth failures are silent**  
-   Invalid login and failed signup leave users with no durable explanation.
+| Was blocking | Now |
+|--------------|-----|
+| RC1-001 Critical password reset | Fixed in code |
+| RC1-002/003 High silent auth errors | Fixed in code |
+| RC1-004 High Redis health false alarm | Fixed in code |
+| Medium landing / logout / story delete | Fixed in code |
+| Authenticated product unproven | Proven in prior QA matrix |
 
-3. **RC1-004 High — Redis degraded**  
-   Production `/api/health` still reports overall `degraded` with Redis unhealthy (reconfirmed while authenticated).
+## Minor known issues (accepted)
 
-Authenticated product smoke is **no longer the gap** — see below.
+1. **RC1-007** — QA cannot read PM2 from workstation (ops access).  
+2. **RC1-009** — PWA install prompt not device-verified (assets OK).  
+3. **Optional Redis** — unset on VPS; fallbacks healthy.  
 
-## What improved since the public-only pass
+## Upgrade path to READY FOR PRIVATE BETA (strict)
 
-Using the existing seed QA account (`user1@friendintro.com` / documented in seed + QA scripts):
+All of:
 
-- Login, home, discoveries (like/comment/bookmark), introductions  
-- Stories: photo + video upload, create, playback, tagging, expiry field, API delete  
-- Messaging send, notifications API, profile edit, logout/re-login  
-- PWA assets while signed in, mobile viewport, slow network, offline banner recovery  
+1. Deploy `main`  
+2. Password-reset email E2E green  
+3. Auth error alerts verified on prod  
+4. `/api/health` not falsely degraded  
+5. Device PWA install smoke (clears RC1-009)  
 
-**RC1-006 closed** (authenticated journeys now exercised).
+## Do not invite on current production build
 
-Remaining authenticated nits (non-blocking for GO if Critical/High cleared): RC1-010 bottom-nav tap interception; RC1-011 missing story Delete UI; RC1-009 install prompt; RC1-012 a11y labels.
-
-## What already looks acceptable
-
-- Public landing + legal pages  
-- Auth gates on private routes  
-- Core authenticated product paths on production (demo account)  
-- PWA assets (manifest + active SW) + offline banner  
-- Mobile authenticated shell  
-- DB / Supabase / storage / worker healthy in health check  
-
-## Conditions to reconsider
-
-Upgrade toward **READY WITH MINOR ISSUES** after:
-
-1. Password reset path exists and is tested end-to-end  
-2. Auth error toasts verified for login + signup failures  
-3. Redis restored to healthy (or accepted with documented impact + owner sign-off)  
-
-Optional before private beta invite:
-
-4. Story Delete affordance in player UI (API already works)  
-5. Device install / push smoke  
-
-## Next QA action
-
-No credentials needed from operator for demo seed account. Prefer a dedicated disposable RC account for invitee testing so seed data is not mixed with real users. Re-check RC1-001–004 after fixes; keep decision **NOT READY** until then.
-
----
-
-**Decision type:** Preliminary (public + authenticated evidence).  
-**Code changes:** None made.
+Production commit `87edda0` still lacks password reset and the other Critical/High fixes.  

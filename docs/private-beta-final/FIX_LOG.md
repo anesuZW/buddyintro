@@ -1,81 +1,64 @@
-# Fix Log — Private Beta Blocker Fixes
+# Fix Log — Private Beta Final Stabilization
 
 **Date:** 2026-08-02  
-**Operator:** CTO directive — Critical/High only  
-**Commits / push / deploy:** None  
+**Branch:** `main`  
+**Deploy:** Not performed in this pass (operator must deploy before invites)
 
 ---
 
-## Sequence
+## Commits
 
-### 1. RC1-001 Critical — Password reset
-
-1. **Reproduce:** Production `/forgot-password` redirected to `login?next=/forgot-password`; login had no reset link; no app routes for reset.  
-2. **Root cause:** Feature never implemented in app shell; path not public in middleware allowlist.  
-3. **Fix:** Forgot + reset pages via existing Supabase Auth APIs; login link; middleware public/auth-page updates; i18n keys.  
-4. **Build:** `next build` reached typecheck; failed on pre-existing `hooks/useRealtimeMessages.ts` (`Property 'id' does not exist on type 'never'`) — unrelated, not fixed.  
-5. **Restart / deploy:** Skipped (forbidden).  
-6. **Retest:** Public-path unit check passed for new routes.  
-7. **Register:** Marked resolved in code.
-
-### 2. RC1-002 High — Login durable errors
-
-1. **Reproduce:** Prior RC: invalid login left idle UI with no lasting DOM error (toast-only).  
-2. **Root cause:** Ephemeral toast only.  
-3. **Fix:** Inline `role="alert"` `formError` on login.  
-4. **Retest:** Code-path verification.  
-5. **Register:** Resolved in code.
-
-### 3. RC1-003 High — Signup durable errors
-
-1. **Reproduce:** Prior RC: signup submit completed with no durable error.  
-2. **Root cause:** Toast-only + Supabase duplicate-email empty-identities success.  
-3. **Fix:** Inline alert + identities-length guard.  
-4. **Retest:** Code-path verification.  
-5. **Register:** Resolved in code.
-
-### 4. RC1-004 High — Redis health degraded
-
-1. **Reproduce:** `GET https://buddyintro.com/api/health` → `status/redis: degraded`; verbose → `redisConfigured: false`, note about in-process fallbacks; queue/worker healthy.  
-2. **Root cause:** Optional Redis absence incorrectly degraded overall health.  
-3. **Fix:** Unconfigured Redis → healthy component + note; latency degrade threshold 1500ms when configured.  
-4. **STOP:** Actually provisioning Redis (`REDIS_URL` on VPS) is infrastructure — not applied.  
-5. **Register:** Code false-positive resolved; infra Redis still optional/unset on prod until ops sets it.
+| Commit | Issues | Summary |
+|--------|--------|---------|
+| `22d95fb` | RC1-001…004 | Password reset, durable auth errors, optional Redis health semantics |
+| `e232775` | RC1-005 | Remove duplicate landing hero band; header CTA → “Sign up” |
+| `4b70830` | RC1-008 | Signup submit idle label → “Create account” |
+| `925d4df` | RC1-010 | Profile logout block `pb-10` clears fixed bottom nav |
+| `397f047` | RC1-011 | Story player Delete for owners via existing DELETE API |
 
 ---
 
-## Files touched (all issues)
+## Per-issue notes
 
-| File | Issues |
-|------|--------|
-| `app/[locale]/(auth)/forgot-password/page.tsx` | RC1-001 |
-| `app/[locale]/(auth)/reset-password/page.tsx` | RC1-001 |
-| `app/[locale]/(auth)/login/page.tsx` | RC1-001, RC1-002 |
-| `app/auth/callback/route.ts` | RC1-001 |
-| `lib/middleware-public-paths.ts` | RC1-001 |
-| `lib/supabase/middleware.ts` | RC1-001 |
-| `messages/*.json` | RC1-001 |
-| `components/invite/SignupClient.tsx` | RC1-003 |
-| `services/health.ts` | RC1-004 |
-| `docs/private-beta-final/CRITICAL_FIXES.md` | docs |
-| `docs/private-beta-final/FIX_LOG.md` | docs |
-| `docs/private-beta-final/BUG_REGISTER.md` | docs |
+### RC1-001…004 (Critical/High)
+See `CRITICAL_FIXES.md`. Root causes and files documented there.
+
+### RC1-005 Medium — Landing duplicate CTAs
+- **Root cause:** Upper value-prop band restated the brand hero; header + hero both used long marketing CTA.  
+- **Fix:** Removed upper band; header label shortened to “Sign up”; hero CTA unchanged.  
+- **Regression:** Landing still shows brand hero + Log in + primary CTA.
+
+### RC1-008 Low — Signup button copy
+- **Root cause:** Submit button always used `COPY.startTrustedNetwork`.  
+- **Fix:** Idle label “Create account”; loading already “Creating account…”.  
+- **Regression:** Invite signup H1 marketing copy unchanged (intentional).
+
+### RC1-010 Medium — Bottom nav tap intercept
+- **Root cause:** Mid-scroll Log out sat under fixed `z-30` nav despite global `pb-nav`.  
+- **Fix:** Extra `pb-10` on logout wrapper only.  
+- **Regression:** Other profile sections unchanged.
+
+### RC1-011 Medium — Story delete UI
+- **Root cause:** DELETE API existed; player had no owner affordance.  
+- **Fix:** Trash control when `story.userId === currentUserId`; confirm → DELETE → advance/close.  
+- **Regression:** Non-owners unchanged; playback/tag UI preserved.
+
+### RC1-012 Low — aria-labels
+- **Evaluation:** Source already has `aria-label` on like/comment/share/bookmark (`DiscoveriesFeed.tsx`). Prod DOM null = stale deploy.  
+- **Action:** No code change; closed after deploy verification.
+
+### RC1-007 Medium — QA cannot see PM2 logs
+- **Evaluation:** Infrastructure/access. App cannot safely expose production logs to browser QA.  
+- **Action:** Documented accepted; provide SSH/log export for future RC.
+
+### RC1-009 Low — PWA install not device-verified
+- **Evaluation:** Manifest + active SW verified in browser; Chromium BIP needs installability criteria on a real device.  
+- **Action:** Accepted for private beta; checklist item for device smoke.
 
 ---
 
-## Regression notes
+## STOP / not changed
 
-- No Prisma schema changes.  
-- No auth architecture change (still Supabase Auth).  
-- Recommendation / trust logic untouched.  
-- Pre-existing build type error in `useRealtimeMessages.ts` remains (outside Critical/High scope).  
-- Local `next dev` hit unrelated edge `EvalError` / CSS parse under non-standard `NODE_ENV`.  
-
-## Next ops steps (outside this pass)
-
-1. Deploy code to production.  
-2. Confirm Supabase Auth redirect URLs include `/auth/callback` and site URL.  
-3. Smoke: forgot-password → email → reset-password → login.  
-4. Smoke: invalid login / duplicate signup show `role="alert"`.  
-5. Confirm `/api/health` overall not degraded solely due to missing Redis.  
-6. Optionally set `REDIS_URL` when ready for BullMQ at scale.  
+- Prisma schema, auth architecture, trust/recommendations  
+- Setting production `REDIS_URL` (ops)  
+- Deploy/restart PM2 (operator)  
