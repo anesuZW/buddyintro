@@ -1,6 +1,9 @@
 // Lightweight Database type used by the Supabase JS client.
 // Prisma is the source of truth - this just gives the JS client typed
 // helpers for tables that are queried directly (e.g. realtime channels).
+//
+// Each table must include `Relationships` so it satisfies postgrest-js
+// `GenericTable` (v2+). Omitting it makes `.from(...).select()` resolve to `never`.
 
 export type Database = {
   public: {
@@ -21,6 +24,7 @@ export type Database = {
           name: string;
         };
         Update: Partial<Database["public"]["Tables"]["users"]["Row"]>;
+        Relationships: [];
       };
       stories: {
         Row: {
@@ -40,6 +44,7 @@ export type Database = {
           "id" | "created_at" | "published_at"
         > & { id?: string };
         Update: Partial<Database["public"]["Tables"]["stories"]["Row"]>;
+        Relationships: [];
       };
       story_tags: {
         Row: {
@@ -55,6 +60,7 @@ export type Database = {
           "id" | "created_at"
         > & { id?: string };
         Update: Partial<Database["public"]["Tables"]["story_tags"]["Row"]>;
+        Relationships: [];
       };
       messages: {
         Row: {
@@ -71,6 +77,7 @@ export type Database = {
           "id" | "created_at" | "read_at"
         > & { id?: string };
         Update: Partial<Database["public"]["Tables"]["messages"]["Row"]>;
+        Relationships: [];
       };
       notifications: {
         Row: {
@@ -94,6 +101,7 @@ export type Database = {
           message: string;
         };
         Update: Partial<Database["public"]["Tables"]["notifications"]["Row"]>;
+        Relationships: [];
       };
       invitations: {
         Row: {
@@ -111,6 +119,7 @@ export type Database = {
           "id" | "created_at" | "accepted_at" | "registered" | "registered_user_id"
         > & { id?: string };
         Update: Partial<Database["public"]["Tables"]["invitations"]["Row"]>;
+        Relationships: [];
       };
       posts: {
         Row: {
@@ -125,6 +134,7 @@ export type Database = {
           id?: string;
         };
         Update: Partial<Database["public"]["Tables"]["posts"]["Row"]>;
+        Relationships: [];
       };
       admin_settings: {
         Row: {
@@ -137,13 +147,24 @@ export type Database = {
         };
         Insert: Partial<Database["public"]["Tables"]["admin_settings"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["admin_settings"]["Row"]>;
+        Relationships: [];
       };
     };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
+    // Use `[_ in never]: never` (not Record<string, never>) so keyof Views is
+    // `never`. Record<string, never> makes every string a valid view name and
+    // causes `.from("messages")` to resolve to the Views overload with type never.
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
     Enums: {
       story_status: "draft" | "published" | "expired";
       media_type: "image" | "video";
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 };

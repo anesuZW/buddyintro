@@ -22,12 +22,13 @@ type MiddlewareAuthIdentity = {
 
 /**
  * Resolve auth identity for middleware gating.
- * Prefers getClaims() (local JWT verify / JWKS — Supabase current SSR guidance).
- * Falls back to getUser() when claims are unavailable (e.g. symmetric JWT projects).
+ * Prefers getClaims() when available (local JWT verify / JWKS — Supabase SSR guidance).
+ * Falls back to getUser() when getClaims is missing or claims are unavailable
+ * (e.g. @supabase/supabase-js < getClaims, or symmetric JWT projects).
  */
 async function resolveMiddlewareAuthIdentity(supabase: {
   auth: {
-    getClaims: () => Promise<{
+    getClaims?: () => Promise<{
       data: { claims?: Record<string, unknown> | null } | null;
       error: { message?: string } | null;
     }>;
@@ -36,34 +37,38 @@ async function resolveMiddlewareAuthIdentity(supabase: {
     }>;
   };
 }): Promise<{ user: MiddlewareAuthIdentity | null; method: "getClaims" | "getUser" }> {
-  try {
-    const { data, error } = await supabase.auth.getClaims();
-    const claims = data?.claims ?? null;
-    const sub = claims && typeof claims.sub === "string" ? claims.sub : null;
-    if (!error && claims && sub) {
-      const email = typeof claims.email === "string" ? claims.email : null;
-      const meta = claims.user_metadata;
-      const emailVerifiedMeta =
-        meta &&
-        typeof meta === "object" &&
-        (meta as { email_verified?: unknown }).email_verified === true;
-      const emailConfirmedAt =
-        typeof claims.email_confirmed_at === "string"
-          ? claims.email_confirmed_at
-          : emailVerifiedMeta
-            ? new Date(0).toISOString()
-            : null;
-      return {
-        user: {
-          id: sub,
-          email,
-          email_confirmed_at: emailConfirmedAt,
-        },
-        method: "getClaims",
-      };
+  const getClaims = supabase.auth.getClaims;
+  if (typeof getClaims === "function") {
+    try {
+      const { data, error } = await getClaims();
+      const claims = data?.claims ?? null;
+      const sub = claims && typeof claims.sub === "string" ? claims.sub : null;
+      if (!error && claims && sub) {
+        const email = typeof claims.email === "string" ? claims.email : null;
+        const meta = claims.user_metadata;
+        const emailVerifiedMeta =
+          meta &&
+          typeof meta === "object" &&
+          "email_verified" in meta &&
+          (meta as { email_verified?: unknown }).email_verified === true;
+        const emailConfirmedAt =
+          typeof claims.email_confirmed_at === "string"
+            ? claims.email_confirmed_at
+            : emailVerifiedMeta
+              ? new Date(0).toISOString()
+              : null;
+        return {
+          user: {
+            id: sub,
+            email,
+            email_confirmed_at: emailConfirmedAt,
+          },
+          method: "getClaims",
+        };
+      }
+    } catch {
+      // Fall through to getUser — preserves auth when getClaims fails.
     }
-  } catch {
-    // Fall through to getUser — preserves auth when getClaims is unsupported.
   }
 
   const {
