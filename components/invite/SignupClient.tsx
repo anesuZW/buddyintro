@@ -224,11 +224,7 @@ export function SignupClient({
             setAcceptedTerms={setAcceptedTerms}
           />
           <Button className="w-full h-12" disabled={loading || !acceptedTerms}>
-            {loading
-              ? "Creating account…"
-              : inviteToken
-                ? COPY.startTrustedNetwork
-                : COPY.startTrustedNetwork}
+            {loading ? "Creating account…" : "Create account"}
           </Button>
         </form>
 
