@@ -13,18 +13,10 @@ export default async function LandingPage() {
             Log in
           </Link>
           <Link href="/signup" className="btn-primary">
-            {COPY.startTrustedNetwork}
+            Sign up
           </Link>
         </div>
       </header>
-
-      <section className="px-6 py-8 fi-gradient-bg border-b border-border">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold">{COPY.buildTrustedNetwork}</h2>
-          <p className="mt-4 text-muted-foreground">{COPY.buildTrustedNetworkBody}</p>
-          <p className="mt-3 text-sm text-primary font-medium">{COPY.notSocialMedia}</p>
-        </div>
-      </section>
 
       <section className="flex-1 flex items-center justify-center text-center px-6 py-12">
         <div className="max-w-2xl">
