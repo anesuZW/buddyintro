@@ -112,7 +112,15 @@ export async function getTrustProfile(
 
 export async function getTrustProfilesBulk(
   viewerId: string,
-  otherUserIds: string[]
+  otherUserIds: string[],
+  preloadedConnections?: Array<{
+    targetUserId: string;
+    sharedIntroducerCount: number;
+    trustScore: number;
+    trustRank: number;
+    trustRankTier: string;
+    degree: number | null;
+  }>
 ): Promise<Map<string, TrustProfilePayload>> {
   const map = new Map<string, TrustProfilePayload>();
   const unique = Array.from(new Set(otherUserIds.filter((id) => id && id !== viewerId)));
@@ -121,17 +129,19 @@ export async function getTrustProfilesBulk(
   const settings = await getAdminSettings();
 
   const [connections, users, sharedRows] = await Promise.all([
-    prisma.userConnection.findMany({
-      where: { sourceUserId: viewerId, targetUserId: { in: unique } },
-      select: {
-        targetUserId: true,
-        sharedIntroducerCount: true,
-        trustScore: true,
-        trustRank: true,
-        trustRankTier: true,
-        degree: true,
-      },
-    }),
+    preloadedConnections
+      ? Promise.resolve(preloadedConnections)
+      : prisma.userConnection.findMany({
+          where: { sourceUserId: viewerId, targetUserId: { in: unique } },
+          select: {
+            targetUserId: true,
+            sharedIntroducerCount: true,
+            trustScore: true,
+            trustRank: true,
+            trustRankTier: true,
+            degree: true,
+          },
+        }),
     prisma.user.findMany({
       where: { id: { in: unique } },
       select: {

@@ -23,7 +23,7 @@ const ROOT = path.resolve(import.meta.dirname, "..");
 const MIGRATIONS = path.join(ROOT, "prisma", "migrations");
 
 describe("Migration ordering", () => {
-  it("uses deterministic 0001–0010 chain", () => {
+  it("uses deterministic 0001–0011 chain", () => {
     const folders = fs
       .readdirSync(MIGRATIONS)
       .filter((e) => fs.statSync(path.join(MIGRATIONS, e)).isDirectory())
@@ -53,17 +53,17 @@ describe("FK ordering", () => {
 describe("NOT NULL defaults and seeds", () => {
   it("admin_settings seed includes updated_at", () => {
     const issues = auditSeeds();
-    assert.ok(!issues.some((i) => i.includes("admin_settings")));
+    assert.ok(!issues.some((i: string) => i.includes("admin_settings")));
   });
 
   it("introduction_categories seed includes id", () => {
     const issues = auditSeeds();
-    assert.ok(!issues.some((i) => i.includes("introduction_categories")));
+    assert.ok(!issues.some((i: string) => i.includes("introduction_categories")));
   });
 
   it("RBAC seed generates UUIDs", () => {
     const issues = auditSeeds();
-    assert.ok(!issues.some((i) => i.includes("0007")));
+    assert.ok(!issues.some((i: string) => i.includes("0007")));
   });
 });
 

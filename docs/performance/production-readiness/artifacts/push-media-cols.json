@@ -1,0 +1,27 @@
+{
+  "pushColumns": [
+    "id",
+    "user_id",
+    "endpoint",
+    "p256dh",
+    "auth",
+    "created_at"
+  ],
+  "mediaProcessingEnum": false,
+  "relatedIndexes": [
+    "messages_discoveries_post_reference_idx",
+    "messages_pkey",
+    "messages_receiver_id_sender_id_created_at_idx",
+    "messages_sender_id_receiver_id_created_at_idx",
+    "messages_story_reference_idx",
+    "push_subscriptions_endpoint_key",
+    "push_subscriptions_pkey",
+    "push_subscriptions_user_id_idx",
+    "users_email_idx",
+    "users_email_key",
+    "users_phone_idx",
+    "users_pkey",
+    "users_trusted_user_idx",
+    "users_verification_level_idx"
+  ]
+}

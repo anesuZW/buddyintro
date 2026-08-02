@@ -1,0 +1,105 @@
+{
+  "at": "2026-08-01T21:26:59.286Z",
+  "addrs": [
+    {
+      "address": "18.213.155.45",
+      "family": 4
+    },
+    {
+      "address": "3.227.209.82",
+      "family": 4
+    },
+    {
+      "address": "18.214.78.123",
+      "family": 4
+    }
+  ],
+  "perIp": [
+    {
+      "ok": true,
+      "target": "18.213.155.45",
+      "tcpMs": 412.221,
+      "remote": "18.213.155.45"
+    },
+    {
+      "ok": true,
+      "target": "18.213.155.45",
+      "tcpMs": 298.6,
+      "remote": "18.213.155.45"
+    },
+    {
+      "ok": true,
+      "target": "18.213.155.45",
+      "tcpMs": 293.463,
+      "remote": "18.213.155.45"
+    },
+    {
+      "ok": true,
+      "target": "3.227.209.82",
+      "tcpMs": 302.275,
+      "remote": "3.227.209.82"
+    },
+    {
+      "ok": true,
+      "target": "3.227.209.82",
+      "tcpMs": 324.572,
+      "remote": "3.227.209.82"
+    },
+    {
+      "ok": true,
+      "target": "3.227.209.82",
+      "tcpMs": 308.839,
+      "remote": "3.227.209.82"
+    },
+    {
+      "ok": true,
+      "target": "18.214.78.123",
+      "tcpMs": 307.197,
+      "remote": "18.214.78.123"
+    },
+    {
+      "ok": true,
+      "target": "18.214.78.123",
+      "tcpMs": 286.062,
+      "remote": "18.214.78.123"
+    },
+    {
+      "ok": true,
+      "target": "18.214.78.123",
+      "tcpMs": 301.693,
+      "remote": "18.214.78.123"
+    }
+  ],
+  "byHost": [
+    {
+      "ok": true,
+      "target": "aws-1-us-east-1.pooler.supabase.com",
+      "tcpMs": 831.816,
+      "remote": "18.214.78.123"
+    },
+    {
+      "ok": true,
+      "target": "aws-1-us-east-1.pooler.supabase.com",
+      "tcpMs": 888.423,
+      "remote": "18.214.78.123"
+    },
+    {
+      "ok": true,
+      "target": "aws-1-us-east-1.pooler.supabase.com",
+      "tcpMs": 808.715,
+      "remote": "18.214.78.123"
+    },
+    {
+      "ok": true,
+      "target": "aws-1-us-east-1.pooler.supabase.com",
+      "tcpMs": 825.358,
+      "remote": "18.214.78.123"
+    },
+    {
+      "ok": true,
+      "target": "aws-1-us-east-1.pooler.supabase.com",
+      "tcpMs": 813.455,
+      "remote": "18.214.78.123"
+    }
+  ]
+}

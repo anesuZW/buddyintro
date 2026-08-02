@@ -153,7 +153,8 @@ export function StoryUploader({
 
 
 
-  const { upload, uploading } = useUpload();
+  const { upload, uploading, progress, cancel } = useUpload();
+  const submitLockRef = useRef(false);
 
   const recorder = useMediaRecorder();
 
@@ -286,6 +287,9 @@ export function StoryUploader({
 
     setFile(f);
 
+    if (f.type.startsWith("video/")) setMediaType("video");
+    else if (f.type.startsWith("image/")) setMediaType("image");
+
   }
 
 
@@ -408,6 +412,8 @@ export function StoryUploader({
 
   async function submit() {
 
+    if (submitLockRef.current) return;
+
     if (!file || !mediaType) {
 
       toast.error("Pick a photo or video first");
@@ -428,6 +434,8 @@ export function StoryUploader({
 
     }
 
+    submitLockRef.current = true;
+
     setSubmitting(true);
 
     try {
@@ -445,19 +453,13 @@ export function StoryUploader({
       let voiceNoteUrl: string | undefined;
 
       if (recorder.blob) {
-
+        const audioExt = recorder.format?.ext || "webm";
         const { url } = await upload(recorder.blob, {
-
           userId: currentUserId,
-
           kind: "audio",
-
-          ext: "webm",
-
+          ext: audioExt,
         });
-
         voiceNoteUrl = url;
-
       }
 
 
@@ -510,6 +512,15 @@ export function StoryUploader({
 
       const data = await res.json();
 
+      const failedEmails = (data.emailDelivery ?? []).filter(
+        (d: { ok?: boolean }) => d.ok === false
+      );
+      if (failedEmails.length) {
+        toast.error(
+          `Introduction saved, but invitation email could not be sent to ${failedEmails.map((d: { email: string }) => d.email).join(", ")}. Check server email configuration.`
+        );
+      }
+
       if (data.phoneInvites?.length) {
 
         setPhoneInvites(data.phoneInvites);
@@ -532,11 +543,21 @@ export function StoryUploader({
 
     } catch (err: unknown) {
 
-      toast.error(err instanceof Error ? err.message : "Couldn't create introduction");
+      if (err instanceof DOMException && err.name === "AbortError") {
+
+        toast("Upload cancelled");
+
+      } else {
+
+        toast.error(err instanceof Error ? err.message : "Couldn't create introduction");
+
+      }
 
     } finally {
 
       setSubmitting(false);
+
+      submitLockRef.current = false;
 
     }
 
@@ -1059,48 +1080,42 @@ export function StoryUploader({
 
                 />
 
-                <div className="flex items-center gap-3">
-
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3">
                   {recorder.state === "idle" && (
-
-                    <Button type="button" variant="outline" size="sm" onClick={recorder.start}>
-
+                    <Button type="button" variant="outline" size="sm" onClick={() => void recorder.start()}>
                       <Mic size={16} />
-
                       Voice recommendation
-
                     </Button>
-
                   )}
-
                   {recorder.state === "recording" && (
-
                     <Button type="button" variant="destructive" size="sm" onClick={recorder.stop}>
-
                       <StopCircle size={16} />
-
                       Stop ({recorder.duration}s)
-
                     </Button>
-
                   )}
-
                   {recorder.state === "stopped" && recorder.blob && (
-
                     <div className="flex items-center gap-2 w-full">
-
                       <audio src={URL.createObjectURL(recorder.blob)} controls className="flex-1" />
-
                       <Button type="button" variant="ghost" size="icon" onClick={recorder.reset}>
-
                         <Trash2 size={16} />
-
                       </Button>
-
                     </div>
-
                   )}
-
+                  </div>
+                  {recorder.error && (
+                    <p className="text-xs text-destructive">{recorder.error}</p>
+                  )}
+                  {uploading && (
+                    <div className="flex items-center gap-3">
+                      <p className="text-xs text-muted-foreground">
+                        Uploading… {progress}%
+                      </p>
+                      <Button type="button" variant="ghost" size="sm" onClick={cancel}>
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
               </div>

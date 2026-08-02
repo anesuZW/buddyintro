@@ -1,19 +1,12 @@
 import { requireUser } from "@/lib/auth";
 import { getTrustRecommendations } from "@/services/trust-recommendations";
 import { Avatar } from "@/components/ui/Avatar";
-import { LanguagePreferencesPanel } from "@/components/profile/LanguagePreferencesPanel";
 import { LogoutButton } from "@/components/profile/LogoutButton";
-import { ProfileEditor } from "@/components/profile/ProfileEditor";
-import { PrivacySettingsPanel } from "@/components/legal/PrivacySettingsPanel";
 import { TrustNetworkSection } from "@/components/profile/TrustNetworkSection";
-import { UserInsightsPanel } from "@/components/profile/UserInsightsPanel";
 import { TrustedUserBadge } from "@/components/trust/TrustedUserBadge";
 import { TrustRecommendationsPanel } from "@/components/trust/TrustRecommendationsPanel";
-import {
-  NotificationPreferencesPanel,
-  type NotificationPreferencesSnapshot,
-} from "@/components/profile/NotificationPreferencesPanel";
-import { PhoneVerificationPanel } from "@/components/profile/PhoneVerificationPanel";
+import { ProfileDeferredPanels } from "@/components/profile/ProfileDeferredPanels";
+import type { NotificationPreferencesSnapshot } from "@/components/profile/NotificationPreferencesPanel";
 import { getProfileTrustNetwork } from "@/services/trust-network";
 import { analyticsService } from "@/services/analytics/analytics-service";
 import { notificationService } from "@/services/notifications/notification-service";
@@ -42,12 +35,13 @@ function toNotificationPreferencesSnapshot(
 export default async function ProfilePage() {
   return runWithPerf({ kind: "page", label: "/profile" }, async () => {
     const user = await requireUser();
-    const [trustNetwork, recommendations, insights, notificationPreferences] = await Promise.all([
-      getProfileTrustNetwork(user.id, user.id),
-      getTrustRecommendations(user.id),
-      analyticsService.queryUserInsights(user.id),
-      notificationService.getPreferences(user.id),
-    ]);
+    const [trustNetwork, recommendations, insights, notificationPreferences] =
+      await Promise.all([
+        getProfileTrustNetwork(user.id, user.id),
+        getTrustRecommendations(user.id),
+        analyticsService.queryUserInsights(user.id),
+        notificationService.getPreferences(user.id),
+      ]);
 
     return (
       <div className="px-4 py-6">
@@ -67,18 +61,26 @@ export default async function ProfilePage() {
 
           <div className="mt-6 grid grid-cols-2 gap-3 w-full">
             <div className="rounded-2xl bg-muted p-4 text-center">
-              <div className="text-2xl font-bold">{trustNetwork.stats.peopleYouIntroduced}</div>
+              <div className="text-2xl font-bold">
+                {trustNetwork.stats.peopleYouIntroduced}
+              </div>
               <div className="text-xs text-muted-foreground">People introduced</div>
             </div>
 
             <div className="rounded-2xl bg-muted p-4 text-center">
-              <div className="text-2xl font-bold">{trustNetwork.stats.peopleIntroducedToYou}</div>
+              <div className="text-2xl font-bold">
+                {trustNetwork.stats.peopleIntroducedToYou}
+              </div>
               <div className="text-xs text-muted-foreground">Introduced to you</div>
             </div>
           </div>
         </div>
 
-        <TrustNetworkSection data={trustNetwork} viewerId={user.id} profileUserId={user.id} />
+        <TrustNetworkSection
+          data={trustNetwork}
+          viewerId={user.id}
+          profileUserId={user.id}
+        />
 
         <div className="mt-6">
           <TrustRecommendationsPanel
@@ -87,28 +89,17 @@ export default async function ProfilePage() {
           />
         </div>
 
-        <UserInsightsPanel initialInsights={insights} />
-
-        <PhoneVerificationPanel
-          initialPhone={user.phone}
+        <ProfileDeferredPanels
+          insights={insights}
+          phone={user.phone}
           phoneVerified={user.phoneVerified}
-        />
-
-        <ProfileEditor
-          initial={{
-            name: user.name,
-            profilePicture: user.profilePicture,
-          }}
           userId={user.id}
+          name={user.name}
+          profilePicture={user.profilePicture}
+          notificationPreferences={toNotificationPreferencesSnapshot(
+            notificationPreferences
+          )}
         />
-
-        <LanguagePreferencesPanel />
-
-        <NotificationPreferencesPanel
-          initialPreferences={toNotificationPreferencesSnapshot(notificationPreferences)}
-        />
-
-        <PrivacySettingsPanel />
 
         <div className="mt-6">
           <LogoutButton />

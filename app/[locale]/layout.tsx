@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
-import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
+import { LazyCookieConsentBanner } from "@/components/legal/LazyCookieConsentBanner";
 import { appFont } from "@/lib/fonts";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import { PwaProviders } from "@/components/pwa/PwaProviders";
@@ -35,7 +35,7 @@ export default async function LocaleLayout({ children, params }: Props) {
             <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
               <PwaProviders>
                 {children}
-                <CookieConsentBanner />
+                <LazyCookieConsentBanner />
                 <Toaster
                   position="top-center"
                   toastOptions={{

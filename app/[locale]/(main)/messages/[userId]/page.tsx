@@ -86,6 +86,7 @@ export default async function ChatPage({
   const conversationPage = await getConversation({
     userId: me.id,
     otherUserId: other.id,
+    limit: 50,
   });
   const initialMessages = conversationPage.items;
 
@@ -100,6 +101,7 @@ export default async function ChatPage({
   return (
     <div className="h-[calc(100dvh-9rem)] flex flex-col">
       <ChatWindow
+        key={other.id}
         currentUser={{ id: me.id, name: me.name, profilePicture: me.profilePicture }}
         otherUser={{
           ...other,

@@ -19,6 +19,8 @@ const MIGRATION_ORDER = [
   "0008_media_platform",
   "0009_i18n",
   "0010_pwa_push",
+  "0011_message_unread_index",
+  "0012_push_updated_at_no_default",
 ];
 
 const TABLE_MIGRATION = {

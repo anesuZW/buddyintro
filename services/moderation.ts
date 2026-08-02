@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import type { ReportStatus, ReportTargetType } from "@prisma/client";
 
@@ -28,7 +29,7 @@ export async function unblockUser(blockerId: string, blockedId: string) {
   return prisma.userBlock.deleteMany({ where: { blockerId, blockedId } });
 }
 
-export async function listBlockedUserIds(userId: string) {
+export const listBlockedUserIds = cache(async (userId: string) => {
   const rows = await prisma.userBlock.findMany({
     where: {
       OR: [{ blockerId: userId }, { blockedId: userId }],
@@ -40,7 +41,7 @@ export async function listBlockedUserIds(userId: string) {
     ids.add(r.blockerId === userId ? r.blockedId : r.blockerId);
   }
   return Array.from(ids);
-}
+});
 
 export async function createReport(args: {
   reporterId: string;

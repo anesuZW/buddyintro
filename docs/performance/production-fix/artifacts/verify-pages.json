@@ -1,0 +1,35 @@
+{
+  "capturedAt": "2026-07-31T14:36:42.559Z",
+  "base": "http://127.0.0.1:3020",
+  "results": [
+    {
+      "page": "/home",
+      "status": 200,
+      "totalMs": 7445,
+      "schemaError": false,
+      "digest": null
+    },
+    {
+      "page": "/discoveries",
+      "status": 200,
+      "totalMs": 3877,
+      "schemaError": false,
+      "digest": null
+    },
+    {
+      "page": "/messages",
+      "status": 200,
+      "totalMs": 2109,
+      "schemaError": false,
+      "digest": null
+    },
+    {
+      "page": "/profile",
+      "status": 200,
+      "totalMs": 4259,
+      "schemaError": false,
+      "digest": null
+    }
+  ],
+  "allOk": true
+}

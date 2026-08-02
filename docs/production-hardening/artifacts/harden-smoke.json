@@ -1,0 +1,347 @@
+{
+  "at": "2026-08-01T21:10:59.259Z",
+  "base": "http://127.0.0.1:3070",
+  "checks": [
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "status": 200,
+      "ms": 4077,
+      "json": {
+        "status": "degraded",
+        "database": "degraded",
+        "supabase": "healthy",
+        "redis": "degraded",
+        "storage": "healthy",
+        "queue": "healthy",
+        "worker": "healthy",
+        "memory": {
+          "heapUsedMb": 30.5,
+          "heapTotalMb": 40.5,
+          "rssMb": 93.2,
+          "externalMb": 3.8
+        },
+        "uptime": 21,
+        "nodeVersion": "v24.15.0",
+        "websocketConnections": 0,
+        "checkedAt": "2026-08-01T21:11:03.312Z",
+        "details": {
+          "mode": "lite",
+          "databaseLatencyMs": 3366
+        }
+      },
+      "bodyPreview": "{\"status\":\"degraded\",\"database\":\"degraded\",\"supabase\":\"healthy\",\"redis\":\"degraded\",\"storage\":\"healthy\",\"queue\":\"healthy\",\"worker\":\"healthy\",\"memory\":{\"heapUsedMb\":30.5,\"heapTotalMb\":40.5,\"rssMb\":93.2,"
+    },
+    {
+      "method": "GET",
+      "path": "/api/feed",
+      "status": 401,
+      "ms": 367,
+      "json": {
+        "error": "Unauthorized",
+        "code": "unauthenticated"
+      },
+      "bodyPreview": "{\"error\":\"Unauthorized\",\"code\":\"unauthenticated\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/feed",
+      "status": 200,
+      "ms": 5743,
+      "json": {
+        "items": []
+      },
+      "bodyPreview": "{\"items\":[]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/discoveries",
+      "status": 200,
+      "ms": 4727,
+      "json": {
+        "posts": [],
+        "nextCursor": null
+      },
+      "bodyPreview": "{\"posts\":[],\"nextCursor\":null}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/messages",
+      "status": 200,
+      "ms": 1368,
+      "json": {
+        "items": [],
+        "nextCursor": null
+      },
+      "bodyPreview": "{\"items\":[],\"nextCursor\":null}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications?limit=5",
+      "status": 200,
+      "ms": 1263,
+      "json": {
+        "items": [],
+        "nextCursor": null,
+        "unreadCount": 0
+      },
+      "bodyPreview": "{\"items\":[],\"nextCursor\":null,\"unreadCount\":0}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/stories",
+      "status": 200,
+      "ms": 1394,
+      "json": {
+        "stories": []
+      },
+      "bodyPreview": "{\"stories\":[]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/push/subscribe",
+      "status": 200,
+      "ms": 1417,
+      "json": {
+        "publicKey": "BNq5zGQPhcYUMJ5QCk8uPL36IVy8unx8hQBEaumKvu0QmyVGIgPGBHLXj5U3Rv4Z5Cv_HtqzivSRrPOk8ZTXffY",
+        "subscribed": false,
+        "configured": true
+      },
+      "bodyPreview": "{\"publicKey\":\"BNq5zGQPhcYUMJ5QCk8uPL36IVy8unx8hQBEaumKvu0QmyVGIgPGBHLXj5U3Rv4Z5Cv_HtqzivSRrPOk8ZTXffY\",\"subscribed\":false,\"configured\":true}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/discoveries",
+      "status": 201,
+      "ms": 3936,
+      "json": {
+        "post": {
+          "id": "88645f25-fb86-4a66-b684-7df8f8d8ef56",
+          "userId": "9fd1cd19-bff7-47fe-af71-ef001816dc07",
+          "content": "harden smoke 1785618679616",
+          "mediaUrl": null,
+          "mediaType": null,
+          "visibility": "network",
+          "introductionCategoryId": null,
+          "visibilityMode": "mutual_introduction_network",
+          "createdAt": "2026-08-01T21:11:20.055Z",
+          "expiresAt": "2026-08-02T21:11:20.052Z",
+          "user": {
+            "id": "9fd1cd19-bff7-47fe-af71-ef001816dc07",
+            "name": "user1",
+            "profilePicture": null
+          }
+        }
+      },
+      "bodyPreview": "{\"post\":{\"id\":\"88645f25-fb86-4a66-b684-7df8f8d8ef56\",\"userId\":\"9fd1cd19-bff7-47fe-af71-ef001816dc07\",\"content\":\"harden smoke 1785618679616\",\"mediaUrl\":null,\"mediaType\":null,\"visibility\":\"network\",\"int"
+    },
+    {
+      "method": "POST",
+      "path": "/api/discoveries",
+      "status": 403,
+      "ms": 63,
+      "json": {
+        "error": "Invalid origin",
+        "code": "csrf_rejected",
+        "reason": "Request origin not allowed",
+        "rejectSource": "csrf",
+        "requestId": "f2fbda5f-9d98-4cd2-ae9d-ca229447f16d"
+      },
+      "bodyPreview": "{\"error\":\"Invalid origin\",\"code\":\"csrf_rejected\",\"reason\":\"Request origin not allowed\",\"rejectSource\":\"csrf\",\"requestId\":\"f2fbda5f-9d98-4cd2-ae9d-ca229447f16d\"}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/messages",
+      "status": 422,
+      "ms": 370,
+      "json": {
+        "error": "Invalid uuid",
+        "code": "validation_error"
+      },
+      "bodyPreview": "{\"error\":\"Invalid uuid\",\"code\":\"validation_error\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/home",
+      "status": 200,
+      "ms": 4075,
+      "json": null,
+      "bodyPreview": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover\"/><link rel=\"stylesheet\" h"
+    },
+    {
+      "method": "GET",
+      "path": "/manifest.webmanifest",
+      "status": 200,
+      "ms": 110,
+      "json": {
+        "id": "/",
+        "name": "BuddyIntro",
+        "short_name": "Buddy",
+        "description": "Discover trusted people through people you already trust",
+        "start_url": "/home",
+        "scope": "/",
+        "display": "standalone",
+        "display_override": [
+          "standalone",
+          "minimal-ui",
+          "browser"
+        ],
+        "background_color": "#0F172A",
+        "theme_color": "#2563EB",
+        "orientation": "portrait-primary",
+        "categories": [
+          "social",
+          "lifestyle"
+        ],
+        "lang": "en",
+        "dir": "ltr",
+        "prefer_related_applications": false,
+        "launch_handler": {
+          "client_mode": "navigate-existing"
+        },
+        "icons": [
+          {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+          },
+          {
+            "src": "/icons/icon-256.png",
+            "sizes": "256x256",
+            "type": "image/png",
+            "purpose": "any"
+          },
+          {
+            "src": "/icons/icon-384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "any"
+          },
+          {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+          },
+          {
+            "src": "/icons/maskable-icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+          },
+          {
+            "src": "/icons/icon-512.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any"
+          },
+          {
+            "src": "/icons/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "any"
+          }
+        ],
+        "shortcuts": [
+          {
+            "name": "Introductions",
+            "short_name": "Intro",
+            "url": "/introductions",
+            "icons": [
+              {
+                "src": "/icons/icon-192.png",
+                "sizes": "192x192"
+              }
+            ]
+          },
+          {
+            "name": "Discoveries",
+            "short_name": "Discover",
+            "url": "/discoveries",
+            "icons": [
+              {
+                "src": "/icons/icon-192.png",
+                "sizes": "192x192"
+              }
+            ]
+          },
+          {
+            "name": "Messages",
+            "short_name": "Messages",
+            "url": "/messages",
+            "icons": [
+              {
+                "src": "/icons/icon-192.png",
+                "sizes": "192x192"
+              }
+            ]
+          }
+        ],
+        "screenshots": [
+          {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "BuddyIntro home"
+          }
+        ],
+        "share_target": {
+          "action": "/api/share/target",
+          "method": "POST",
+          "enctype": "multipart/form-data",
+          "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url",
+            "files": [
+              {
+                "name": "media",
+                "accept": [
+                  "image/*",
+                  "video/*",
+                  "text/plain"
+                ]
+              }
+            ]
+          }
+        },
+        "protocol_handlers": [
+          {
+            "protocol": "web+buddyintro",
+            "url": "/share?url=%s"
+          }
+        ],
+        "file_handlers": [
+          {
+            "action": "/share",
+            "accept": {
+              "image/*": [
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".webp",
+                ".gif"
+              ],
+              "video/*": [
+                ".mp4",
+                ".webm",
+                ".mov"
+              ]
+            }
+          }
+        ]
+      },
+      "bodyPreview": "{\"id\":\"/\",\"name\":\"BuddyIntro\",\"short_name\":\"Buddy\",\"description\":\"Discover trusted people through people you already trust\",\"start_url\":\"/home\",\"scope\":\"/\",\"display\":\"standalone\",\"display_override\":[\""
+    },
+    {
+      "method": "GET",
+      "path": "/sw.js",
+      "status": 200,
+      "ms": 26,
+      "json": null,
+      "bodyPreview": "/**\r\n * Workbox service worker source — compiled to public/sw.js via scripts/build-sw.js\r\n * @see docs/PWA.md\r\n */\r\n\r\n/* eslint-disable no-undef */\r\nimportScripts(\"/workbox/workbox-sw.js\");\r\n\r\nworkbox"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "host": "aws-1-us-east-1.pooler.supabase.com",
+  "port": 5432,
+  "tcp": {
+    "n": 5,
+    "min": 814.987,
+    "median": 852.122,
+    "p95": 905.774,
+    "p99": 905.774,
+    "max": 905.774,
+    "mean": 857.29,
+    "samples": [
+      814.987,
+      816.432,
+      852.122,
+      897.134,
+      905.774
+    ]
+  },
+  "tlsHandshake": null,
+  "tcpPlusTls": null,
+  "lastDetail": {
+    "ok": false,
+    "tcpMs": 812.0847,
+    "tlsMs": 293.16,
+    "totalConnectMs": 1105.2589,
+    "error": "ERR_SSL_WRONG_VERSION_NUMBER"
+  }
+}

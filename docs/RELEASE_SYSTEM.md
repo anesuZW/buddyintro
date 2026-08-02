@@ -92,7 +92,7 @@ scripts/
   release.js          # Build pipeline
   publish.js          # GitHub publish
   deploy.js           # SSH deploy + auto-rollback
-  rollback.js         # Manual rollback
+  deploy-rollback.js   # Manual rollback (`npm run deploy:rollback`)
   doctor.js           # Pre-flight checks
   lib/
     exec.js           # Cross-platform process execution

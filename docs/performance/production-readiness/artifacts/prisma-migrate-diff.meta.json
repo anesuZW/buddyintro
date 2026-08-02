@@ -1,0 +1,6 @@
+{
+  "status": 0,
+  "stderr": "npm warn Unknown env config \"devdir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n┌─────────────────────────────────────────────────────────┐\n│  Update available 5.22.0 -> 7.9.1                       │\n│                                                         │\n│  This is a major update - please follow the guide at    │\n│  https://pris.ly/d/major-version-upgrade                │\n│                                                         │\n│  Run the following to update                            │\n│    npm i --save-dev prisma@latest                       │\n│    npm i @prisma/client@latest                          │\n└─────────────────────────────────────────────────────────┘\n",
+  "stdoutBytes": 2179,
+  "lineCount": 62
+}

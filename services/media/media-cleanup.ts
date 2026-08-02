@@ -47,11 +47,13 @@ async function collectReferencedStoragePaths(): Promise<Set<string>> {
     }
   };
 
-  const [users, stories, discoveriesPosts, mediaObjects] = await Promise.all([
+  // Only paths attached to user-visible entities count as "in use".
+  // media_objects alone are NOT referenced — otherwise upload-then-abandon
+  // orphans can never be reclaimed (registry row protected the file forever).
+  const [users, stories, discoveriesPosts] = await Promise.all([
     prisma.user.findMany({ where: { profilePicture: { not: null } }, select: { profilePicture: true } }),
     prisma.story.findMany({ select: { mediaUrl: true, voiceNoteUrl: true } }),
     prisma.discoveriesPost.findMany({ where: { mediaUrl: { not: null } }, select: { mediaUrl: true } }),
-    prisma.mediaObject.findMany({ select: { storagePath: true, variants: true } }),
   ]);
 
   for (const user of users) addStored(user.profilePicture);
@@ -60,17 +62,6 @@ async function collectReferencedStoragePaths(): Promise<Set<string>> {
     addStored(story.voiceNoteUrl);
   }
   for (const post of discoveriesPosts) addStored(post.mediaUrl);
-  for (const row of mediaObjects) {
-    referenced.add(row.storagePath);
-    if (row.variants && typeof row.variants === "object" && !Array.isArray(row.variants)) {
-      for (const value of Object.values(row.variants as Record<string, string>)) {
-        if (typeof value === "string") referenced.add(normalizeStoragePath(value));
-      }
-    }
-    for (const variant of collectVariantStoragePaths(row.storagePath)) {
-      referenced.add(variant);
-    }
-  }
 
   return referenced;
 }
@@ -126,6 +117,11 @@ export async function runMediaCleanup(opts: {
     if (report.deletedPaths.length < 100) {
       report.deletedPaths.push(normalized);
     }
+
+    // Drop registry rows for reclaimed orphans so dedupe/DB stay consistent.
+    await prisma.mediaObject
+      .deleteMany({ where: { storagePath: normalized } })
+      .catch(() => undefined);
   }
 
   console.info(

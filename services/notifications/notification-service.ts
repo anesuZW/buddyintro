@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { cache } from "react";
 import { isPrismaUniqueViolation } from "@/lib/prisma-errors";
 import { getAdminSettings } from "@/services/admin";
 import { enqueueOrRun, jobProvider } from "@/services/jobs/job-service";
@@ -38,6 +39,11 @@ async function getOrCreatePreferences(userId: string) {
   }
 }
 
+/** Request-scoped dedupe for NotificationPreferences.findUnique/create. */
+const getNotificationPreferencesCached = cache((userId: string) =>
+  getOrCreatePreferences(userId)
+);
+
 function inQuietHours(prefs: {
   quietHoursEnabled: boolean;
   quietHoursStart: string | null;
@@ -59,7 +65,10 @@ async function shouldDeliver(
   type: string,
   channel: "in_app" | "email" | "push"
 ): Promise<boolean> {
-  const [settings, prefs] = await Promise.all([getAdminSettings(), getOrCreatePreferences(userId)]);
+  const [settings, prefs] = await Promise.all([
+    getAdminSettings(),
+    getNotificationPreferencesCached(userId),
+  ]);
   if (!settings.enableNotifications || !prefs.enableNotifications) return false;
   if (inQuietHours(prefs) && channel !== "in_app") return false;
 
@@ -239,7 +248,7 @@ export const notificationService = {
   },
 
   async getPreferences(userId: string) {
-    return getOrCreatePreferences(userId);
+    return getNotificationPreferencesCached(userId);
   },
 
   async updatePreferences(userId: string, input: UpdateNotificationPreferencesInput) {
@@ -306,6 +315,6 @@ export const notificationService = {
   },
 };
 
-export async function getUnreadNotificationCount(userId: string) {
+export const getUnreadNotificationCount = cache(async (userId: string) => {
   return notificationService.unreadCount(userId);
-}
+});

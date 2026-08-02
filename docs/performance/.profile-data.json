@@ -1,0 +1,1635 @@
+{
+  "generatedAt": "2026-07-26T06:37:26.870Z",
+  "sprint": "Database Performance Profiling — READ-ONLY",
+  "branch": "performance-recovery-sprint",
+  "profilingConfig": {
+    "prismaQueryTiming": false,
+    "slowQueryThresholdMs": 200,
+    "slowQueryLog": "disabled unless NODE_ENV=development",
+    "phase2Profiler": false,
+    "authProfile": false,
+    "productionBenchmark": false,
+    "perfContext": "runWithPerf() on pages — queryCount + slowQueries via lib/perf/context.ts",
+    "recommendationForMeasurement": "PROFILE_PRODUCTION=1 PROFILE_PHASE2=1 AUTH_PROFILE=1 NODE_ENV=development npm run dev",
+    "trackPrismaSource": "lib/prisma.ts $extends query timing → trackPrismaQuery → recordPhase2PrismaQuery",
+    "note": "HTTP captured with PROFILE_PRODUCTION=1 dev server"
+  },
+  "latency": {
+    "runs": 2,
+    "databaseUrl": "postgresql://postgres.***:***@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+    "directUrl": "postgresql://postgres.***:***@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+    "infraBaselineMs": 455,
+    "infraP95Ms": 603,
+    "poolerBottleneck": true,
+    "benchmarks": [
+      {
+        "label": "SELECT 1",
+        "min": 307,
+        "avg": 455,
+        "p95": 603,
+        "max": 603,
+        "samples": [
+          307,
+          603
+        ],
+        "model": "raw",
+        "operation": "queryRaw"
+      },
+      {
+        "label": "AdminSettings.findUnique",
+        "min": 295,
+        "avg": 455,
+        "p95": 615,
+        "max": 615,
+        "samples": [
+          295,
+          615
+        ],
+        "model": "AdminSettings",
+        "operation": "findUnique"
+      },
+      {
+        "label": "User.findUnique",
+        "min": 312,
+        "avg": 469,
+        "p95": 625,
+        "max": 625,
+        "samples": [
+          312,
+          625
+        ],
+        "model": "User",
+        "operation": "findUnique"
+      },
+      {
+        "label": "Story.count",
+        "min": 307,
+        "avg": 459,
+        "p95": 610,
+        "max": 610,
+        "samples": [
+          307,
+          610
+        ],
+        "model": "Story",
+        "operation": "count"
+      },
+      {
+        "label": "Story.findMany (published, take 20)",
+        "min": 286,
+        "avg": 439,
+        "p95": 592,
+        "max": 592,
+        "samples": [
+          286,
+          592
+        ],
+        "model": "Story",
+        "operation": "findMany"
+      },
+      {
+        "label": "StoryTag.findMany (tagged user)",
+        "min": 312,
+        "avg": 485,
+        "p95": 658,
+        "max": 658,
+        "samples": [
+          312,
+          658
+        ],
+        "model": "StoryTag",
+        "operation": "findMany"
+      },
+      {
+        "label": "DiscoveriesPost.findMany (network feed)",
+        "min": 307,
+        "avg": 510,
+        "p95": 713,
+        "max": 713,
+        "samples": [
+          307,
+          713
+        ],
+        "model": "DiscoveriesPost",
+        "operation": "findMany"
+      },
+      {
+        "label": "SharedIntroducerRelationship.findMany",
+        "min": 280,
+        "avg": 447,
+        "p95": 614,
+        "max": 614,
+        "samples": [
+          280,
+          614
+        ],
+        "model": "SharedIntroducerRelationship",
+        "operation": "findMany"
+      },
+      {
+        "label": "Notification.count (unread)",
+        "min": 308,
+        "avg": 476,
+        "p95": 643,
+        "max": 643,
+        "samples": [
+          308,
+          643
+        ],
+        "model": "Notification",
+        "operation": "count"
+      },
+      {
+        "label": "Message.count (unread inbox)",
+        "min": 281,
+        "avg": 499,
+        "p95": 716,
+        "max": 716,
+        "samples": [
+          281,
+          716
+        ],
+        "model": "Message",
+        "operation": "count"
+      },
+      {
+        "label": "AnalyticsEvent.count (24h)",
+        "min": 276,
+        "avg": 459,
+        "p95": 641,
+        "max": 641,
+        "samples": [
+          276,
+          641
+        ],
+        "model": "AnalyticsEvent",
+        "operation": "count"
+      },
+      {
+        "label": "UserConnection.findMany (1st degree)",
+        "min": 406,
+        "avg": 528,
+        "p95": 649,
+        "max": 649,
+        "samples": [
+          406,
+          649
+        ],
+        "model": "UserConnection",
+        "operation": "findMany"
+      }
+    ],
+    "interpretation": [
+      {
+        "query": "SELECT 1",
+        "avgMs": 455,
+        "p95Ms": 603,
+        "queryCostAboveInfraMs": 0,
+        "mostlyInfra": true
+      },
+      {
+        "query": "AdminSettings.findUnique",
+        "avgMs": 455,
+        "p95Ms": 615,
+        "queryCostAboveInfraMs": 0,
+        "mostlyInfra": true
+      },
+      {
+        "query": "User.findUnique",
+        "avgMs": 469,
+        "p95Ms": 625,
+        "queryCostAboveInfraMs": 14,
+        "mostlyInfra": true
+      },
+      {
+        "query": "Story.count",
+        "avgMs": 459,
+        "p95Ms": 610,
+        "queryCostAboveInfraMs": 4,
+        "mostlyInfra": true
+      },
+      {
+        "query": "Story.findMany (published, take 20)",
+        "avgMs": 439,
+        "p95Ms": 592,
+        "queryCostAboveInfraMs": -16,
+        "mostlyInfra": true
+      },
+      {
+        "query": "StoryTag.findMany (tagged user)",
+        "avgMs": 485,
+        "p95Ms": 658,
+        "queryCostAboveInfraMs": 30,
+        "mostlyInfra": true
+      },
+      {
+        "query": "DiscoveriesPost.findMany (network feed)",
+        "avgMs": 510,
+        "p95Ms": 713,
+        "queryCostAboveInfraMs": 55,
+        "mostlyInfra": true
+      },
+      {
+        "query": "SharedIntroducerRelationship.findMany",
+        "avgMs": 447,
+        "p95Ms": 614,
+        "queryCostAboveInfraMs": -8,
+        "mostlyInfra": true
+      },
+      {
+        "query": "Notification.count (unread)",
+        "avgMs": 476,
+        "p95Ms": 643,
+        "queryCostAboveInfraMs": 21,
+        "mostlyInfra": true
+      },
+      {
+        "query": "Message.count (unread inbox)",
+        "avgMs": 499,
+        "p95Ms": 716,
+        "queryCostAboveInfraMs": 44,
+        "mostlyInfra": true
+      },
+      {
+        "query": "AnalyticsEvent.count (24h)",
+        "avgMs": 459,
+        "p95Ms": 641,
+        "queryCostAboveInfraMs": 4,
+        "mostlyInfra": true
+      },
+      {
+        "query": "UserConnection.findMany (1st degree)",
+        "avgMs": 528,
+        "p95Ms": 649,
+        "queryCostAboveInfraMs": 73,
+        "mostlyInfra": true
+      }
+    ]
+  },
+  "explain": {
+    "connection": "postgresql://postgres.***:***@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+    "plans": [
+      {
+        "name": "AdminSettings.findUnique",
+        "executionTimeMs": 0.066,
+        "planningTimeMs": 0.741,
+        "scanTypes": [
+          "Index Scan"
+        ],
+        "rowsReturned": 1,
+        "missingIndexHints": [],
+        "raw": "Index Scan using admin_settings_pkey on admin_settings  (cost=0.15..2.37 rows=1 width=117) (actual time=0.016..0.017 rows=1 loops=1)\n  Index Cond: (id = 1)\n  Buffers: shared hit=2\nPlanning:\n  Buffers: shared hit=215\nPlanning Time: 0.741 ms\nExecution Time: 0.066 ms"
+      },
+      {
+        "name": "User.findUnique",
+        "executionTimeMs": 0.052,
+        "planningTimeMs": 0.636,
+        "scanTypes": [
+          "Index Scan"
+        ],
+        "rowsReturned": 1,
+        "missingIndexHints": [],
+        "raw": "Index Scan using users_pkey on users  (cost=0.15..2.37 rows=1 width=249) (actual time=0.018..0.019 rows=1 loops=1)\n  Index Cond: (id = '9fd1cd19-bff7-47fe-af71-ef001816dc07'::uuid)\n  Buffers: shared hit=2\nPlanning:\n  Buffers: shared hit=174\nPlanning Time: 0.636 ms\nExecution Time: 0.052 ms"
+      },
+      {
+        "name": "Story.findMany (published)",
+        "executionTimeMs": 0.178,
+        "planningTimeMs": 0.495,
+        "scanTypes": [
+          "Seq Scan",
+          "Sort"
+        ],
+        "rowsReturned": 20,
+        "missingIndexHints": [
+          "Sequential scan detected — verify index coverage for WHERE/JOIN columns"
+        ],
+        "raw": "Limit  (cost=8.33..8.38 rows=20 width=256) (actual time=0.134..0.139 rows=20 loops=1)\n  Buffers: shared hit=7\n  ->  Sort  (cost=8.33..8.60 rows=110 width=256) (actual time=0.133..0.135 rows=20 loops=1)\n        Sort Key: created_at DESC\n        Sort Method: top-N heapsort  Memory: 37kB\n        Buffers: shared hit=7\n        ->  Seq Scan on stories  (cost=0.00..5.40 rows=110 width=256) (actual time=0.019..0.063 rows=66 loops=1)\n              Filter: (status = 'published'::\"StoryStatus\")\n              Rows Removed by Filter: 4\n              Buffers: shared hit=4\nPlanning:\n  Buffers: shared hit=135\nPlanning Time: 0.495 ms\nExecution Time: 0.178 ms"
+      },
+      {
+        "name": "StoryTag.findMany (tagged_user_id)",
+        "executionTimeMs": 0.049,
+        "planningTimeMs": 0.576,
+        "scanTypes": [
+          "Seq Scan"
+        ],
+        "rowsReturned": 1,
+        "missingIndexHints": [
+          "Sequential scan detected — verify index coverage for WHERE/JOIN columns"
+        ],
+        "raw": "Limit  (cost=0.00..1.71 rows=1 width=128) (actual time=0.027..0.027 rows=0 loops=1)\n  Buffers: shared hit=1\n  ->  Seq Scan on story_tags  (cost=0.00..1.71 rows=1 width=128) (actual time=0.026..0.026 rows=0 loops=1)\n        Filter: (tagged_user_id = '9fd1cd19-bff7-47fe-af71-ef001816dc07'::uuid)\n        Rows Removed by Filter: 71\n        Buffers: shared hit=1\nPlanning:\n  Buffers: shared hit=156\nPlanning Time: 0.576 ms\nExecution Time: 0.049 ms"
+      },
+      {
+        "name": "DiscoveriesPost.findMany",
+        "executionTimeMs": 0.047,
+        "planningTimeMs": 0.325,
+        "scanTypes": [
+          "Seq Scan",
+          "Sort"
+        ],
+        "rowsReturned": 11,
+        "missingIndexHints": [
+          "Sequential scan detected — verify index coverage for WHERE/JOIN columns"
+        ],
+        "raw": "Limit  (cost=25.50..25.53 rows=11 width=140) (actual time=0.021..0.024 rows=11 loops=1)\n  Buffers: shared hit=1\n  ->  Sort  (cost=25.50..26.70 rows=480 width=140) (actual time=0.020..0.022 rows=11 loops=1)\n        Sort Key: created_at DESC\n        Sort Method: quicksort  Memory: 27kB\n        Buffers: shared hit=1\n        ->  Seq Scan on discoveries_posts  (cost=0.00..14.80 rows=480 width=140) (actual time=0.009..0.010 rows=13 loops=1)\n              Buffers: shared hit=1\nPlanning:\n  Buffers: shared hit=83\nPlanning Time: 0.325 ms\nExecution Time: 0.047 ms"
+      },
+      {
+        "name": "Notification.count (unread)",
+        "executionTimeMs": 0.136,
+        "planningTimeMs": 0.457,
+        "scanTypes": [
+          "Index Scan"
+        ],
+        "rowsReturned": 1,
+        "missingIndexHints": [],
+        "raw": "Aggregate  (cost=26.86..26.87 rows=1 width=8) (actual time=0.077..0.078 rows=1 loops=1)\n  Buffers: shared hit=20\n  ->  Index Scan using notifications_user_id_idx on notifications  (cost=0.14..26.72 rows=56 width=0) (actual time=0.016..0.068 rows=69 loops=1)\n        Index Cond: (user_id = '9fd1cd19-bff7-47fe-af71-ef001816dc07'::uuid)\n        Filter: (read_at IS NULL)\n        Buffers: shared hit=20\nPlanning:\n  Buffers: shared hit=101\nPlanning Time: 0.457 ms\nExecution Time: 0.136 ms"
+      },
+      {
+        "name": "Message.count (unread)",
+        "executionTimeMs": 0.063,
+        "planningTimeMs": 0.471,
+        "scanTypes": [
+          "Index Scan",
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "rowsReturned": 1,
+        "missingIndexHints": [],
+        "raw": "Aggregate  (cost=4.45..4.46 rows=1 width=8) (actual time=0.017..0.018 rows=1 loops=1)\n  Buffers: shared hit=1\n  ->  Bitmap Heap Scan on messages  (cost=1.27..4.44 rows=1 width=0) (actual time=0.014..0.014 rows=0 loops=1)\n        Recheck Cond: (receiver_id = '9fd1cd19-bff7-47fe-af71-ef001816dc07'::uuid)\n        Filter: (read_at IS NULL)\n        Buffers: shared hit=1\n        ->  Bitmap Index Scan on messages_receiver_id_sender_id_created_at_idx  (cost=0.00..1.27 rows=3 width=0) (actual time=0.009..0.009 rows=0 loops=1)\n              Index Cond: (receiver_id = '9fd1cd19-bff7-47fe-af71-ef001816dc07'::uuid)\n              Buffers: shared hit=1\nPlanning:\n  Buffers: shared hit=104\nPlanning Time: 0.471 ms\nExecution Time: 0.063 ms"
+      },
+      {
+        "name": "SharedIntroducerRelationship.findMany",
+        "executionTimeMs": 0.06,
+        "planningTimeMs": 0.353,
+        "scanTypes": [
+          "Index Scan",
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "rowsReturned": 1,
+        "missingIndexHints": [],
+        "raw": "Limit  (cost=4.39..5.50 rows=1 width=104) (actual time=0.021..0.022 rows=0 loops=1)\n  Buffers: shared hit=2\n  ->  Bitmap Heap Scan on shared_introducer_relationships  (cost=4.39..5.50 rows=1 width=104) (actual time=0.020..0.021 rows=0 loops=1)\n        Recheck Cond: ((user_a_id = '9fd1cd19-bff7-47fe-af71-ef001816dc07'::uuid) OR (user_b_id = '9fd1cd19-bff7-47fe-af71-ef001816dc07'::uuid))\n        Buffers: shared hit=2\n        ->  BitmapOr  (cost=4.39..4.39 rows=1 width=0) (actual time=0.014..0.014 rows=0 loops=1)\n              Buffers: shared hit=2\n              ->  Bitmap Index Scan on shared_introducer_relationships_user_a_id_user_b_id_shared__key  (cost=0.00..1.25 rows=1 width=0) (actual time=0.007..0.007 rows=0 loops=1)\n                    Index Cond: (user_a_id = '9fd1cd19-bff7-47fe-af71-ef001816dc07'::uuid)\n                    Buffers: shared hit=1\n              ->  Bitmap Index Scan on shared_introducer_relationships_user_a_id_user_b_id_shared__key  (cost=0.00..3.14 rows=1 width=0) (actual time=0.006..0.006 rows=0 loops=1)\n                    Index Cond: (user_b_id = '9fd1cd19-bff7-47fe-af71-ef001816dc07'::uuid)\n                    Buffers: shared hit=1\nPlanning:\n  Buffers: shared hit=87\nPlanning Time: 0.353 ms\nExecution Time: 0.060 ms"
+      },
+      {
+        "name": "Story.count (intro badge pattern)",
+        "executionTimeMs": 0.077,
+        "planningTimeMs": 0.821,
+        "scanTypes": [
+          "Seq Scan",
+          "Index Only Scan",
+          "Nested Loop"
+        ],
+        "rowsReturned": 1,
+        "missingIndexHints": [
+          "Sequential scan detected — verify index coverage for WHERE/JOIN columns"
+        ],
+        "raw": "Aggregate  (cost=4.11..4.12 rows=1 width=8) (actual time=0.028..0.029 rows=1 loops=1)\n  Buffers: shared hit=1\n  ->  Nested Loop  (cost=0.14..4.11 rows=1 width=0) (actual time=0.025..0.026 rows=0 loops=1)\n        Buffers: shared hit=1\n        ->  Seq Scan on story_tags t  (cost=0.00..1.71 rows=1 width=16) (actual time=0.025..0.025 rows=0 loops=1)\n              Filter: (tagged_user_id = '9fd1cd19-bff7-47fe-af71-ef001816dc07'::uuid)\n              Rows Removed by Filter: 71\n              Buffers: shared hit=1\n        ->  Index Only Scan using stories_pkey on stories s  (cost=0.14..2.36 rows=1 width=16) (never executed)\n              Index Cond: (id = t.story_id)\n              Heap Fetches: 0\nPlanning:\n  Buffers: shared hit=146\nPlanning Time: 0.821 ms\nExecution Time: 0.077 ms"
+      }
+    ]
+  },
+  "indexes": {
+    "indexesByTable": {
+      "users": [
+        {
+          "name": "users_email_idx",
+          "def": "CREATE INDEX users_email_idx ON public.users USING btree (email)"
+        },
+        {
+          "name": "users_email_key",
+          "def": "CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email)"
+        },
+        {
+          "name": "users_phone_idx",
+          "def": "CREATE INDEX users_phone_idx ON public.users USING btree (phone)"
+        },
+        {
+          "name": "users_pkey",
+          "def": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)"
+        },
+        {
+          "name": "users_preferred_language_idx",
+          "def": "CREATE INDEX users_preferred_language_idx ON public.users USING btree (preferred_language)"
+        },
+        {
+          "name": "users_trusted_user_idx",
+          "def": "CREATE INDEX users_trusted_user_idx ON public.users USING btree (trusted_user)"
+        },
+        {
+          "name": "users_verification_level_idx",
+          "def": "CREATE INDEX users_verification_level_idx ON public.users USING btree (verification_level)"
+        }
+      ],
+      "stories": [
+        {
+          "name": "stories_expires_at_idx",
+          "def": "CREATE INDEX stories_expires_at_idx ON public.stories USING btree (expires_at)"
+        },
+        {
+          "name": "stories_introduction_category_id_idx",
+          "def": "CREATE INDEX stories_introduction_category_id_idx ON public.stories USING btree (introduction_category_id)"
+        },
+        {
+          "name": "stories_pkey",
+          "def": "CREATE UNIQUE INDEX stories_pkey ON public.stories USING btree (id)"
+        },
+        {
+          "name": "stories_status_idx",
+          "def": "CREATE INDEX stories_status_idx ON public.stories USING btree (status)"
+        },
+        {
+          "name": "stories_user_id_idx",
+          "def": "CREATE INDEX stories_user_id_idx ON public.stories USING btree (user_id)"
+        }
+      ],
+      "story_tags": [
+        {
+          "name": "story_tags_invitation_id_key",
+          "def": "CREATE UNIQUE INDEX story_tags_invitation_id_key ON public.story_tags USING btree (invitation_id)"
+        },
+        {
+          "name": "story_tags_pkey",
+          "def": "CREATE UNIQUE INDEX story_tags_pkey ON public.story_tags USING btree (id)"
+        },
+        {
+          "name": "story_tags_story_id_idx",
+          "def": "CREATE INDEX story_tags_story_id_idx ON public.story_tags USING btree (story_id)"
+        },
+        {
+          "name": "story_tags_story_id_tagged_external_email_key",
+          "def": "CREATE UNIQUE INDEX story_tags_story_id_tagged_external_email_key ON public.story_tags USING btree (story_id, tagged_external_email)"
+        },
+        {
+          "name": "story_tags_story_id_tagged_external_phone_key",
+          "def": "CREATE UNIQUE INDEX story_tags_story_id_tagged_external_phone_key ON public.story_tags USING btree (story_id, tagged_external_phone)"
+        },
+        {
+          "name": "story_tags_story_id_tagged_user_id_key",
+          "def": "CREATE UNIQUE INDEX story_tags_story_id_tagged_user_id_key ON public.story_tags USING btree (story_id, tagged_user_id)"
+        },
+        {
+          "name": "story_tags_tagged_external_email_idx",
+          "def": "CREATE INDEX story_tags_tagged_external_email_idx ON public.story_tags USING btree (tagged_external_email)"
+        },
+        {
+          "name": "story_tags_tagged_external_phone_idx",
+          "def": "CREATE INDEX story_tags_tagged_external_phone_idx ON public.story_tags USING btree (tagged_external_phone)"
+        },
+        {
+          "name": "story_tags_tagged_user_id_idx",
+          "def": "CREATE INDEX story_tags_tagged_user_id_idx ON public.story_tags USING btree (tagged_user_id)"
+        }
+      ],
+      "discoveries_posts": [
+        {
+          "name": "discoveries_posts_expires_at_idx",
+          "def": "CREATE INDEX discoveries_posts_expires_at_idx ON public.discoveries_posts USING btree (expires_at)"
+        },
+        {
+          "name": "discoveries_posts_pkey",
+          "def": "CREATE UNIQUE INDEX discoveries_posts_pkey ON public.discoveries_posts USING btree (id)"
+        },
+        {
+          "name": "discoveries_posts_user_id_idx",
+          "def": "CREATE INDEX discoveries_posts_user_id_idx ON public.discoveries_posts USING btree (user_id)"
+        },
+        {
+          "name": "discoveries_posts_visibility_created_at_idx",
+          "def": "CREATE INDEX discoveries_posts_visibility_created_at_idx ON public.discoveries_posts USING btree (visibility, created_at)"
+        }
+      ],
+      "messages": [
+        {
+          "name": "messages_discoveries_post_reference_idx",
+          "def": "CREATE INDEX messages_discoveries_post_reference_idx ON public.messages USING btree (discoveries_post_reference)"
+        },
+        {
+          "name": "messages_pkey",
+          "def": "CREATE UNIQUE INDEX messages_pkey ON public.messages USING btree (id)"
+        },
+        {
+          "name": "messages_receiver_id_sender_id_created_at_idx",
+          "def": "CREATE INDEX messages_receiver_id_sender_id_created_at_idx ON public.messages USING btree (receiver_id, sender_id, created_at)"
+        },
+        {
+          "name": "messages_sender_id_receiver_id_created_at_idx",
+          "def": "CREATE INDEX messages_sender_id_receiver_id_created_at_idx ON public.messages USING btree (sender_id, receiver_id, created_at)"
+        },
+        {
+          "name": "messages_story_reference_idx",
+          "def": "CREATE INDEX messages_story_reference_idx ON public.messages USING btree (story_reference)"
+        }
+      ],
+      "notifications": [
+        {
+          "name": "notifications_created_at_idx",
+          "def": "CREATE INDEX notifications_created_at_idx ON public.notifications USING btree (created_at)"
+        },
+        {
+          "name": "notifications_is_read_idx",
+          "def": "CREATE INDEX notifications_is_read_idx ON public.notifications USING btree (is_read)"
+        },
+        {
+          "name": "notifications_pkey",
+          "def": "CREATE UNIQUE INDEX notifications_pkey ON public.notifications USING btree (id)"
+        },
+        {
+          "name": "notifications_user_id_created_at_idx",
+          "def": "CREATE INDEX notifications_user_id_created_at_idx ON public.notifications USING btree (user_id, created_at)"
+        },
+        {
+          "name": "notifications_user_id_idx",
+          "def": "CREATE INDEX notifications_user_id_idx ON public.notifications USING btree (user_id)"
+        },
+        {
+          "name": "notifications_user_id_is_read_created_at_idx",
+          "def": "CREATE INDEX notifications_user_id_is_read_created_at_idx ON public.notifications USING btree (user_id, is_read, created_at)"
+        }
+      ],
+      "analytics_events": [
+        {
+          "name": "analytics_events_created_at_idx",
+          "def": "CREATE INDEX analytics_events_created_at_idx ON public.analytics_events USING btree (created_at)"
+        },
+        {
+          "name": "analytics_events_event_type_created_at_idx",
+          "def": "CREATE INDEX analytics_events_event_type_created_at_idx ON public.analytics_events USING btree (event_type, created_at)"
+        },
+        {
+          "name": "analytics_events_event_type_idx",
+          "def": "CREATE INDEX analytics_events_event_type_idx ON public.analytics_events USING btree (event_type)"
+        },
+        {
+          "name": "analytics_events_pkey",
+          "def": "CREATE UNIQUE INDEX analytics_events_pkey ON public.analytics_events USING btree (id)"
+        },
+        {
+          "name": "analytics_events_user_id_idx",
+          "def": "CREATE INDEX analytics_events_user_id_idx ON public.analytics_events USING btree (user_id)"
+        }
+      ],
+      "invitations": [
+        {
+          "name": "invitations_email_idx",
+          "def": "CREATE INDEX invitations_email_idx ON public.invitations USING btree (email)"
+        },
+        {
+          "name": "invitations_invite_token_idx",
+          "def": "CREATE INDEX invitations_invite_token_idx ON public.invitations USING btree (invite_token)"
+        },
+        {
+          "name": "invitations_invite_token_key",
+          "def": "CREATE UNIQUE INDEX invitations_invite_token_key ON public.invitations USING btree (invite_token)"
+        },
+        {
+          "name": "invitations_invited_by_idx",
+          "def": "CREATE INDEX invitations_invited_by_idx ON public.invitations USING btree (invited_by)"
+        },
+        {
+          "name": "invitations_phone_number_idx",
+          "def": "CREATE INDEX invitations_phone_number_idx ON public.invitations USING btree (phone_number)"
+        },
+        {
+          "name": "invitations_pkey",
+          "def": "CREATE UNIQUE INDEX invitations_pkey ON public.invitations USING btree (id)"
+        }
+      ],
+      "user_connections": [
+        {
+          "name": "user_connections_degree_idx",
+          "def": "CREATE INDEX user_connections_degree_idx ON public.user_connections USING btree (degree)"
+        },
+        {
+          "name": "user_connections_pkey",
+          "def": "CREATE UNIQUE INDEX user_connections_pkey ON public.user_connections USING btree (id)"
+        },
+        {
+          "name": "user_connections_source_user_id_degree_idx",
+          "def": "CREATE INDEX user_connections_source_user_id_degree_idx ON public.user_connections USING btree (source_user_id, degree)"
+        },
+        {
+          "name": "user_connections_source_user_id_idx",
+          "def": "CREATE INDEX user_connections_source_user_id_idx ON public.user_connections USING btree (source_user_id)"
+        },
+        {
+          "name": "user_connections_source_user_id_shared_introducer_count_idx",
+          "def": "CREATE INDEX user_connections_source_user_id_shared_introducer_count_idx ON public.user_connections USING btree (source_user_id, shared_introducer_count)"
+        },
+        {
+          "name": "user_connections_source_user_id_target_user_id_key",
+          "def": "CREATE UNIQUE INDEX user_connections_source_user_id_target_user_id_key ON public.user_connections USING btree (source_user_id, target_user_id)"
+        },
+        {
+          "name": "user_connections_source_user_id_trust_score_idx",
+          "def": "CREATE INDEX user_connections_source_user_id_trust_score_idx ON public.user_connections USING btree (source_user_id, trust_score)"
+        },
+        {
+          "name": "user_connections_target_user_id_idx",
+          "def": "CREATE INDEX user_connections_target_user_id_idx ON public.user_connections USING btree (target_user_id)"
+        }
+      ],
+      "shared_introducer_relationships": [
+        {
+          "name": "shared_introducer_relationships_pkey",
+          "def": "CREATE UNIQUE INDEX shared_introducer_relationships_pkey ON public.shared_introducer_relationships USING btree (id)"
+        },
+        {
+          "name": "shared_introducer_relationships_shared_introducer_id_idx",
+          "def": "CREATE INDEX shared_introducer_relationships_shared_introducer_id_idx ON public.shared_introducer_relationships USING btree (shared_introducer_id)"
+        },
+        {
+          "name": "shared_introducer_relationships_user_a_id_user_b_id_idx",
+          "def": "CREATE INDEX shared_introducer_relationships_user_a_id_user_b_id_idx ON public.shared_introducer_relationships USING btree (user_a_id, user_b_id)"
+        },
+        {
+          "name": "shared_introducer_relationships_user_a_id_user_b_id_shared__key",
+          "def": "CREATE UNIQUE INDEX shared_introducer_relationships_user_a_id_user_b_id_shared__key ON public.shared_introducer_relationships USING btree (user_a_id, user_b_id, shared_introducer_id)"
+        }
+      ],
+      "admin_settings": [
+        {
+          "name": "admin_settings_pkey",
+          "def": "CREATE UNIQUE INDEX admin_settings_pkey ON public.admin_settings USING btree (id)"
+        }
+      ]
+    },
+    "tableStats": [
+      {
+        "table": "users",
+        "seqScan": 300,
+        "idxScan": 7589,
+        "rowEstimate": 11,
+        "sizeMb": 0.1
+      },
+      {
+        "table": "stories",
+        "seqScan": 1122,
+        "idxScan": 6217,
+        "rowEstimate": 70,
+        "sizeMb": 0.1
+      },
+      {
+        "table": "story_tags",
+        "seqScan": 1434,
+        "idxScan": 2728,
+        "rowEstimate": 71,
+        "sizeMb": 0.2
+      },
+      {
+        "table": "invitations",
+        "seqScan": 479,
+        "idxScan": 46,
+        "rowEstimate": 4,
+        "sizeMb": 0.1
+      },
+      {
+        "table": "messages",
+        "seqScan": 265,
+        "idxScan": 624,
+        "rowEstimate": 14,
+        "sizeMb": 0.1
+      },
+      {
+        "table": "admin_settings",
+        "seqScan": 1,
+        "idxScan": 450,
+        "rowEstimate": 1,
+        "sizeMb": 0
+      },
+      {
+        "table": "discoveries_posts",
+        "seqScan": 15,
+        "idxScan": 277,
+        "rowEstimate": 13,
+        "sizeMb": 0.1
+      },
+      {
+        "table": "user_connections",
+        "seqScan": 729,
+        "idxScan": 847,
+        "rowEstimate": 30,
+        "sizeMb": 0.2
+      },
+      {
+        "table": "shared_introducer_relationships",
+        "seqScan": 90,
+        "idxScan": 2456,
+        "rowEstimate": 106,
+        "sizeMb": 0.2
+      },
+      {
+        "table": "notifications",
+        "seqScan": 65,
+        "idxScan": 469,
+        "rowEstimate": 172,
+        "sizeMb": 0.3
+      },
+      {
+        "table": "analytics_events",
+        "seqScan": 13,
+        "idxScan": 219,
+        "rowEstimate": 355,
+        "sizeMb": 0.4
+      }
+    ],
+    "duplicateIndexes": [],
+    "unusedIndexes": [
+      {
+        "table": "analytics_events",
+        "index": "analytics_events_pkey",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "discoveries_posts",
+        "index": "discoveries_posts_expires_at_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "invitations",
+        "index": "invitations_invite_token_key",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "invitations",
+        "index": "invitations_phone_number_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "invitations",
+        "index": "invitations_invite_token_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "messages",
+        "index": "messages_pkey",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "messages",
+        "index": "messages_discoveries_post_reference_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "notifications",
+        "index": "notifications_is_read_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "notifications",
+        "index": "notifications_created_at_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "shared_introducer_relationships",
+        "index": "shared_introducer_relationships_user_a_id_user_b_id_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "shared_introducer_relationships",
+        "index": "shared_introducer_relationships_shared_introducer_id_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "stories",
+        "index": "stories_introduction_category_id_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "story_tags",
+        "index": "story_tags_pkey",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "story_tags",
+        "index": "story_tags_invitation_id_key",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "story_tags",
+        "index": "story_tags_story_id_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "story_tags",
+        "index": "story_tags_tagged_external_email_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "story_tags",
+        "index": "story_tags_tagged_external_phone_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "story_tags",
+        "index": "story_tags_story_id_tagged_user_id_key",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "story_tags",
+        "index": "story_tags_story_id_tagged_external_email_key",
+        "idxScan": 0,
+        "sizeMb": 0
+      },
+      {
+        "table": "user_connections",
+        "index": "user_connections_source_user_id_idx",
+        "idxScan": 0,
+        "sizeMb": 0
+      }
+    ],
+    "compositeOpportunities": [
+      {
+        "table": "messages",
+        "columns": "(receiver_id, read_at)",
+        "reason": "Unread badge count in layout"
+      },
+      {
+        "table": "messages",
+        "columns": "(sender_id, receiver_id, created_at)",
+        "reason": "Conversation list latest message"
+      },
+      {
+        "table": "story_tags",
+        "columns": "(tagged_user_id, story_id)",
+        "reason": "Home feed + intro badge"
+      },
+      {
+        "table": "discoveries_posts",
+        "columns": "(visibility, created_at)",
+        "reason": "Feed ordering + filter"
+      },
+      {
+        "table": "user_connections",
+        "columns": "(source_user_id, degree)",
+        "reason": "Network depth filtering"
+      },
+      {
+        "table": "shared_introducer_relationships",
+        "columns": "(user_a_id, user_b_id)",
+        "reason": "Trust enrichment bulk lookup"
+      },
+      {
+        "table": "notifications",
+        "columns": "(user_id, read_at)",
+        "reason": "Unread notification count"
+      }
+    ]
+  },
+  "connection": {
+    "poolerHost": "2020@aws-1-us-east-1.pooler.supabase.com:5432",
+    "pgbouncerParam": null,
+    "connectionLimitParam": null,
+    "concurrentSelect1": {
+      "label": "10× parallel SELECT 1",
+      "min": 554,
+      "avg": 1290,
+      "p95": 2733,
+      "max": 2733,
+      "samples": [
+        554,
+        584,
+        2733
+      ]
+    },
+    "directUrlSameAsPooler": true,
+    "pgActivity": {
+      "active": "2",
+      "client_wait": "20",
+      "total": "23"
+    },
+    "findings": [
+      "DIRECT_URL points to pooler — migrations/EXPLAIN use same path as runtime",
+      "Supabase pooler RTT dominates single-query latency (see SELECT 1 p95)",
+      "Prisma default pool: connection_limit not set in DATABASE_URL query string"
+    ]
+  },
+  "staticAnalysis": {
+    "tracingMechanism": {
+      "prismaExtension": "lib/prisma.ts — times every operation when PROFILE_* or development",
+      "perfContext": "lib/perf/context.ts — runWithPerf aggregates queryCount per page",
+      "phase2": "lib/profile/phase2-profiler.ts — aggregates Model.operation counts + detectPhase2Issues",
+      "authProfile": "lib/auth-profile.ts — getCurrentUserCalls, supabaseGetUser, prismaUserLookup",
+      "routeProfiler": "lib/profile/route-profiler.ts — optional segment timing"
+    },
+    "executionTrees": {
+      "/home": [
+        "app/[locale]/(main)/home/page.tsx → runWithPerf",
+        "  → requireUser → getCurrentUser → getAuthUser (Supabase) → User.findUnique/upsert",
+        "  → HomeTrustDashboard → loadHomeDashboardStats → getTrustNetworkStats",
+        "      → StoryTag.findMany ×2, UserConnection.findMany, Story.count",
+        "  → HomeSecondaryPanels → loadHomeDashboardSecondary",
+        "      → getHomeStoryContext (4× StoryTag.findMany) → getIntroductionSuggestions + getTrustRecommendations",
+        "  → HomeFeedPanels → loadHomeDashboardFeed",
+        "      → getHomeStoryContext (deduped) → getStoryBarForViewer → Story.findMany + StoryTag.findMany",
+        "      → getMutualTagFeed → Story.findMany + StoryTag.findMany",
+        "  layout: TopBarWithBadges + BottomNavWithBadge → getLayoutBadges (deduped)",
+        "      → Story.count, Message.count, Notification.count"
+      ],
+      "/discoveries": [
+        "app/[locale]/(main)/discoveries/page.tsx → runWithPerf",
+        "  → requireUser → getCurrentUser",
+        "  → getAdminSettings (AdminSettings.findUnique)",
+        "  → getTrustRecommendations → UserConnection.findMany + getAdminSettings",
+        "  → getDiscoveriesFeed",
+        "      → getDiscoveriesNetworkAuthorIds → UserConnection.findMany",
+        "      → User.findUnique (viewer verification fields)",
+        "      → listBlockedUserIds → UserBlock.findMany",
+        "      → filterDiscoveryAuthorIds → verification gates",
+        "      → DiscoveriesPost.findMany (includes likes, bookmarks, _count)",
+        "      → filterByCategoryVisibility → Story.findMany (batched) + SharedIntroducerRelationship",
+        "      → getConnectionReasonsBulk + getTrustProfilesBulk",
+        "          → UserConnection.findMany, User.findMany, SharedIntroducerRelationship.findMany"
+      ],
+      "/messages": [
+        "app/[locale]/(main)/messages/page.tsx (client shell)",
+        "  → MessagesInboxClient → GET /api/messages",
+        "      → getCurrentUser → getConversationList",
+        "          → Message.findMany (all user messages) + User.findMany + getTrustProfilesBulk"
+      ],
+      "/profile": [
+        "app/[locale]/(main)/profile/page.tsx → runWithPerf",
+        "  → requireUser",
+        "  → getProfileTrustNetwork → StoryTag.findMany + UserConnection.findMany",
+        "  → getTrustRecommendations",
+        "  → analyticsService.queryUserInsights → AnalyticsEvent aggregations",
+        "  → notificationService.getPreferences → NotificationPreferences.findUnique"
+      ]
+    },
+    "prismaCallSites": [
+      {
+        "model": "Story",
+        "operation": "findMany",
+        "file": "services/home-dashboard.ts",
+        "function": "getHomeStoryContext",
+        "lineHint": "21-53"
+      },
+      {
+        "model": "StoryTag",
+        "operation": "findMany",
+        "file": "services/home-dashboard.ts",
+        "function": "getHomeStoryContext",
+        "lineHint": "21-53"
+      },
+      {
+        "model": "Story",
+        "operation": "findMany",
+        "file": "services/stories.ts",
+        "function": "getStoryBarForViewer",
+        "lineHint": "290"
+      },
+      {
+        "model": "AdminSettings",
+        "operation": "findUnique",
+        "file": "services/admin.ts",
+        "function": "getAdminSettings",
+        "lineHint": "cached"
+      },
+      {
+        "model": "User",
+        "operation": "findUnique",
+        "file": "lib/auth.ts",
+        "function": "getCurrentUser",
+        "lineHint": "124"
+      },
+      {
+        "model": "DiscoveriesPost",
+        "operation": "findMany",
+        "file": "services/discoveries.ts",
+        "function": "getDiscoveriesFeed",
+        "lineHint": "74"
+      },
+      {
+        "model": "SharedIntroducerRelationship",
+        "operation": "findMany",
+        "file": "services/trust-profile.ts",
+        "function": "getTrustProfilesBulk",
+        "lineHint": "146"
+      },
+      {
+        "model": "Notification",
+        "operation": "count",
+        "file": "services/notifications/notification-service.ts",
+        "function": "getUnreadNotificationCount",
+        "lineHint": "via layout-badges"
+      },
+      {
+        "model": "Message",
+        "operation": "count",
+        "file": "services/layout-badges.ts",
+        "function": "getLayoutBadges",
+        "lineHint": "22"
+      },
+      {
+        "model": "Story",
+        "operation": "count",
+        "file": "services/layout-badges.ts",
+        "function": "getLayoutBadges",
+        "lineHint": "15"
+      },
+      {
+        "model": "UserConnection",
+        "operation": "findMany",
+        "file": "lib/discoveries-network.ts",
+        "function": "getDiscoveriesNetworkAuthorIds",
+        "lineHint": "network depth"
+      },
+      {
+        "model": "AnalyticsEvent",
+        "operation": "count",
+        "file": "services/analytics/analytics-service.ts",
+        "function": "queryUserInsights",
+        "lineHint": "profile page"
+      }
+    ]
+  },
+  "nPlusOne": {
+    "patterns": [
+      {
+        "page": "/home",
+        "service": "getIntroductionSuggestions",
+        "loop": "O(n²) pair scan over introducedByViewer tags",
+        "estimatedDuplicates": "Up to 400 SharedIntroducerCount lookups without ctx batching",
+        "file": "services/introduction-suggestions.ts",
+        "severity": "medium"
+      },
+      {
+        "page": "/discoveries",
+        "service": "filterByCategoryVisibility",
+        "loop": "Per-post category gate (partially batched)",
+        "estimatedDuplicates": "0–2 queries per post when cross-category disabled",
+        "file": "lib/category-visibility.ts",
+        "severity": "medium"
+      },
+      {
+        "page": "/discoveries",
+        "service": "getTrustProfilesBulk",
+        "loop": "Bulk fetch but OR clause per author for SharedIntroducerRelationship",
+        "estimatedDuplicates": "1 bulk query (not N+1) — OR array scales with author count",
+        "file": "services/trust-profile.ts",
+        "severity": "low"
+      },
+      {
+        "page": "/messages",
+        "service": "getConversationList",
+        "loop": "Loads all messages then dedupes in JS",
+        "estimatedDuplicates": "1 unbounded findMany — not N+1 but O(all messages)",
+        "file": "services/messages.ts",
+        "severity": "high"
+      },
+      {
+        "page": "/home",
+        "service": "getHomeStoryContext",
+        "loop": "4 parallel StoryTag.findMany — same tags scanned multiple ways",
+        "estimatedDuplicates": "4 queries/request (by design, not loop N+1)",
+        "file": "services/home-dashboard.ts",
+        "severity": "medium"
+      },
+      {
+        "page": "layout (all pages)",
+        "service": "getLayoutBadges",
+        "loop": "Called from TopBar + BottomNav — React cache dedupes",
+        "estimatedDuplicates": "1× effective (2 call sites, 1 execution)",
+        "file": "components/layout/LayoutBadges.tsx",
+        "severity": "info"
+      },
+      {
+        "page": "all authenticated",
+        "service": "getAdminSettings",
+        "loop": "Called from many services without always passing settingsOverride",
+        "estimatedDuplicates": "1× per request (React cache) but 3–8 call sites",
+        "file": "services/admin.ts",
+        "severity": "info"
+      },
+      {
+        "page": "/discoveries",
+        "service": "getDiscoveriesFeed",
+        "loop": "getAdminSettings called in page AND inside feed if no override",
+        "estimatedDuplicates": "1× when settingsOverride passed (page does pass)",
+        "file": "app/[locale]/(main)/discoveries/page.tsx",
+        "severity": "info"
+      }
+    ],
+    "duplicatePatterns": [
+      {
+        "query": "AdminSettings.findUnique",
+        "firstExecution": "First getAdminSettings() in request",
+        "repeatedExecution": "Subsequent getAdminSettings() via React cache() — same row",
+        "reason": "Multiple services read admin flags independently",
+        "caller": "getAdminSettings (cache dedupes within request)",
+        "callSites": 15
+      },
+      {
+        "query": "User.findUnique",
+        "firstExecution": "getCurrentUser in layout requireUser",
+        "repeatedExecution": "requireUser/getCurrentUser in page (cache dedupes)",
+        "reason": "Layout + page both call requireUser",
+        "caller": "lib/auth.ts cache()",
+        "callSites": 2
+      },
+      {
+        "query": "StoryTag.findMany",
+        "firstExecution": "getHomeStoryContext (4 variants)",
+        "repeatedExecution": "getStoryBarForViewer + getMutualTagFeed may rescan tags",
+        "reason": "Overlapping home feed loaders",
+        "caller": "services/home-dashboard.ts, services/stories.ts, services/feed.ts",
+        "callSites": 6
+      },
+      {
+        "query": "Notification.count",
+        "firstExecution": "getLayoutBadges → getUnreadNotificationCount",
+        "repeatedExecution": "Notifications page / API may recount",
+        "reason": "Badge + inbox use separate code paths",
+        "caller": "services/layout-badges.ts",
+        "callSites": 2
+      },
+      {
+        "query": "Message.count",
+        "firstExecution": "getLayoutBadges unread badge",
+        "repeatedExecution": "Messages API list may load messages differently",
+        "reason": "Count vs full findMany for inbox",
+        "caller": "services/layout-badges.ts vs services/messages.ts",
+        "callSites": 2
+      }
+    ]
+  },
+  "cacheRecommendations": [
+    {
+      "target": "getAdminSettings",
+      "mechanism": "React cache()",
+      "status": "already cached",
+      "priority": "done"
+    },
+    {
+      "target": "getCurrentUser",
+      "mechanism": "React cache()",
+      "status": "already cached",
+      "priority": "done"
+    },
+    {
+      "target": "getLayoutBadges",
+      "mechanism": "React cache(userId)",
+      "status": "already cached",
+      "priority": "done"
+    },
+    {
+      "target": "getHomeStoryContext",
+      "mechanism": "React cache(userId)",
+      "status": "already cached",
+      "priority": "done"
+    },
+    {
+      "target": "getDiscoveriesNetworkAuthorIds",
+      "mechanism": "React cache(viewerId)",
+      "status": "recommend",
+      "priority": "high"
+    },
+    {
+      "target": "listBlockedUserIds",
+      "mechanism": "React cache(viewerId)",
+      "status": "recommend",
+      "priority": "medium"
+    },
+    {
+      "target": "getTrustProfilesBulk",
+      "mechanism": "unstable_cache 60s per viewer+authorSet hash",
+      "status": "recommend",
+      "priority": "medium"
+    },
+    {
+      "target": "Introduction graph edges",
+      "mechanism": "unstable_cache + background refresh",
+      "status": "recommend",
+      "priority": "high"
+    },
+    {
+      "target": "NotificationPreferences",
+      "mechanism": "React cache(userId)",
+      "status": "recommend",
+      "priority": "low"
+    },
+    {
+      "target": "AnalyticsEvent.create",
+      "mechanism": "async queue (not blocking SSR)",
+      "status": "recommend",
+      "priority": "high"
+    }
+  ],
+  "authAudit": {
+    "perAuthenticatedRequest": {
+      "middleware": "Supabase getUser via middleware (x-auth-profile-middleware-ms header)",
+      "layout": "requireUser → getCurrentUser → getAuthUser + User.findUnique (1× cached)",
+      "page": "requireUser again (cache hit) or getCurrentUser in API routes",
+      "estimatedUserFindUnique": "1 effective (React cache)",
+      "estimatedSupabaseGetUser": "1–2 (middleware + fallback if headers missing)",
+      "estimatedAdminSettings": "1 effective (React cache)",
+      "estimatedNotificationPreferences": "0 on most pages; 1 on /profile"
+    },
+    "note": "AUTH_PROFILE=1 logs [AUTH-PROFILE] lines with getCurrentUser, prismaUserLookup, supabaseGetUser"
+  },
+  "analyticsAudit": {
+    "blockingPaths": [
+      {
+        "path": "/profile",
+        "call": "analyticsService.queryUserInsights",
+        "blocking": true
+      },
+      {
+        "path": "POST /api/analytics",
+        "call": "AnalyticsEvent.create",
+        "blocking": "sync write"
+      }
+    ],
+    "recommendation": "Move AnalyticsEvent.create to fire-and-forget queue; keep insights on profile async",
+    "measuredLatency": "See AnalyticsEvent.count benchmark — pooler RTT dominates"
+  },
+  "httpProfile": {
+    "base": "http://127.0.0.1:3012",
+    "capturedAt": "2026-07-31T08:16:38.145Z",
+    "pages": [
+      {
+        "page": "/home",
+        "status": 500,
+        "ttfbMs": 3417,
+        "totalMs": 3684,
+        "authMs": "1319",
+        "prismaMs": null,
+        "requestId": "54ec2997"
+      },
+      {
+        "page": "/discoveries",
+        "status": 500,
+        "ttfbMs": 1798,
+        "totalMs": 1978,
+        "authMs": "389",
+        "prismaMs": null,
+        "requestId": "dd16f8ab"
+      },
+      {
+        "page": "/messages",
+        "status": 500,
+        "ttfbMs": 1693,
+        "totalMs": 1713,
+        "authMs": "382",
+        "prismaMs": null,
+        "requestId": "87371c94"
+      },
+      {
+        "page": "/introductions",
+        "status": 500,
+        "ttfbMs": 14369,
+        "totalMs": 14397,
+        "authMs": "364",
+        "prismaMs": null,
+        "requestId": "0e91f982"
+      },
+      {
+        "page": "/profile",
+        "status": 500,
+        "ttfbMs": 5376,
+        "totalMs": 5431,
+        "authMs": "522",
+        "prismaMs": null,
+        "requestId": "88cedc08"
+      },
+      {
+        "page": "/create-story",
+        "status": 500,
+        "ttfbMs": 24694,
+        "totalMs": 24727,
+        "authMs": "386",
+        "prismaMs": null,
+        "requestId": "861c1b1c"
+      },
+      {
+        "page": "/maindash",
+        "status": 500,
+        "ttfbMs": 15857,
+        "totalMs": 15890,
+        "authMs": "605",
+        "prismaMs": null,
+        "requestId": "ced1b64d"
+      }
+    ]
+  },
+  "hotspots": {
+    "topSlowQueries": [
+      {
+        "rank": 1,
+        "query": "Message.count (unread inbox)",
+        "avgMs": 499,
+        "p95Ms": 716,
+        "model": "Message",
+        "operation": "count"
+      },
+      {
+        "rank": 2,
+        "query": "DiscoveriesPost.findMany (network feed)",
+        "avgMs": 510,
+        "p95Ms": 713,
+        "model": "DiscoveriesPost",
+        "operation": "findMany"
+      },
+      {
+        "rank": 3,
+        "query": "StoryTag.findMany (tagged user)",
+        "avgMs": 485,
+        "p95Ms": 658,
+        "model": "StoryTag",
+        "operation": "findMany"
+      },
+      {
+        "rank": 4,
+        "query": "UserConnection.findMany (1st degree)",
+        "avgMs": 528,
+        "p95Ms": 649,
+        "model": "UserConnection",
+        "operation": "findMany"
+      },
+      {
+        "rank": 5,
+        "query": "Notification.count (unread)",
+        "avgMs": 476,
+        "p95Ms": 643,
+        "model": "Notification",
+        "operation": "count"
+      },
+      {
+        "rank": 6,
+        "query": "AnalyticsEvent.count (24h)",
+        "avgMs": 459,
+        "p95Ms": 641,
+        "model": "AnalyticsEvent",
+        "operation": "count"
+      },
+      {
+        "rank": 7,
+        "query": "User.findUnique",
+        "avgMs": 469,
+        "p95Ms": 625,
+        "model": "User",
+        "operation": "findUnique"
+      },
+      {
+        "rank": 8,
+        "query": "AdminSettings.findUnique",
+        "avgMs": 455,
+        "p95Ms": 615,
+        "model": "AdminSettings",
+        "operation": "findUnique"
+      },
+      {
+        "rank": 9,
+        "query": "SharedIntroducerRelationship.findMany",
+        "avgMs": 447,
+        "p95Ms": 614,
+        "model": "SharedIntroducerRelationship",
+        "operation": "findMany"
+      },
+      {
+        "rank": 10,
+        "query": "Story.count",
+        "avgMs": 459,
+        "p95Ms": 610,
+        "model": "Story",
+        "operation": "count"
+      },
+      {
+        "rank": 11,
+        "query": "SELECT 1",
+        "avgMs": 455,
+        "p95Ms": 603,
+        "model": "raw",
+        "operation": "queryRaw"
+      },
+      {
+        "rank": 12,
+        "query": "Story.findMany (published, take 20)",
+        "avgMs": 439,
+        "p95Ms": 592,
+        "model": "Story",
+        "operation": "findMany"
+      }
+    ],
+    "topDuplicated": [
+      {
+        "query": "AdminSettings.findUnique",
+        "firstExecution": "First getAdminSettings() in request",
+        "repeatedExecution": "Subsequent getAdminSettings() via React cache() — same row",
+        "reason": "Multiple services read admin flags independently",
+        "caller": "getAdminSettings (cache dedupes within request)",
+        "callSites": 15
+      },
+      {
+        "query": "User.findUnique",
+        "firstExecution": "getCurrentUser in layout requireUser",
+        "repeatedExecution": "requireUser/getCurrentUser in page (cache dedupes)",
+        "reason": "Layout + page both call requireUser",
+        "caller": "lib/auth.ts cache()",
+        "callSites": 2
+      },
+      {
+        "query": "StoryTag.findMany",
+        "firstExecution": "getHomeStoryContext (4 variants)",
+        "repeatedExecution": "getStoryBarForViewer + getMutualTagFeed may rescan tags",
+        "reason": "Overlapping home feed loaders",
+        "caller": "services/home-dashboard.ts, services/stories.ts, services/feed.ts",
+        "callSites": 6
+      },
+      {
+        "query": "Notification.count",
+        "firstExecution": "getLayoutBadges → getUnreadNotificationCount",
+        "repeatedExecution": "Notifications page / API may recount",
+        "reason": "Badge + inbox use separate code paths",
+        "caller": "services/layout-badges.ts",
+        "callSites": 2
+      },
+      {
+        "query": "Message.count",
+        "firstExecution": "getLayoutBadges unread badge",
+        "repeatedExecution": "Messages API list may load messages differently",
+        "reason": "Count vs full findMany for inbox",
+        "caller": "services/layout-badges.ts vs services/messages.ts",
+        "callSites": 2
+      }
+    ],
+    "topNPlusOne": [
+      {
+        "page": "/home",
+        "service": "getIntroductionSuggestions",
+        "loop": "O(n²) pair scan over introducedByViewer tags",
+        "estimatedDuplicates": "Up to 400 SharedIntroducerCount lookups without ctx batching",
+        "file": "services/introduction-suggestions.ts",
+        "severity": "medium"
+      },
+      {
+        "page": "/discoveries",
+        "service": "filterByCategoryVisibility",
+        "loop": "Per-post category gate (partially batched)",
+        "estimatedDuplicates": "0–2 queries per post when cross-category disabled",
+        "file": "lib/category-visibility.ts",
+        "severity": "medium"
+      },
+      {
+        "page": "/discoveries",
+        "service": "getTrustProfilesBulk",
+        "loop": "Bulk fetch but OR clause per author for SharedIntroducerRelationship",
+        "estimatedDuplicates": "1 bulk query (not N+1) — OR array scales with author count",
+        "file": "services/trust-profile.ts",
+        "severity": "low"
+      },
+      {
+        "page": "/messages",
+        "service": "getConversationList",
+        "loop": "Loads all messages then dedupes in JS",
+        "estimatedDuplicates": "1 unbounded findMany — not N+1 but O(all messages)",
+        "file": "services/messages.ts",
+        "severity": "high"
+      },
+      {
+        "page": "/home",
+        "service": "getHomeStoryContext",
+        "loop": "4 parallel StoryTag.findMany — same tags scanned multiple ways",
+        "estimatedDuplicates": "4 queries/request (by design, not loop N+1)",
+        "file": "services/home-dashboard.ts",
+        "severity": "medium"
+      },
+      {
+        "page": "layout (all pages)",
+        "service": "getLayoutBadges",
+        "loop": "Called from TopBar + BottomNav — React cache dedupes",
+        "estimatedDuplicates": "1× effective (2 call sites, 1 execution)",
+        "file": "components/layout/LayoutBadges.tsx",
+        "severity": "info"
+      },
+      {
+        "page": "all authenticated",
+        "service": "getAdminSettings",
+        "loop": "Called from many services without always passing settingsOverride",
+        "estimatedDuplicates": "1× per request (React cache) but 3–8 call sites",
+        "file": "services/admin.ts",
+        "severity": "info"
+      },
+      {
+        "page": "/discoveries",
+        "service": "getDiscoveriesFeed",
+        "loop": "getAdminSettings called in page AND inside feed if no override",
+        "estimatedDuplicates": "1× when settingsOverride passed (page does pass)",
+        "file": "app/[locale]/(main)/discoveries/page.tsx",
+        "severity": "info"
+      }
+    ],
+    "topRepeatedServices": [
+      {
+        "service": "getAdminSettings",
+        "callsPerRequest": "3–8",
+        "files": [
+          "services/admin.ts (cache)"
+        ]
+      },
+      {
+        "service": "getCurrentUser",
+        "callsPerRequest": "1–3",
+        "files": [
+          "lib/auth.ts (cache)"
+        ]
+      },
+      {
+        "service": "getLayoutBadges",
+        "callsPerRequest": "1 (deduped)",
+        "files": [
+          "services/layout-badges.ts"
+        ]
+      },
+      {
+        "service": "getHomeStoryContext",
+        "callsPerRequest": "1 (deduped)",
+        "files": [
+          "services/home-dashboard.ts"
+        ]
+      }
+    ]
+  },
+  "optimizationEstimates": {
+    "currentState": {
+      "avgPoolerRttMs": 455,
+      "estimatedQueriesHome": 18,
+      "estimatedPrismaTimeHomeMs": 8190
+    },
+    "ifPoolerFixed": {
+      "expectedAvgRttMs": 50,
+      "estimatedPrismaTimeHomeMs": 900,
+      "pageLatencyReductionPercent": 89
+    },
+    "ifQueryCountHalved": {
+      "queriesPerHome": 9,
+      "estimatedPrismaTimeHomeMs": 4095,
+      "pageLatencyReductionPercent": 50
+    },
+    "ifBoth": {
+      "queriesPerHome": 14,
+      "expectedAvgRttMs": 50,
+      "estimatedPrismaTimeHomeMs": 700,
+      "pageLatencyReductionPercent": 91
+    },
+    "supabaseCost": "Pooler round-trips scale with query count × concurrent users — largest cost lever is query multiplication",
+    "note": "Estimates only — no changes made in this sprint"
+  },
+  "observedSlowLogs": [
+    {
+      "query": "Story.findMany",
+      "reportedMs": 3328,
+      "source": "user observation / [prisma:slow]"
+    },
+    {
+      "query": "StoryTag.findMany",
+      "reportedMs": 4341,
+      "source": "user observation"
+    },
+    {
+      "query": "User.findUnique",
+      "reportedMs": 2567,
+      "source": "user observation"
+    },
+    {
+      "query": "DiscoveriesPost.findMany",
+      "reportedMs": 2450,
+      "source": "user observation"
+    },
+    {
+      "query": "SharedIntroducerRelationship.findMany",
+      "reportedMs": 2956,
+      "source": "user observation"
+    },
+    {
+      "query": "AdminSettings.findUnique",
+      "reportedMs": 2768,
+      "source": "user observation"
+    },
+    {
+      "query": "Notification.count",
+      "reportedMs": 1140,
+      "source": "user observation"
+    },
+    {
+      "query": "Message.count",
+      "reportedMs": 953,
+      "source": "user observation"
+    }
+  ]
+}

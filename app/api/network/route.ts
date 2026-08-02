@@ -5,32 +5,39 @@ import { prisma } from "@/lib/prisma";
 import { getIntroductionEvidence, getConnectionReason } from "@/lib/introduction-graph";
 import { serializeConnectionReason, serializeEvidence } from "@/lib/connection-reason";
 import { viewerMayQueryNetworkPair } from "@/lib/access-control";
+import { apiJson, withApiHandler } from "@/lib/api-error";
 
 const QuerySchema = z.object({
   users: z.string().min(1),
 });
 
-export async function GET(request: Request) {
+export const GET = withApiHandler(async (request: Request) => {
   const meAuth = await requireUserApi();
-  if (meAuth instanceof NextResponse) return meAuth;
+  if (isApiAuthError(meAuth)) return meAuth;
   const me = meAuth;
   const { searchParams } = new URL(request.url);
   const parsed = QuerySchema.safeParse({ users: searchParams.get("users") ?? "" });
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "users query required" }, { status: 400 });
+    return apiJson(400, {
+      error: "users query required",
+      code: "validation_error",
+    });
   }
 
   const ids = parsed.data.users.split(",").map((s) => s.trim()).filter(Boolean);
   if (ids.length < 2) {
-    return NextResponse.json({ error: "Provide two user IDs" }, { status: 400 });
+    return apiJson(400, {
+      error: "Provide two user IDs",
+      code: "validation_error",
+    });
   }
 
   const userA = ids.includes(me.id) ? me.id : ids[0];
   const userB = ids.find((id) => id !== userA) ?? ids[1];
 
   if (!viewerMayQueryNetworkPair(me.id, userA, userB)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return apiJson(403, { error: "Forbidden", code: "permission_denied" });
   }
 
   const [evidence, connectionReason, users] = await Promise.all([
@@ -49,4 +56,4 @@ export async function GET(request: Request) {
     connectionReason: serializeConnectionReason(connectionReason, userA, userB),
     evidence: evidence.map(serializeEvidence),
   });
-}
+});

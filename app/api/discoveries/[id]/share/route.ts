@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server";
 import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { recordDiscoveriesShare } from "@/services/discoveries";
+import { apiJson, withApiHandler } from "@/lib/api-error";
 
-export async function POST(
+export const POST = withApiHandler(async (
   _request: Request,
   { params }: { params: { id: string } }
-) {
+) => {
   const userAuth = await requireUserApi();
-  if (userAuth instanceof NextResponse) return userAuth;
-  const user = userAuth;
+  if (isApiAuthError(userAuth)) return userAuth;
   try {
-    await recordDiscoveriesShare(params.id, user.id);
+    await recordDiscoveriesShare(params.id, userAuth.id);
     return NextResponse.json({ ok: true });
   } catch (err: unknown) {
     if (err instanceof Error && err.message === "Forbidden") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiJson(403, { error: "Forbidden", code: "permission_denied" });
     }
     throw err;
   }
-}
+});

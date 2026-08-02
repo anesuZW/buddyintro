@@ -1,0 +1,200 @@
+{
+  "at": "2026-07-31T16:32:32.141Z",
+  "base": "http://127.0.0.1:3063",
+  "pages": [
+    {
+      "path": "/home",
+      "status": 200,
+      "ttfbMs": 5086,
+      "bytes": 19972,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "encoding": "gzip",
+      "snippet": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=5, viewp"
+    },
+    {
+      "path": "/discoveries",
+      "status": 200,
+      "ttfbMs": 5134,
+      "bytes": 19916,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "encoding": "gzip",
+      "snippet": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=5, viewp"
+    },
+    {
+      "path": "/messages",
+      "status": 200,
+      "ttfbMs": 5072,
+      "bytes": 20510,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "encoding": "gzip",
+      "snippet": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=5, viewp"
+    },
+    {
+      "path": "/profile",
+      "status": 200,
+      "ttfbMs": 5127,
+      "bytes": 20116,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "encoding": "gzip",
+      "snippet": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=5, viewp"
+    },
+    {
+      "path": "/notifications",
+      "status": 200,
+      "ttfbMs": 5096,
+      "bytes": 20389,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "encoding": "gzip",
+      "snippet": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=5, viewp"
+    },
+    {
+      "path": "/create-story",
+      "status": 200,
+      "ttfbMs": 5105,
+      "bytes": 19920,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "encoding": "gzip",
+      "snippet": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=5, viewp"
+    },
+    {
+      "path": "/introductions",
+      "status": 200,
+      "ttfbMs": 5136,
+      "bytes": 19924,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "encoding": "gzip",
+      "snippet": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=5, viewp"
+    },
+    {
+      "path": "/manifest.webmanifest",
+      "status": 200,
+      "ttfbMs": 18,
+      "bytes": 2031,
+      "contentType": "application/manifest+json",
+      "location": null,
+      "encoding": null,
+      "snippet": "{\"id\":\"/\",\"name\":\"BuddyIntro\",\"short_name\":\"Buddy\",\"description\":\"Discover trusted people through people you already trust\",\"start_url\":\"/home\",\"scope\":\"/\",\"dis"
+    },
+    {
+      "path": "/sw.js",
+      "status": 200,
+      "ttfbMs": 8,
+      "bytes": 19909,
+      "contentType": "application/javascript; charset=UTF-8",
+      "location": null,
+      "encoding": "gzip",
+      "snippet": "/**\r\n * Workbox service worker source — compiled to public/sw.js via scripts/build-sw.js\r\n * @see docs/PWA.md\r\n */\r\n\r\n/* eslint-disable no-undef */\r\nimportScrip"
+    }
+  ],
+  "apis": [
+    {
+      "path": "/api/health",
+      "status": 503,
+      "ttfbMs": 5029,
+      "bytes": 610,
+      "contentType": "application/json",
+      "location": null,
+      "encoding": null,
+      "snippet": "{\"status\":\"unhealthy\",\"database\":\"unhealthy\",\"supabase\":\"healthy\",\"redis\":\"degraded\",\"storage\":\"healthy\",\"queue\":\"healthy\",\"worker\":\"healthy\",\"memory\":{\"heapUse"
+    },
+    {
+      "path": "/api/version",
+      "status": 200,
+      "ttfbMs": 10,
+      "bytes": 251,
+      "contentType": "application/json",
+      "location": null,
+      "encoding": null,
+      "snippet": "{\"commit\":\"da3407446075654b9a78a443b5dc65f5266b893c\",\"branch\":\"main\",\"version\":\"0.1.3\",\"builtAt\":\"2026-07-21T23:33:27.801Z\",\"node\":\"v24.15.0\",\"environment\":\"pro"
+    },
+    {
+      "path": "/api/feed",
+      "status": 500,
+      "ttfbMs": 5028,
+      "bytes": 0,
+      "contentType": null,
+      "location": null,
+      "encoding": null,
+      "snippet": ""
+    },
+    {
+      "path": "/api/discoveries",
+      "status": 500,
+      "ttfbMs": 5020,
+      "bytes": 0,
+      "contentType": null,
+      "location": null,
+      "encoding": null,
+      "snippet": ""
+    },
+    {
+      "path": "/api/messages",
+      "status": 500,
+      "ttfbMs": 5041,
+      "bytes": 0,
+      "contentType": null,
+      "location": null,
+      "encoding": null,
+      "snippet": ""
+    },
+    {
+      "path": "/api/notifications?limit=5",
+      "status": 500,
+      "ttfbMs": 5040,
+      "bytes": 0,
+      "contentType": null,
+      "location": null,
+      "encoding": null,
+      "snippet": ""
+    },
+    {
+      "path": "/api/stories",
+      "status": 500,
+      "ttfbMs": 5035,
+      "bytes": 0,
+      "contentType": null,
+      "location": null,
+      "encoding": null,
+      "snippet": ""
+    },
+    {
+      "path": "/api/trust/recommendations",
+      "status": 500,
+      "ttfbMs": 5029,
+      "bytes": 0,
+      "contentType": null,
+      "location": null,
+      "encoding": null,
+      "snippet": ""
+    }
+  ],
+  "security": [
+    {
+      "path": "/api/feed",
+      "status": 401,
+      "location": null
+    },
+    {
+      "path": "/api/discoveries",
+      "status": 401,
+      "location": null
+    },
+    {
+      "path": "/api/messages",
+      "status": 401,
+      "location": null
+    },
+    {
+      "path": "/home",
+      "status": 307,
+      "location": "/login?next=%2Fhome"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-07-26T16:16:41.384Z",
+  "queryCounts": {
+    "StoryTag_findMany": 2,
+    "StoryTag_count": 0,
+    "Story_findMany": 5,
+    "Story_count": 1,
+    "UserConnection_findMany": 1,
+    "SharedIntroducerRelationship_groupBy": 1,
+    "SharedIntroducerRelationship_findMany": 0,
+    "totalPrismaEstimate": 17
+  },
+  "codeChanges": [
+    "lib/home-story-context.ts — consolidated 2-scan context builder",
+    "services/home-dashboard.ts — 2 StoryTag.findMany authoritative scan",
+    "services/trust-network.ts — optional TrustNetworkStatsContext (skip 4 StoryTag ops)",
+    "lib/story-visibility.ts — visibility prefetch from home context",
+    "services/stories.ts — pass visibilityPrefetch to filterStoriesByVisibilityGate"
+  ],
+  "httpProfile": {
+    "status": 200,
+    "ttfbMs": 2344,
+    "totalMs": 9246,
+    "middlewareAuthMs": null,
+    "requestId": null
+  },
+  "rc1": {
+    "ok": false,
+    "passed": false
+  },
+  "rc2": {
+    "ok": false,
+    "authScopePass": false
+  }
+}

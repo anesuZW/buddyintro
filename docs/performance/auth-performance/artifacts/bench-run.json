@@ -1,0 +1,280 @@
+{
+  "label": "run",
+  "capturedAt": "2026-07-31T15:05:24.971Z",
+  "base": "http://127.0.0.1:3040",
+  "runs": 1,
+  "summary": {
+    "/home": {
+      "status": [
+        200
+      ],
+      "ttfbMs": {
+        "samples": [
+          1189
+        ],
+        "median": 1189
+      },
+      "middlewareMs": {
+        "samples": [
+          28
+        ],
+        "median": 28
+      },
+      "getUserNetworkMs": {
+        "samples": [
+          0
+        ],
+        "median": 0
+      },
+      "createClientMs": {
+        "median": 2
+      },
+      "sessionMs": {
+        "median": 16
+      },
+      "routeGetUserMs": {
+        "median": null
+      },
+      "getUserCalls": {
+        "median": null
+      },
+      "last": {
+        "page": "/home",
+        "status": 200,
+        "ttfbMs": 1189,
+        "totalMs": 6223,
+        "middlewareMs": 28,
+        "createClientMs": 2,
+        "sessionMs": 16,
+        "getUserNetworkMs": 0,
+        "refreshMs": 0,
+        "routeGetUserMs": null,
+        "prismaMs": null,
+        "getUserCalls": null,
+        "resolveMethod": "getClaims",
+        "requestId": "a9398167"
+      }
+    },
+    "/discoveries": {
+      "status": [
+        500
+      ],
+      "ttfbMs": {
+        "samples": [
+          7912
+        ],
+        "median": 7912
+      },
+      "middlewareMs": {
+        "samples": [
+          19
+        ],
+        "median": 19
+      },
+      "getUserNetworkMs": {
+        "samples": [
+          0
+        ],
+        "median": 0
+      },
+      "createClientMs": {
+        "median": 1
+      },
+      "sessionMs": {
+        "median": 16
+      },
+      "routeGetUserMs": {
+        "median": null
+      },
+      "getUserCalls": {
+        "median": null
+      },
+      "last": {
+        "page": "/discoveries",
+        "status": 500,
+        "ttfbMs": 7912,
+        "totalMs": 7932,
+        "middlewareMs": 19,
+        "createClientMs": 1,
+        "sessionMs": 16,
+        "getUserNetworkMs": 0,
+        "refreshMs": 0,
+        "routeGetUserMs": null,
+        "prismaMs": null,
+        "getUserCalls": null,
+        "resolveMethod": "getClaims",
+        "requestId": "51763cc5"
+      }
+    },
+    "/messages": {
+      "status": [
+        200
+      ],
+      "ttfbMs": {
+        "samples": [
+          699
+        ],
+        "median": 699
+      },
+      "middlewareMs": {
+        "samples": [
+          22
+        ],
+        "median": 22
+      },
+      "getUserNetworkMs": {
+        "samples": [
+          0
+        ],
+        "median": 0
+      },
+      "createClientMs": {
+        "median": 1
+      },
+      "sessionMs": {
+        "median": 14
+      },
+      "routeGetUserMs": {
+        "median": null
+      },
+      "getUserCalls": {
+        "median": null
+      },
+      "last": {
+        "page": "/messages",
+        "status": 200,
+        "ttfbMs": 699,
+        "totalMs": 5679,
+        "middlewareMs": 22,
+        "createClientMs": 1,
+        "sessionMs": 14,
+        "getUserNetworkMs": 0,
+        "refreshMs": 0,
+        "routeGetUserMs": null,
+        "prismaMs": null,
+        "getUserCalls": null,
+        "resolveMethod": "getClaims",
+        "requestId": "66c4b457"
+      }
+    },
+    "/profile": {
+      "status": [
+        500
+      ],
+      "ttfbMs": {
+        "samples": [
+          5969
+        ],
+        "median": 5969
+      },
+      "middlewareMs": {
+        "samples": [
+          21
+        ],
+        "median": 21
+      },
+      "getUserNetworkMs": {
+        "samples": [
+          0
+        ],
+        "median": 0
+      },
+      "createClientMs": {
+        "median": 1
+      },
+      "sessionMs": {
+        "median": 17
+      },
+      "routeGetUserMs": {
+        "median": null
+      },
+      "getUserCalls": {
+        "median": null
+      },
+      "last": {
+        "page": "/profile",
+        "status": 500,
+        "ttfbMs": 5969,
+        "totalMs": 10950,
+        "middlewareMs": 21,
+        "createClientMs": 1,
+        "sessionMs": 17,
+        "getUserNetworkMs": 0,
+        "refreshMs": 0,
+        "routeGetUserMs": null,
+        "prismaMs": null,
+        "getUserCalls": null,
+        "resolveMethod": "getClaims",
+        "requestId": "ebeb1a09"
+      }
+    }
+  },
+  "raw": [
+    [
+      {
+        "page": "/home",
+        "status": 200,
+        "ttfbMs": 1189,
+        "totalMs": 6223,
+        "middlewareMs": 28,
+        "createClientMs": 2,
+        "sessionMs": 16,
+        "getUserNetworkMs": 0,
+        "refreshMs": 0,
+        "routeGetUserMs": null,
+        "prismaMs": null,
+        "getUserCalls": null,
+        "resolveMethod": "getClaims",
+        "requestId": "a9398167"
+      },
+      {
+        "page": "/discoveries",
+        "status": 500,
+        "ttfbMs": 7912,
+        "totalMs": 7932,
+        "middlewareMs": 19,
+        "createClientMs": 1,
+        "sessionMs": 16,
+        "getUserNetworkMs": 0,
+        "refreshMs": 0,
+        "routeGetUserMs": null,
+        "prismaMs": null,
+        "getUserCalls": null,
+        "resolveMethod": "getClaims",
+        "requestId": "51763cc5"
+      },
+      {
+        "page": "/messages",
+        "status": 200,
+        "ttfbMs": 699,
+        "totalMs": 5679,
+        "middlewareMs": 22,
+        "createClientMs": 1,
+        "sessionMs": 14,
+        "getUserNetworkMs": 0,
+        "refreshMs": 0,
+        "routeGetUserMs": null,
+        "prismaMs": null,
+        "getUserCalls": null,
+        "resolveMethod": "getClaims",
+        "requestId": "66c4b457"
+      },
+      {
+        "page": "/profile",
+        "status": 500,
+        "ttfbMs": 5969,
+        "totalMs": 10950,
+        "middlewareMs": 21,
+        "createClientMs": 1,
+        "sessionMs": 17,
+        "getUserNetworkMs": 0,
+        "refreshMs": 0,
+        "routeGetUserMs": null,
+        "prismaMs": null,
+        "getUserCalls": null,
+        "resolveMethod": "getClaims",
+        "requestId": "ebeb1a09"
+      }
+    ]
+  ]
+}

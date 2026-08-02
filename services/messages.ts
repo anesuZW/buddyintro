@@ -225,9 +225,12 @@ export async function getConversation(args: {
 
   const hasMore = rows.length > limit;
   const slice = hasMore ? rows.slice(0, limit) : rows;
+  // Cursor must be the oldest row (for createdAt < cursor). reverse() mutates — copy first.
+  const oldest = slice[slice.length - 1];
+  const chronological = [...slice].reverse();
 
   return {
-    items: slice.reverse().map((msg) =>
+    items: chronological.map((msg) =>
       msg.story
         ? {
             ...msg,
@@ -238,7 +241,7 @@ export async function getConversation(args: {
           }
         : msg
     ),
-    nextCursor: hasMore ? slice[slice.length - 1].createdAt.toISOString() : null,
+    nextCursor: hasMore && oldest ? oldest.createdAt.toISOString() : null,
   };
 }
 

@@ -1,0 +1,127 @@
+{
+  "generatedAt": "2026-07-26T15:39:21.325Z",
+  "sprint": "Sprint 2 — post-optimization",
+  "gitHead": "87edda065bda93cf7c7dba6f74e2c263a133cb29",
+  "checkpoint": "checkpoint/sprint-2-auth-start → working tree",
+  "codeChanges": [
+    "lib/auth.ts — getAuthUser wrapped in React cache()",
+    "lib/introductions-settings.ts — getIntroductionExpiryFilter + introductionsNeverExpire cached",
+    "services/layout-badges.ts — cache key primitives (userId, lastIntroductionsSeenAt)",
+    "services/notifications/notification-service.ts — NotificationPreferences + getUnreadNotificationCount cached"
+  ],
+  "perRequestTargets": {
+    "User_findUnique": 1,
+    "AdminSettings_findUnique": 1,
+    "NotificationPreferences_findUnique": 1,
+    "getLayoutBadges": 1,
+    "getUnreadNotificationCount": 1
+  },
+  "httpProfile": {
+    "base": "http://localhost:3000",
+    "capturedAt": "2026-07-26T15:40:14.851Z",
+    "pages": [
+      {
+        "page": "/",
+        "status": 200,
+        "ttfbMs": 7784,
+        "totalMs": 7800,
+        "authMs": null,
+        "middlewareAuthMs": "598",
+        "prismaMs": null,
+        "getUserCalls": null,
+        "requestId": "6514a4d0"
+      },
+      {
+        "page": "/home",
+        "status": 200,
+        "ttfbMs": 6103,
+        "totalMs": 12591,
+        "authMs": null,
+        "middlewareAuthMs": "446",
+        "prismaMs": null,
+        "getUserCalls": null,
+        "requestId": "96dab7f9"
+      },
+      {
+        "page": "/discoveries",
+        "status": 200,
+        "ttfbMs": 10002,
+        "totalMs": 10007,
+        "authMs": null,
+        "middlewareAuthMs": "502",
+        "prismaMs": null,
+        "getUserCalls": null,
+        "requestId": "8ca82534"
+      },
+      {
+        "page": "/profile",
+        "status": 200,
+        "ttfbMs": 8781,
+        "totalMs": 8792,
+        "authMs": null,
+        "middlewareAuthMs": "465",
+        "prismaMs": null,
+        "getUserCalls": null,
+        "requestId": "dc11261e"
+      },
+      {
+        "page": "/messages",
+        "status": 200,
+        "ttfbMs": 3772,
+        "totalMs": 3781,
+        "authMs": null,
+        "middlewareAuthMs": "539",
+        "prismaMs": null,
+        "getUserCalls": null,
+        "requestId": "9be82e56"
+      },
+      {
+        "page": "/introductions",
+        "status": 200,
+        "ttfbMs": 3847,
+        "totalMs": 3854,
+        "authMs": null,
+        "middlewareAuthMs": "332",
+        "prismaMs": null,
+        "getUserCalls": null,
+        "requestId": "1f54f5e2"
+      },
+      {
+        "page": "/notifications",
+        "status": 200,
+        "ttfbMs": 3163,
+        "totalMs": 4221,
+        "authMs": null,
+        "middlewareAuthMs": "322",
+        "prismaMs": null,
+        "getUserCalls": null,
+        "requestId": "fcd2dce5"
+      }
+    ],
+    "clientMemory": {
+      "heapUsedMb": 1,
+      "rssMb": 78
+    },
+    "clientCpuUserMs": 109,
+    "clientCpuSystemMs": 31
+  },
+  "rc1": {
+    "ok": true,
+    "outputTail": "✓ GET /api/messages/[userId]/context 200 9565ms\n✓ POST /api/messages 200 5186ms\n✓ GET /api/feed unauthenticated → 401\n✓ GET /api/discoveries unauthenticated → 401\n✓ GET /api/health public → 200\n✓ GET /api/discoveries (posts) 200 5362ms\n✓ POST like 200 7920ms\n✓ POST like again (toggle) 200 3438ms\n✓ POST bookmark 200 7508ms\n✓ POST share 200 6042ms\n✓ POST comment 201 9987ms\n✓ POST /api/media/upload 200 4502ms\n\n18/18 passed\n"
+  },
+  "rc2": {
+    "ok": false,
+    "passed": 34,
+    "total": 38,
+    "authScopePass": true,
+    "preExistingFailures": [
+      "phase2 External email introduction API (400 — email/env)",
+      "phase3 emailDelivery object present",
+      "phase2 External phone introduction API (400)",
+      "phase2 phoneInvites returned"
+    ],
+    "outputTail": "✓ [phase5] Typing indicator — NOT IMPLEMENTED — documented product gap (not a regression)\n✓ [phase6] Jordan notifications list 200\n✓ [phase7] Profile name PATCH 200\n✓ [phase7] Profile avatar PATCH 200\n✓ [phase7] Profile avatar persisted in PATCH response — /uploads/images/2026/07/9fd1cd19-bff7-47fe-af71-ef001816dc07/1785012776906-8ca7he.png\n✓ [phase8] Invalid file type upload 200 — Observed behavior documented\n✓ [phase8] Oversized file → 413 413 — app_body_limit\n✓ [phase8] Retry upload after rejection 200\n✓ [phase11] Unauthenticated feed → 401 401\n✓ [phase11] Health public 200 200\n\n34/38 passed\n\nFailures:\n  [phase2] External email introduction API: \n  [phase3] emailDelivery object present: missing\n  [phase2] External phone introduction API: \n  [phase2] phoneInvites returned: failed"
+  },
+  "regressionBlocked": false,
+  "regressionNote": "RC2 4/38 failures are pre-existing external intro email/phone paths — unrelated to Sprint 2 auth cache changes. RC1 18/18 PASS. All auth, messages, discoveries, profile, uploads, and in-app introduction flows pass."
+}

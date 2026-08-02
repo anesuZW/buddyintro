@@ -1,0 +1,55 @@
+RC2 validation — http://localhost:3002
+
+✓ [auth] Login user1 + user2
+✓ [phase2] Resolve Jordan user id — f01876e3-93c0-4776-b6b7-4c4967a7c267
+✓ [phase1] Upload image for story 200
+✓ [phase1] Upload video for story 200
+✓ [phase1] Upload voice note 200
+✓ [phase1] Publish video story 201 — 452d1e1c-ae33-42f4-8dcc-67341adda5c9
+✗ [phase1] Publish voice recommendation story 500 — ""
+✓ [phase1] Stories feed includes video 200
+✓ [phase1] Stories feed includes voice note 200
+✓ [phase2] BuddyIntro user introduction 201
+✗ [phase2] External email introduction API 500
+✗ [phase3] emailDelivery object present — missing
+✗ [phase2] External phone introduction API 400
+✗ [phase2] phoneInvites returned — failed
+✓ [phase2] Feed updates after intros 200
+✓ [phase2] Introductions list 200
+✓ [phase4] Create discovery text 201
+✓ [phase4] Like then unlike discovery 200
+✓ [phase4] Bookmark toggle (unbookmark) 200
+✓ [phase4] Comment on discovery 201
+✓ [phase4] Share discovery 200
+✗ [phase4] Discovery persists after refresh
+✓ [phase4] Edit discovery (intentionally missing) 404 — QA-012 — not implemented
+✓ [phase4] Delete discovery (intentionally missing) 404 — QA-012 — not implemented
+✓ [phase5] User1 sends message to Jordan 200
+✗ [phase5] User2 inbox shows conversation 500 — no matching convo
+✗ [phase5] User2 sees RC2 message in inbox preview — missing
+✗ [phase5] User2 message context panel API
+✓ [phase5] Typing indicator — NOT IMPLEMENTED — documented product gap (not a regression)
+✓ [phase6] Jordan notifications list 200
+✓ [phase7] Profile name PATCH 200
+✓ [phase7] Profile avatar PATCH 200
+✓ [phase7] Profile avatar persisted in PATCH response — /uploads/images/2026/07/9fd1cd19-bff7-47fe-af71-ef001816dc07/1785012776906-8ca7he.png
+✓ [phase8] Invalid file type upload 200 — Observed behavior documented
+✓ [phase8] Oversized file → 413 413 — app_body_limit
+✓ [phase8] Retry upload after rejection 200
+✓ [phase11] Unauthenticated feed → 401 401
+✓ [phase11] Health public 200 200
+
+29/38 passed
+
+Failures:
+  [phase1] Publish voice recommendation story: ""
+  [phase2] External email introduction API: 
+  [phase3] emailDelivery object present: missing
+  [phase2] External phone introduction API: 
+  [phase2] phoneInvites returned: failed
+  [phase4] Discovery persists after refresh: 
+  [phase5] User2 inbox shows conversation: no matching convo
+  [phase5] User2 sees RC2 message in inbox preview: missing
+  [phase5] User2 message context panel API: 
+
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.

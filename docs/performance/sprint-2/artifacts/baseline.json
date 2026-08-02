@@ -1,0 +1,104 @@
+{
+  "generatedAt": "2026-07-26T15:38:58.370Z",
+  "sprint": "Sprint 2 — pre-optimization baseline (from profiling + planning)",
+  "checkpoint": "checkpoint/sprint-2-auth-start @ 87edda0",
+  "gitHead": "87edda0",
+  "poolerRttP50Ms": 307,
+  "perRequestDuplicates": {
+    "User_findUnique": {
+      "before": 1,
+      "note": "getCurrentUser already cached; layout+page deduped"
+    },
+    "AdminSettings_findUnique": {
+      "before": 1,
+      "note": "getAdminSettings React cache + 60s TTL"
+    },
+    "NotificationPreferences_findUnique": {
+      "before": "0–2",
+      "note": "profile: prefs + shouldDeliver paths"
+    },
+    "getAuthUser_supabase": {
+      "before": "1–2",
+      "note": "middleware + route fallback without cache on getAuthUser"
+    },
+    "getLayoutBadges": {
+      "before": "1–2",
+      "note": "TopBar + BottomNav separate Suspense; object cache key risk"
+    },
+    "getIntroductionExpiryFilter": {
+      "before": "1+",
+      "note": "multiple callers; AdminSettings deduped only"
+    },
+    "Notification_count_badge": {
+      "before": 1,
+      "note": "per getLayoutBadges invocation"
+    },
+    "Message_count_badge": {
+      "before": 1,
+      "note": "per getLayoutBadges invocation"
+    },
+    "Story_count_badge": {
+      "before": 1,
+      "note": "per getLayoutBadges invocation"
+    }
+  },
+  "queryCounts": {
+    "home": 18,
+    "discoveries": 12,
+    "profile": 10,
+    "messages": 9,
+    "introductions": 8,
+    "settings": 10
+  },
+  "estimatedDbTimeMs": {
+    "home": 8190
+  },
+  "httpProfile": [
+    {
+      "page": "/home",
+      "status": 200,
+      "ttfbMs": 29890,
+      "totalMs": 34418,
+      "authMs": "662",
+      "prismaMs": null,
+      "requestId": "b7f4e9f8"
+    },
+    {
+      "page": "/discoveries",
+      "status": 200,
+      "ttfbMs": 16637,
+      "totalMs": 16670,
+      "authMs": "476",
+      "prismaMs": null,
+      "requestId": "7b647792"
+    },
+    {
+      "page": "/messages",
+      "status": 200,
+      "ttfbMs": 5664,
+      "totalMs": 6041,
+      "authMs": "682",
+      "prismaMs": null,
+      "requestId": "4e740f30"
+    },
+    {
+      "page": "/introductions",
+      "status": 200,
+      "ttfbMs": 12381,
+      "totalMs": 12409,
+      "authMs": "459",
+      "prismaMs": null,
+      "requestId": "4711ba41"
+    },
+    {
+      "page": "/profile",
+      "status": 200,
+      "ttfbMs": 16017,
+      "totalMs": 16029,
+      "authMs": "2303",
+      "prismaMs": null,
+      "requestId": "771234a2"
+    }
+  ],
+  "note": "Baseline captured from Sprint 0 profiling before Sprint 2 code changes"
+}

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { getIntroductionsUnreadCount } from "@/services/introductions";
+import { withApiHandler } from "@/lib/api-error";
 
-export async function GET() {
+export const GET = withApiHandler(async () => {
   const userAuth = await requireUserApi();
-  if (userAuth instanceof NextResponse) return userAuth;
-  const user = userAuth;
-  const count = await getIntroductionsUnreadCount(user.id);
+  if (isApiAuthError(userAuth)) return userAuth;
+  const count = await getIntroductionsUnreadCount(userAuth.id);
   return NextResponse.json({ count });
-}
+});

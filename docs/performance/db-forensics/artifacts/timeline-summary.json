@@ -1,0 +1,19 @@
+{
+  "at": "2026-08-01T21:21:15.104Z",
+  "target": "postgresql://post***@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+  "host": "aws-1-us-east-1.pooler.supabase.com",
+  "port": 5432,
+  "measured_ms": {
+    "dns_lookup4_median": 1.78,
+    "tcp_connect_median": 852.122,
+    "tls_handshake_median": null,
+    "tcp_plus_tls_median": null,
+    "pg_connect_new_client_median": 1847.871,
+    "pg_query_warm_reuse_median": 306.275,
+    "pg_full_new_client_cycle_median": 2440.598,
+    "prisma_first_query_after_construct": 3061.0286,
+    "prisma_same_client_median": 298.181,
+    "prisma_event_duration_first": 560
+  },
+  "note": "pg connect includes DNS+TCP+TLS+Postgres startup/auth as seen by libpq/pg. Warm query on reused client approximates RTT + server exec without new handshake."
+}

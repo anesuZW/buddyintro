@@ -1,0 +1,19 @@
+{
+  "capturedAt": "2026-07-31T08:15:00.000Z",
+  "base": "http://127.0.0.1:3012",
+  "profileFlags": ["PROFILE_PRODUCTION=1", "AUTH_PROFILE=1", "PROFILE_PHASE2=1"],
+  "pages": [
+    { "page": "/home", "status": 500, "totalMs": 3684 },
+    { "page": "/discoveries", "status": 500, "totalMs": 1978 },
+    { "page": "/messages", "status": 500, "totalMs": 1713 },
+    { "page": "/introductions", "status": 500, "totalMs": 14397 },
+    { "page": "/profile", "status": 500, "totalMs": 5431 },
+    { "page": "/create-story", "status": 500, "totalMs": 24727 },
+    { "page": "/maindash", "status": 500, "totalMs": 15890 }
+  ],
+  "blocker": "P2022 users.preferred_language missing",
+  "profileDatabase": {
+    "status": "FAILED",
+    "error": "P2022 preferred_language on prisma.user.findUnique in database-performance-profile.ts"
+  }
+}

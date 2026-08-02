@@ -6,6 +6,7 @@ export const MIDDLEWARE_AUTH_TIMING_HEADERS = {
   refresh: "x-auth-refresh-ms",
   response: "x-auth-response-ms",
   total: "x-auth-profile-middleware-ms",
+  method: "x-auth-resolve-method",
 } as const;
 
 export function isMiddlewareAuthTimingEnabled(): boolean {
@@ -14,17 +15,35 @@ export function isMiddlewareAuthTimingEnabled(): boolean {
 
 export type MiddlewareAuthSegmentTimings = {
   createClientMs: number;
-  /** Local session/cookie work inside getUser (excludes Auth HTTP). */
+  /** Local session/cookie work inside auth resolve (excludes Auth HTTP). */
   loadSessionMs: number;
-  /** GET /auth/v1/user network time observed during getUser. */
+  /**
+   * Auth verification network time (GET /auth/v1/user and/or JWKS fetch).
+   * Header name kept as x-auth-get-user-ms for benchmark continuity.
+   */
   getUserNetworkMs: number;
-  /** POST /token refresh network time observed during getUser. */
+  /** POST /token refresh network time observed during auth resolve. */
   refreshNetworkMs: number;
   responseBuildMs: number;
   totalMs: number;
+  /** How middleware resolved identity. */
+  resolveMethod?: "getClaims" | "getUser";
 };
 
-/** Wrap getUser() to attribute Supabase Auth HTTP without changing call semantics. */
+function isAuthVerificationUrl(url: string): boolean {
+  return (
+    url.includes("/auth/v1/user") ||
+    url.includes("/auth/v1/jwks") ||
+    url.includes("/.well-known/jwks.json") ||
+    url.includes("/jwks")
+  );
+}
+
+function isTokenRefreshUrl(url: string): boolean {
+  return url.includes("/auth/v1/token") || url.includes("/token?grant_type");
+}
+
+/** Wrap auth resolve to attribute Supabase Auth HTTP without changing call semantics. */
 export async function measureGetUserWithFetchSplit<T>(
   getUser: () => Promise<T>
 ): Promise<{ result: T; getUserNetworkMs: number; refreshNetworkMs: number }> {
@@ -44,9 +63,9 @@ export async function measureGetUserWithFetchSplit<T>(
       return await originalFetch(input, init);
     } finally {
       const ms = Math.round(performance.now() - start);
-      if (url.includes("/auth/v1/token") || url.includes("/token?grant_type")) {
+      if (isTokenRefreshUrl(url)) {
         refreshNetworkMs += ms;
-      } else if (url.includes("/auth/v1/user")) {
+      } else if (isAuthVerificationUrl(url)) {
         getUserNetworkMs += ms;
       }
     }
@@ -73,6 +92,9 @@ export function applyMiddlewareAuthTimingHeaders(
   response.headers.set(h.response, String(timings.responseBuildMs));
   response.headers.set(h.total, String(timings.totalMs));
   response.headers.set("x-auth-profile-middleware-ms", String(timings.totalMs));
+  if (timings.resolveMethod) {
+    response.headers.set(h.method, timings.resolveMethod);
+  }
   if (process.env.PROFILE_PRODUCTION === "1") {
     response.headers.set("x-bench-auth-ms", String(timings.totalMs));
   }
@@ -96,6 +118,7 @@ export function logMiddlewareAuthSegments(
       `getUserNetwork=${timings.getUserNetworkMs}ms\n` +
       `refreshNetwork=${timings.refreshNetworkMs}ms\n` +
       `responseBuild=${timings.responseBuildMs}ms\n` +
+      `resolveMethod=${timings.resolveMethod ?? "unknown"}\n` +
       `total=${timings.totalMs}ms`
   );
 }

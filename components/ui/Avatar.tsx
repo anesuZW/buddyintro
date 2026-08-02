@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { cn, getInitials } from "@/lib/utils";
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl";
@@ -11,6 +12,34 @@ const sizes: Record<Size, string> = {
   lg: "h-14 w-14 text-base",
   xl: "h-20 w-20 text-lg",
 };
+
+const sizePx: Record<Size, number> = {
+  xs: 24,
+  sm: 32,
+  md: 40,
+  lg: 56,
+  xl: 80,
+};
+
+function canOptimizeImage(src: string): boolean {
+  if (src.startsWith("data:") || src.startsWith("blob:")) return false;
+  if (src.startsWith("/api/")) return false;
+  try {
+    if (src.startsWith("http://") || src.startsWith("https://")) {
+      const host = new URL(src).hostname;
+      return (
+        host.endsWith(".supabase.co") ||
+        host.endsWith(".supabase.in") ||
+        host === "images.unsplash.com" ||
+        host === "avatars.githubusercontent.com"
+      );
+    }
+  } catch {
+    return false;
+  }
+  // Same-origin paths (/uploads/…) are fine for the default loader.
+  return src.startsWith("/");
+}
 
 export function Avatar({
   src,
@@ -25,6 +54,8 @@ export function Avatar({
   ring?: boolean;
   className?: string;
 }) {
+  const px = sizePx[size];
+
   return (
     <div
       className={cn(
@@ -36,12 +67,23 @@ export function Avatar({
       )}
     >
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt={name || "avatar"}
-          className="h-full w-full object-cover"
-        />
+        canOptimizeImage(src) ? (
+          <Image
+            src={src}
+            alt={name || "avatar"}
+            width={px}
+            height={px}
+            className="h-full w-full object-cover"
+            sizes={`${px}px`}
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element -- signed /api media & blobs
+          <img
+            src={src}
+            alt={name || "avatar"}
+            className="h-full w-full object-cover"
+          />
+        )
       ) : (
         <span>{getInitials(name)}</span>
       )}

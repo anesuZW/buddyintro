@@ -1,0 +1,32 @@
+{
+  "at": "2026-08-01T21:19:41.067Z",
+  "urls": {
+    "DATABASE_URL": {
+      "redacted": "postgresql://post***@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+      "protocol": "postgresql",
+      "host": "aws-1-us-east-1.pooler.supabase.com",
+      "port": 5432,
+      "database": "postgres",
+      "user": "postgres.drzpgydqpryrwobtqbkg",
+      "params": {},
+      "hasPgBouncer": true,
+      "isPoolerHost": true,
+      "isDirectHost": false,
+      "passwordPresent": true
+    },
+    "DIRECT_URL": {
+      "redacted": "postgresql://post***@db.drzpgydqpryrwobtqbkg.supabase.co:5432/postgres",
+      "protocol": "postgresql",
+      "host": "db.drzpgydqpryrwobtqbkg.supabase.co",
+      "port": 5432,
+      "database": "postgres",
+      "user": "postgres",
+      "params": {},
+      "hasPgBouncer": false,
+      "isPoolerHost": false,
+      "isDirectHost": true,
+      "passwordPresent": true
+    },
+    "DATABASE_POOLER_URL": null
+  }
+}

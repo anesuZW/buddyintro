@@ -19,7 +19,18 @@ export function InstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(true);
   const [showIosHint, setShowIosHint] = useState(false);
-  const { isIos, isStandalone, isSamsung } = detectPlatform();
+  const [platform, setPlatform] = useState({
+    isIos: false,
+    isAndroid: false,
+    isStandalone: false,
+    isSamsung: false,
+  });
+
+  useEffect(() => {
+    setPlatform(detectPlatform());
+  }, []);
+
+  const { isIos, isStandalone, isSamsung } = platform;
 
   useEffect(() => {
     if (isStandalone) return;

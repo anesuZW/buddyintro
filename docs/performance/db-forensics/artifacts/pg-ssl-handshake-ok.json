@@ -1,0 +1,302 @@
+{
+  "at": "2026-08-01T21:25:24.519Z",
+  "host": "aws-1-us-east-1.pooler.supabase.com",
+  "byHostname": {
+    "dns": {
+      "n": 5,
+      "min": 1.848,
+      "median": 3.243,
+      "p95": 114.827,
+      "max": 114.827,
+      "mean": 47.212,
+      "samples": [
+        1.848,
+        2.079,
+        3.243,
+        114.063,
+        114.827
+      ]
+    },
+    "tcp": {
+      "n": 5,
+      "min": 813.463,
+      "median": 831.673,
+      "p95": 836.813,
+      "max": 836.813,
+      "mean": 829.157,
+      "samples": [
+        813.463,
+        828.2,
+        831.673,
+        835.637,
+        836.813
+      ]
+    },
+    "sslRequest": {
+      "n": 5,
+      "min": 284.026,
+      "median": 297.164,
+      "p95": 388.073,
+      "max": 388.073,
+      "mean": 312.116,
+      "samples": [
+        284.026,
+        285.825,
+        297.164,
+        305.49,
+        388.073
+      ]
+    },
+    "tls": {
+      "n": 5,
+      "min": 299.057,
+      "median": 307.24,
+      "p95": 332.441,
+      "max": 332.441,
+      "mean": 311.19,
+      "samples": [
+        299.057,
+        301.585,
+        307.24,
+        315.628,
+        332.441
+      ]
+    },
+    "total": {
+      "n": 5,
+      "min": 1419.208,
+      "median": 1435.942,
+      "p95": 1653.481,
+      "max": 1653.481,
+      "mean": 1499.798,
+      "samples": [
+        1419.208,
+        1420.219,
+        1435.942,
+        1570.14,
+        1653.481
+      ]
+    },
+    "runs": [
+      {
+        "ok": true,
+        "useIp": false,
+        "dnsMs": 114.8271,
+        "tcpMs": 836.8132,
+        "sslRequestMs": 285.8249,
+        "tlsMs": 332.4411,
+        "totalMs": 1570.1401,
+        "protocol": "TLSv1.3",
+        "reused": false,
+        "authorized": false,
+        "authorizationError": "SELF_SIGNED_CERT_IN_CHAIN",
+        "cipher": "TLS_AES_256_GCM_SHA384"
+      },
+      {
+        "ok": true,
+        "useIp": false,
+        "dnsMs": 2.0788,
+        "tcpMs": 813.4629,
+        "sslRequestMs": 305.4903,
+        "tlsMs": 299.0573,
+        "totalMs": 1420.2194,
+        "protocol": "TLSv1.3",
+        "reused": false,
+        "authorized": false,
+        "authorizationError": "SELF_SIGNED_CERT_IN_CHAIN",
+        "cipher": "TLS_AES_256_GCM_SHA384"
+      },
+      {
+        "ok": true,
+        "useIp": false,
+        "dnsMs": 114.0632,
+        "tcpMs": 835.6369,
+        "sslRequestMs": 388.0731,
+        "tlsMs": 315.6281,
+        "totalMs": 1653.481,
+        "protocol": "TLSv1.3",
+        "reused": false,
+        "authorized": false,
+        "authorizationError": "SELF_SIGNED_CERT_IN_CHAIN",
+        "cipher": "TLS_AES_256_GCM_SHA384"
+      },
+      {
+        "ok": true,
+        "useIp": false,
+        "dnsMs": 3.2425,
+        "tcpMs": 828.2002,
+        "sslRequestMs": 297.1643,
+        "tlsMs": 307.2397,
+        "totalMs": 1435.9419,
+        "protocol": "TLSv1.3",
+        "reused": false,
+        "authorized": false,
+        "authorizationError": "SELF_SIGNED_CERT_IN_CHAIN",
+        "cipher": "TLS_AES_256_GCM_SHA384"
+      },
+      {
+        "ok": true,
+        "useIp": false,
+        "dnsMs": 1.8484,
+        "tcpMs": 831.6727,
+        "sslRequestMs": 284.026,
+        "tlsMs": 301.5847,
+        "totalMs": 1419.208,
+        "protocol": "TLSv1.3",
+        "reused": false,
+        "authorized": false,
+        "authorizationError": "SELF_SIGNED_CERT_IN_CHAIN",
+        "cipher": "TLS_AES_256_GCM_SHA384"
+      }
+    ]
+  },
+  "byIp": {
+    "dns": {
+      "n": 5,
+      "min": 2.151,
+      "median": 3.541,
+      "p95": 37.414,
+      "max": 37.414,
+      "mean": 16.013,
+      "samples": [
+        2.151,
+        3.347,
+        3.541,
+        33.614,
+        37.414
+      ]
+    },
+    "tcp": {
+      "n": 5,
+      "min": 280.157,
+      "median": 285.123,
+      "p95": 307.333,
+      "max": 307.333,
+      "mean": 290.029,
+      "samples": [
+        280.157,
+        284.886,
+        285.123,
+        292.646,
+        307.333
+      ]
+    },
+    "sslRequest": {
+      "n": 5,
+      "min": 283.117,
+      "median": 286.975,
+      "p95": 319.238,
+      "max": 319.238,
+      "mean": 294.846,
+      "samples": [
+        283.117,
+        285.548,
+        286.975,
+        299.353,
+        319.238
+      ]
+    },
+    "tls": {
+      "n": 5,
+      "min": 309.719,
+      "median": 398.354,
+      "p95": 451.971,
+      "max": 451.971,
+      "mean": 382.081,
+      "samples": [
+        309.719,
+        310.195,
+        398.354,
+        440.167,
+        451.971
+      ]
+    },
+    "total": {
+      "n": 5,
+      "min": 913.254,
+      "median": 1011.666,
+      "p95": 1045.748,
+      "max": 1045.748,
+      "mean": 983.084,
+      "samples": [
+        913.254,
+        919.861,
+        1011.666,
+        1024.893,
+        1045.748
+      ]
+    },
+    "runs": [
+      {
+        "ok": true,
+        "useIp": true,
+        "dnsMs": 33.6141,
+        "tcpMs": 292.6458,
+        "sslRequestMs": 286.9749,
+        "tlsMs": 398.3537,
+        "totalMs": 1011.6662,
+        "protocol": "TLSv1.3",
+        "reused": false,
+        "authorized": false,
+        "authorizationError": "SELF_SIGNED_CERT_IN_CHAIN",
+        "cipher": "TLS_AES_256_GCM_SHA384"
+      },
+      {
+        "ok": true,
+        "useIp": true,
+        "dnsMs": 37.4137,
+        "tcpMs": 284.8856,
+        "sslRequestMs": 283.1171,
+        "tlsMs": 440.1668,
+        "totalMs": 1045.7483,
+        "protocol": "TLSv1.3",
+        "reused": false,
+        "authorized": false,
+        "authorizationError": "SELF_SIGNED_CERT_IN_CHAIN",
+        "cipher": "TLS_AES_256_GCM_SHA384"
+      },
+      {
+        "ok": true,
+        "useIp": true,
+        "dnsMs": 3.5412,
+        "tcpMs": 280.1568,
+        "sslRequestMs": 319.2377,
+        "tlsMs": 310.1954,
+        "totalMs": 913.2537,
+        "protocol": "TLSv1.3",
+        "reused": false,
+        "authorized": false,
+        "authorizationError": "SELF_SIGNED_CERT_IN_CHAIN",
+        "cipher": "TLS_AES_256_GCM_SHA384"
+      },
+      {
+        "ok": true,
+        "useIp": true,
+        "dnsMs": 2.1512,
+        "tcpMs": 285.123,
+        "sslRequestMs": 285.548,
+        "tlsMs": 451.9705,
+        "totalMs": 1024.8932,
+        "protocol": "TLSv1.3",
+        "reused": false,
+        "authorized": false,
+        "authorizationError": "SELF_SIGNED_CERT_IN_CHAIN",
+        "cipher": "TLS_AES_256_GCM_SHA384"
+      },
+      {
+        "ok": true,
+        "useIp": true,
+        "dnsMs": 3.3471,
+        "tcpMs": 307.3326,
+        "sslRequestMs": 299.3528,
+        "tlsMs": 309.719,
+        "totalMs": 919.8608,
+        "protocol": "TLSv1.3",
+        "reused": false,
+        "authorized": false,
+        "authorizationError": "SELF_SIGNED_CERT_IN_CHAIN",
+        "cipher": "TLS_AES_256_GCM_SHA384"
+      }
+    ]
+  }
+}

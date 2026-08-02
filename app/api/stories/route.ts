@@ -7,18 +7,23 @@ import { enforceRateLimit } from "@/lib/api-rate-limit";
 import { clampLimit } from "@/lib/pagination";
 import { STORY_VISIBILITY_MODES } from "@/lib/story-visibility";
 import { withProxiedMedia } from "@/lib/storage-url";
+import { storedMediaUrlSchema, optionalStoredMediaUrlSchema } from "@/lib/storage/validation";
+import {
+  apiJson,
+  mapUnknownErrorToResponse,
+  withApiHandler,
+} from "@/lib/api-error";
+import { isPrismaConnectivityError } from "@/lib/prisma-errors";
 
-export async function GET() {
+export const GET = withApiHandler(async () => {
   const userAuth = await requireUserApi();
-  if (userAuth instanceof NextResponse) return userAuth;
+  if (isApiAuthError(userAuth)) return userAuth;
   const user = userAuth;
   const stories = await getVisibleStories(user.id);
   return NextResponse.json({
     stories: stories.slice(0, clampLimit()).map(withProxiedMedia),
   });
-}
-
-import { storedMediaUrlSchema, optionalStoredMediaUrlSchema } from "@/lib/storage/validation";
+});
 
 const TagSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("user"), userId: z.string().uuid() }),
@@ -43,9 +48,9 @@ const PostSchema = z.object({
     .optional(),
 });
 
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request: Request) => {
   const userAuth = await requireUserApi();
-  if (userAuth instanceof NextResponse) return userAuth;
+  if (isApiAuthError(userAuth)) return userAuth;
   const user = userAuth;
 
   const limited = await enforceRateLimit(user.id, "stories:post");
@@ -53,24 +58,36 @@ export async function POST(request: Request) {
 
   const gate = await checkVerificationGate(user, "create_introduction");
   if (!gate.ok) {
-    return NextResponse.json({ error: gate.message, code: gate.code }, { status: gate.status });
-  }
-  const body = await request.json();
-  const parsed = PostSchema.safeParse(body);
-  if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message || "Invalid input" },
-      { status: 400 }
+      { error: gate.message, code: gate.code },
+      { status: gate.status }
     );
   }
+
+  let body: unknown;
   try {
-    const { story, phoneInvites } = await createStoryWithTags({
+    body = await request.json();
+  } catch {
+    return apiJson(422, { error: "Invalid JSON body", code: "invalid_json" });
+  }
+
+  const parsed = PostSchema.safeParse(body);
+  if (!parsed.success) {
+    return apiJson(422, {
+      error: parsed.error.issues[0]?.message || "Invalid input",
+      code: "validation_error",
+    });
+  }
+
+  try {
+    const { story, phoneInvites, emailDelivery } = await createStoryWithTags({
       authorId: user.id,
       ...parsed.data,
     });
-    return NextResponse.json({ story, phoneInvites }, { status: 201 });
+    return NextResponse.json({ story, phoneInvites, emailDelivery }, { status: 201 });
   } catch (err: unknown) {
+    if (isPrismaConnectivityError(err)) return mapUnknownErrorToResponse(err);
     const message = err instanceof Error ? err.message : "Could not create story";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return apiJson(400, { error: message, code: "create_failed" });
   }
-}
+});

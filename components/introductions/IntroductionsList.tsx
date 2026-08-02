@@ -7,7 +7,7 @@ import type { IntroductionItem } from "@/types";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { ListError, ListLoading } from "@/components/ui/ListState";
+import { ListEmpty, ListError, ListLoading } from "@/components/ui/ListState";
 
 type Tab = "recent" | "past" | "pending";
 type Category = { id: string; name: string };
@@ -103,14 +103,6 @@ export function IntroductionsList({
     });
   }, [items, query, categoryFilter]);
 
-  if (loading && !items.length) {
-    return (
-      <div className="px-4 py-12">
-        <ListLoading label="Loading introductions…" />
-      </div>
-    );
-  }
-
   return (
     <div id="introductions-list">
       {error && !items.length && (
@@ -187,10 +179,14 @@ export function IntroductionsList({
       </div>
 
       <div className="space-y-4 px-4 pb-6">
-        {filtered.length === 0 ? (
-          <p className="text-center text-muted-foreground py-12">
-            No {tab} introductions yet.
-          </p>
+        {loading && !items.length ? (
+          <ListLoading variant="list" label="Loading introductions…" />
+        ) : filtered.length === 0 ? (
+          <ListEmpty
+            message={`No ${tab} introductions yet. Create one to connect friends.`}
+            actionHref="/create-story"
+            actionLabel="Create an introduction"
+          />
         ) : (
           filtered.map((item) => <IntroductionCard key={item.id} item={item} />)
         )}

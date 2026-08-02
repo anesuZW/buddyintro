@@ -109,7 +109,14 @@ export async function sendInvitationEmail(args: {
   inviterAvatar?: string | null;
   story?: InvitationStoryPreview;
 }) {
-  if (!args.invitation.email) return { ok: false as const, reason: "no_email" as const };
+  if (!args.invitation.email) {
+    return {
+      ok: false as const,
+      provider: null,
+      error: "no_email",
+      providerError: { provider: null, message: "no_email" },
+    };
+  }
 
   const previewUrl = invitePreviewUrl(args.invitation.inviteToken);
   const signupUrl = inviteSignupUrl(args.invitation.inviteToken);
@@ -138,6 +145,7 @@ export async function sendInvitationEmail(args: {
     subject: built.subject,
     html: built.html,
     text: built.text,
+    type: "invitation",
   });
 }
 

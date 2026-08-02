@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send, X } from "lucide-react";
+import { Loader2, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 
@@ -29,16 +29,34 @@ export function MessageComposer({
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
-    if (!value.trim()) return;
+    const text = value.trim();
+    if (!text || sending) return;
+
+    const origin = includeContext ? conversationOrigin : "direct";
+    const optimisticId = `tmp-${Date.now()}`;
+    const optimistic = {
+      id: optimisticId,
+      sender_id: currentUserId,
+      receiver_id: otherUserId,
+      message: text,
+      story_reference:
+        includeStory && includeContext && origin === "story" ? storyReference ?? null : null,
+      created_at: new Date().toISOString(),
+      read_at: null,
+      pending: true,
+    };
+
+    setValue("");
     setSending(true);
+    onSent?.(optimistic);
+
     try {
-      const origin = includeContext ? conversationOrigin : "direct";
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           receiverId: otherUserId,
-          message: value,
+          message: text,
           storyReference:
             includeStory && includeContext && origin === "story" ? storyReference : null,
           discoveriesPostReference:
@@ -48,22 +66,33 @@ export function MessageComposer({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to send");
+        onSent?.({ ...optimistic, failed: true, id: optimisticId });
+        setValue(text);
+        toast.error(
+          typeof err?.reason === "string"
+            ? err.reason
+            : typeof err?.error === "string"
+              ? err.error
+              : "Failed to send"
+        );
+        return;
       }
       const data = await res.json();
       onSent?.({
         id: data.message.id,
         sender_id: currentUserId,
         receiver_id: otherUserId,
-        message: value,
+        message: text,
         story_reference:
           includeStory && includeContext && origin === "story" ? storyReference ?? null : null,
-        created_at: new Date().toISOString(),
+        created_at: data.message.createdAt ?? new Date().toISOString(),
         read_at: null,
+        replacesId: optimisticId,
       });
-      setValue("");
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch {
+      onSent?.({ ...optimistic, failed: true, id: optimisticId });
+      setValue(text);
+      toast.error("Could not send message. Please try again.");
     } finally {
       setSending(false);
     }
@@ -74,12 +103,21 @@ export function MessageComposer({
       {storyContext && includeStory && conversationOrigin === "story" && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <div className="rounded-md overflow-hidden h-10 w-10 bg-black flex-shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={storyContext.mediaUrl}
-              alt=""
-              className="h-full w-full object-cover"
-            />
+            {storyContext.mediaType === "video" ? (
+              <video
+                src={storyContext.mediaUrl}
+                className="h-full w-full object-cover"
+                muted
+                playsInline
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={storyContext.mediaUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            )}
           </div>
           <div className="flex-1">Replying to a story</div>
           <button
@@ -111,9 +149,10 @@ export function MessageComposer({
           placeholder="Send a message…"
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          disabled={sending}
         />
-        <Button size="icon" disabled={sending || !value.trim()}>
-          <Send size={16} />
+        <Button size="icon" disabled={sending || !value.trim()} aria-label="Send">
+          {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
         </Button>
       </form>
     </div>

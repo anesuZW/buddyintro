@@ -1,0 +1,25 @@
+RC1 API smoke — http://localhost:3002 as user1@friendintro.com
+
+Login OK
+
+✓ GET /api/health 200 695ms
+✓ GET /api/feed 200 4093ms
+✗ GET /api/discoveries 500 10914ms
+✓ GET /api/notifications?limit=5 200 2505ms
+✓ GET /api/introductions?group=recent 200 3581ms
+✗ GET /api/messages (list) 500 7722ms
+✓ GET /api/feed unauthenticated → 401
+✓ GET /api/discoveries unauthenticated → 401
+✓ GET /api/health public → 200
+✗ GET /api/discoveries (posts) 500 9615ms
+⚠ No jordan discovery post for interaction tests
+✓ POST /api/media/upload 200 4636ms
+
+8/11 passed
+
+Failures:
+  GET /api/discoveries: 500 ""
+  GET /api/messages (list): 500 ""
+  GET /api/discoveries (posts): 500 ""
+
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.

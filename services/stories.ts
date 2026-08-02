@@ -21,7 +21,11 @@ import {
   filterStoriesByVisibilityGate,
   type StoryVisibilityModeValue,
 } from "@/lib/story-visibility";
+import type { HomeVisibilityPrefetch } from "@/lib/home-story-context";
+import type { HomeVisibleStoryRow } from "@/lib/home-story-loader";
+import { projectHomeStoryBarStories } from "@/lib/home-story-loader";
 import { withProxiedMedia } from "@/lib/storage-url";
+import { appLogger } from "@/lib/logger";
 
 const storyInclude = {
   user: { select: { id: true, name: true, profilePicture: true } },
@@ -35,6 +39,24 @@ const storyInclude = {
 export type CreateStoryResult = {
   story: StoryWithRelations;
   phoneInvites: PhoneInviteShare[];
+  emailDelivery: EmailDeliveryResult[];
+};
+
+export type EmailDeliveryResult = {
+  email: string;
+  ok: boolean;
+  provider?: string;
+  messageId?: string;
+  error?: string;
+  statusCode?: number;
+  providerError?: {
+    provider: string | null;
+    message: string;
+    statusCode?: number;
+    name?: string;
+    code?: string;
+    response?: string;
+  };
 };
 
 export async function createStoryWithTags(args: {
@@ -59,7 +81,8 @@ export async function createStoryWithTags(args: {
     : (args.expiresInHours ?? settings.storyExpiryHours ?? STORY_DEFAULTS.expiryHours);
   const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(
+    async (tx) => {
     const story = await tx.story.create({
       data: {
         userId: args.authorId,
@@ -143,24 +166,58 @@ export async function createStoryWithTags(args: {
     });
 
     return { saved, pendingEmails, pendingPhones, author };
-  });
+  },
+  { maxWait: 10000, timeout: 20000 }
+  );
+
+  const emailDelivery: EmailDeliveryResult[] = [];
 
   for (const { invitation } of result.pendingEmails) {
-    try {
-      await sendInvitationEmail({
-        invitation,
+    if (!invitation.email) continue;
+    const sendResult = await sendInvitationEmail({
+      invitation,
+      inviterName: result.author.name,
+      inviterAvatar: result.author.profilePicture,
+      story: {
+        mediaUrl: result.saved.mediaUrl,
+        mediaType: result.saved.mediaType,
+        text: result.saved.text,
         inviterName: result.author.name,
         inviterAvatar: result.author.profilePicture,
-        story: {
-          mediaUrl: result.saved.mediaUrl,
-          mediaType: result.saved.mediaType,
-          text: result.saved.text,
-          inviterName: result.author.name,
-          inviterAvatar: result.author.profilePicture,
-        },
+      },
+    });
+
+    const entry: EmailDeliveryResult = {
+      email: invitation.email,
+      ok: sendResult.ok,
+      provider: sendResult.ok
+        ? sendResult.provider
+        : sendResult.providerError.provider ?? sendResult.provider ?? undefined,
+      messageId: sendResult.ok ? sendResult.messageId : undefined,
+      error: !sendResult.ok ? sendResult.error : undefined,
+      statusCode: !sendResult.ok ? sendResult.statusCode : undefined,
+      providerError: !sendResult.ok ? sendResult.providerError : undefined,
+    };
+    emailDelivery.push(entry);
+
+    if (sendResult.ok) {
+      appLogger.info("invitation email sent", {
+        route: "stories/create",
+        email: invitation.email,
+        provider: sendResult.provider,
+        messageId: sendResult.messageId,
+        providerResponse: { status: "accepted", messageId: sendResult.messageId },
+        invitationId: invitation.id,
       });
-    } catch (error) {
-      console.error("[stories] invitation email failed", error);
+    } else {
+      appLogger.error("invitation email failed", {
+        route: "stories/create",
+        email: invitation.email,
+        error: sendResult.error,
+        statusCode: sendResult.statusCode,
+        providerError: sendResult.providerError,
+        invitationId: invitation.id,
+      });
     }
   }
 
@@ -215,13 +272,21 @@ export async function createStoryWithTags(args: {
     }
   }
 
-  return { story: result.saved, phoneInvites };
+  return { story: result.saved, phoneInvites, emailDelivery };
 }
 
 export async function getVisibleStories(
   viewerId: string,
-  opts?: { introducerAuthorIds?: string[] }
+  opts?: {
+    introducerAuthorIds?: string[];
+    visibilityPrefetch?: HomeVisibilityPrefetch;
+    homeVisibleStoryRows?: HomeVisibleStoryRow[];
+  }
 ): Promise<StoryWithRelations[]> {
+  if (opts?.homeVisibleStoryRows) {
+    return projectHomeStoryBarStories(opts.homeVisibleStoryRows);
+  }
+
   let authorIds: string[];
   if (opts?.introducerAuthorIds) {
     authorIds = opts.introducerAuthorIds;
@@ -245,7 +310,11 @@ export async function getVisibleStories(
     include: storyInclude,
   });
 
-  const visibleStories = await filterStoriesByVisibilityGate(viewerId, rows);
+  const visibleStories = await filterStoriesByVisibilityGate(
+    viewerId,
+    rows,
+    opts?.visibilityPrefetch
+  );
   const visible: StoryWithRelations[] = visibleStories.map((story) =>
     withProxiedMedia(story as StoryWithRelations)
   );
@@ -254,7 +323,11 @@ export async function getVisibleStories(
 
 export async function getStoryBarForViewer(
   viewerId: string,
-  opts?: { introducerAuthorIds?: string[] }
+  opts?: {
+    introducerAuthorIds?: string[];
+    visibilityPrefetch?: HomeVisibilityPrefetch;
+    homeVisibleStoryRows?: HomeVisibleStoryRow[];
+  }
 ) {
   const stories = await getVisibleStories(viewerId, opts);
   const map = new Map<

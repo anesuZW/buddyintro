@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { notificationService } from "@/services/notifications/notification-service";
+import { apiJson, withApiHandler } from "@/lib/api-error";
 
-export async function GET(request: Request) {
+export const GET = withApiHandler(async (request: Request) => {
   const userAuth = await requireUserApi();
-  if (userAuth instanceof NextResponse) return userAuth;
+  if (isApiAuthError(userAuth)) return userAuth;
   const user = userAuth;
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor") ?? undefined;
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
     unreadOnly,
   });
   return NextResponse.json(result);
-}
+});
 
 const PatchSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("mark_read"), id: z.string().uuid() }),
@@ -27,11 +28,26 @@ const PatchSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("delete"), id: z.string().uuid() }),
 ]);
 
-export async function PATCH(request: Request) {
+export const PATCH = withApiHandler(async (request: Request) => {
   const userAuth = await requireUserApi();
-  if (userAuth instanceof NextResponse) return userAuth;
+  if (isApiAuthError(userAuth)) return userAuth;
   const user = userAuth;
-  const body = PatchSchema.parse(await request.json());
+
+  let json: unknown;
+  try {
+    json = await request.json();
+  } catch {
+    return apiJson(422, { error: "Invalid JSON body", code: "invalid_json" });
+  }
+
+  const parsed = PatchSchema.safeParse(json);
+  if (!parsed.success) {
+    return apiJson(422, {
+      error: "Invalid input",
+      code: "validation_error",
+    });
+  }
+  const body = parsed.data;
 
   if (body.action === "mark_read") {
     await notificationService.markRead(user.id, body.id);
@@ -43,4 +59,4 @@ export async function PATCH(request: Request) {
 
   const unreadCount = await notificationService.unreadCount(user.id);
   return NextResponse.json({ ok: true, unreadCount });
-}
+});

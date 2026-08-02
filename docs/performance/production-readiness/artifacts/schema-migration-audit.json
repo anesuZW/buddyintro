@@ -1,0 +1,652 @@
+{
+  "capturedAt": "2026-07-31T08:07:05.265Z",
+  "urlsConfigured": {
+    "DATABASE_URL": {
+      "configured": true,
+      "masked": "postgresql://postgres.drzpgydqpryrwobtqbkg:***@2020@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
+    },
+    "DIRECT_URL": {
+      "configured": true,
+      "masked": "postgresql://postgres:***@2020@db.drzpgydqpryrwobtqbkg.supabase.co:5432/postgres"
+    },
+    "LOCAL_DATABASE_URL": {
+      "configured": false,
+      "masked": null
+    }
+  },
+  "filesystemMigrations": [
+    {
+      "id": "0001_baseline",
+      "exists": true,
+      "bytes": 15340,
+      "head": "-- 0001_baseline: Core identity, stories, invitations, messages, admin settings\n-- Generated from schema.prisma via prisma migrate diff\n\n-- CreateEnum\nCREATE TYPE \"StoryStatus\" AS ENUM ('draft', 'published', 'expired');\n\n\n-- CreateEnum"
+    },
+    {
+      "id": "0002_discoveries",
+      "exists": true,
+      "bytes": 6314,
+      "head": "-- 0002_discoveries: Discoveries feed and conversation context\n-- Generated from schema.prisma via prisma migrate diff\n\n-- CreateTable\nCREATE TABLE \"conversation_contexts\" (\n    \"id\" UUID NOT NULL,\n    \"user_a_id\" UUID NOT NULL,\n    \"user_b_id\" UUID NOT NULL,"
+    },
+    {
+      "id": "0003_trust_graph",
+      "exists": true,
+      "bytes": 7592,
+      "head": "-- 0003_trust_graph: Trust graph, introduction categories, shared introducers\n-- Generated from schema.prisma via prisma migrate diff\n\n-- CreateTable\nCREATE TABLE \"user_connections\" (\n    \"id\" UUID NOT NULL,\n    \"source_user_id\" UUID NOT NULL,\n    \"target_user_id\" UUID NOT NULL,"
+    },
+    {
+      "id": "0004_notifications",
+      "exists": true,
+      "bytes": 4634,
+      "head": "-- 0004_notifications: Notifications, preferences, push, analytics\n-- Generated from schema.prisma via prisma migrate diff\n\n-- CreateTable\nCREATE TABLE \"notifications\" (\n    \"id\" UUID NOT NULL,\n    \"user_id\" UUID NOT NULL,\n    \"actor_id\" UUID,"
+    },
+    {
+      "id": "0005_moderation",
+      "exists": true,
+      "bytes": 3231,
+      "head": "-- 0005_moderation: Moderation, verification challenges, user blocks, reports\n-- Generated from schema.prisma via prisma migrate diff\n\n-- CreateTable\nCREATE TABLE \"phone_verification_challenges\" (\n    \"id\" UUID NOT NULL,\n    \"user_id\" UUID NOT NULL,\n    \"phone\" TEXT NOT NULL,"
+    },
+    {
+      "id": "0006_platform",
+      "exists": true,
+      "bytes": 1333,
+      "head": "-- 0006_platform: Background jobs platform\n-- Generated from schema.prisma via prisma migrate diff\n\n-- CreateTable\nCREATE TABLE \"background_jobs\" (\n    \"id\" UUID NOT NULL,\n    \"queue\" TEXT NOT NULL,\n    \"job_type\" TEXT NOT NULL,"
+    },
+    {
+      "id": "0007_security_rbac",
+      "exists": true,
+      "bytes": 7400,
+      "head": "-- 0007_security_rbac: RBAC, audit logs, security events\n-- Generated from schema.prisma via prisma migrate diff\n\n-- CreateTable\nCREATE TABLE \"roles\" (\n    \"id\" UUID NOT NULL,\n    \"name\" TEXT NOT NULL,\n    \"description\" TEXT,"
+    },
+    {
+      "id": "0008_media_platform",
+      "exists": true,
+      "bytes": 1304,
+      "head": "-- Media platform v2: registry for deduplication, background processing, and analytics.\n\nCREATE TYPE \"MediaProcessingStatus\" AS ENUM ('pending', 'processing', 'ready', 'failed');\n\nCREATE TABLE \"media_objects\" (\n    \"id\" UUID NOT NULL,\n    \"content_hash\" TEXT NOT NULL,\n    \"storage_path\" TEXT NOT NULL,"
+    },
+    {
+      "id": "0009_i18n",
+      "exists": true,
+      "bytes": 242,
+      "head": "-- Add preferred language for i18n user preference\nALTER TABLE \"users\" ADD COLUMN IF NOT EXISTS \"preferred_language\" TEXT NOT NULL DEFAULT 'en';\n\nCREATE INDEX IF NOT EXISTS \"users_preferred_language_idx\" ON \"users\"(\"preferred_language\");\n"
+    },
+    {
+      "id": "0010_pwa_push",
+      "exists": true,
+      "bytes": 946,
+      "head": "-- 0010_pwa_push: Extended push subscription metadata for production PWA\n\nALTER TABLE \"push_subscriptions\" ADD COLUMN IF NOT EXISTS \"expiration_time\" TIMESTAMP(3);\nALTER TABLE \"push_subscriptions\" ADD COLUMN IF NOT EXISTS \"device_type\" TEXT;\nALTER TABLE \"push_subscriptions\" ADD COLUMN IF NOT EXISTS \"browser\" TEXT;\nALTER TABLE \"push_subscriptions\" ADD COLUMN IF NOT EXISTS \"platform\" TEXT;\nALTER TABLE \"push_subscriptions\" ADD COLUMN IF NOT EXISTS \"enabled\" BOOLEAN NOT NULL DEFAULT true;\nALTER TABLE \"push_subscriptions\" ADD COLUMN IF NOT EXISTS \"updated_at\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;"
+    },
+    {
+      "id": "0011_message_unread_index",
+      "exists": true,
+      "bytes": 181,
+      "head": "-- Speed up unread message badge: WHERE receiver_id = ? AND read_at IS NULL\nCREATE INDEX IF NOT EXISTS \"messages_receiver_id_read_at_idx\" ON \"messages\"(\"receiver_id\", \"read_at\");\n"
+    }
+  ],
+  "prismaUserPreferredLanguageInSchema": true,
+  "targets": [
+    {
+      "label": "DATABASE_URL",
+      "connectMs": 2383,
+      "maskedUrl": "postgresql://postgres.drzpgydqpryrwobtqbkg:***@2020@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+      "tableCount": 31,
+      "tables": [
+        "admin_audit_logs",
+        "admin_settings",
+        "analytics_events",
+        "background_jobs",
+        "content_reports",
+        "conversation_contexts",
+        "discoveries_bookmarks",
+        "discoveries_comments",
+        "discoveries_likes",
+        "discoveries_posts",
+        "discoveries_shares",
+        "introduction_categories",
+        "invitations",
+        "messages",
+        "notification_preferences",
+        "notifications",
+        "permissions",
+        "phone_verification_challenges",
+        "posts",
+        "push_subscriptions",
+        "role_permissions",
+        "roles",
+        "security_events",
+        "shared_introducer_relationships",
+        "stories",
+        "story_tags",
+        "user_blocks",
+        "user_connections",
+        "user_consents",
+        "user_roles",
+        "users"
+      ],
+      "columnCount": 318,
+      "indexCount": 119,
+      "fkCount": 52,
+      "constraintCount": 332,
+      "preferredLanguage": {
+        "exists": false,
+        "column": null,
+        "indexExists": false,
+        "index": null
+      },
+      "userColumns": [
+        "id",
+        "name",
+        "email",
+        "profile_picture",
+        "invites_sent",
+        "invites_registered",
+        "last_introductions_seen_at",
+        "phone_verified",
+        "email_verified",
+        "identity_verified",
+        "verification_level",
+        "verified_at",
+        "trusted_user",
+        "phone",
+        "suspended_at",
+        "banned_at",
+        "trust_risk_score",
+        "trust_risk_level",
+        "trust_risk_reviewed_at",
+        "trust_risk_false_positive",
+        "created_at"
+      ],
+      "markers": {
+        "has_users": true,
+        "has_discoveries_posts": true,
+        "has_user_connections": true,
+        "has_notifications": true,
+        "has_user_blocks": true,
+        "has_background_jobs": true,
+        "has_roles": true,
+        "has_media_objects": false,
+        "has_preferred_language_column": false,
+        "has_push_endpoint_unique": true,
+        "has_messages_unread_idx": false
+      },
+      "migrationsTableExists": false,
+      "migrations": [],
+      "sampleIndexes": [
+        {
+          "tablename": "admin_audit_logs",
+          "indexname": "admin_audit_logs_action_idx",
+          "indexdef": "CREATE INDEX admin_audit_logs_action_idx ON public.admin_audit_logs USING btree (action)"
+        },
+        {
+          "tablename": "admin_audit_logs",
+          "indexname": "admin_audit_logs_admin_id_idx",
+          "indexdef": "CREATE INDEX admin_audit_logs_admin_id_idx ON public.admin_audit_logs USING btree (admin_id)"
+        },
+        {
+          "tablename": "admin_audit_logs",
+          "indexname": "admin_audit_logs_created_at_idx",
+          "indexdef": "CREATE INDEX admin_audit_logs_created_at_idx ON public.admin_audit_logs USING btree (created_at)"
+        },
+        {
+          "tablename": "admin_audit_logs",
+          "indexname": "admin_audit_logs_pkey",
+          "indexdef": "CREATE UNIQUE INDEX admin_audit_logs_pkey ON public.admin_audit_logs USING btree (id)"
+        },
+        {
+          "tablename": "admin_audit_logs",
+          "indexname": "admin_audit_logs_target_type_target_id_idx",
+          "indexdef": "CREATE INDEX admin_audit_logs_target_type_target_id_idx ON public.admin_audit_logs USING btree (target_type, target_id)"
+        },
+        {
+          "tablename": "admin_settings",
+          "indexname": "admin_settings_pkey",
+          "indexdef": "CREATE UNIQUE INDEX admin_settings_pkey ON public.admin_settings USING btree (id)"
+        },
+        {
+          "tablename": "analytics_events",
+          "indexname": "analytics_events_created_at_idx",
+          "indexdef": "CREATE INDEX analytics_events_created_at_idx ON public.analytics_events USING btree (created_at)"
+        },
+        {
+          "tablename": "analytics_events",
+          "indexname": "analytics_events_event_type_created_at_idx",
+          "indexdef": "CREATE INDEX analytics_events_event_type_created_at_idx ON public.analytics_events USING btree (event_type, created_at)"
+        },
+        {
+          "tablename": "analytics_events",
+          "indexname": "analytics_events_event_type_idx",
+          "indexdef": "CREATE INDEX analytics_events_event_type_idx ON public.analytics_events USING btree (event_type)"
+        },
+        {
+          "tablename": "analytics_events",
+          "indexname": "analytics_events_pkey",
+          "indexdef": "CREATE UNIQUE INDEX analytics_events_pkey ON public.analytics_events USING btree (id)"
+        },
+        {
+          "tablename": "analytics_events",
+          "indexname": "analytics_events_user_id_idx",
+          "indexdef": "CREATE INDEX analytics_events_user_id_idx ON public.analytics_events USING btree (user_id)"
+        },
+        {
+          "tablename": "background_jobs",
+          "indexname": "background_jobs_job_type_created_at_idx",
+          "indexdef": "CREATE INDEX background_jobs_job_type_created_at_idx ON public.background_jobs USING btree (job_type, created_at)"
+        },
+        {
+          "tablename": "background_jobs",
+          "indexname": "background_jobs_pkey",
+          "indexdef": "CREATE UNIQUE INDEX background_jobs_pkey ON public.background_jobs USING btree (id)"
+        },
+        {
+          "tablename": "background_jobs",
+          "indexname": "background_jobs_queue_status_idx",
+          "indexdef": "CREATE INDEX background_jobs_queue_status_idx ON public.background_jobs USING btree (queue, status)"
+        },
+        {
+          "tablename": "background_jobs",
+          "indexname": "background_jobs_status_priority_run_at_idx",
+          "indexdef": "CREATE INDEX background_jobs_status_priority_run_at_idx ON public.background_jobs USING btree (status, priority, run_at)"
+        },
+        {
+          "tablename": "background_jobs",
+          "indexname": "background_jobs_status_run_at_idx",
+          "indexdef": "CREATE INDEX background_jobs_status_run_at_idx ON public.background_jobs USING btree (status, run_at)"
+        },
+        {
+          "tablename": "content_reports",
+          "indexname": "content_reports_pkey",
+          "indexdef": "CREATE UNIQUE INDEX content_reports_pkey ON public.content_reports USING btree (id)"
+        },
+        {
+          "tablename": "content_reports",
+          "indexname": "content_reports_reporter_id_idx",
+          "indexdef": "CREATE INDEX content_reports_reporter_id_idx ON public.content_reports USING btree (reporter_id)"
+        },
+        {
+          "tablename": "content_reports",
+          "indexname": "content_reports_status_created_at_idx",
+          "indexdef": "CREATE INDEX content_reports_status_created_at_idx ON public.content_reports USING btree (status, created_at)"
+        },
+        {
+          "tablename": "content_reports",
+          "indexname": "content_reports_target_type_target_id_idx",
+          "indexdef": "CREATE INDEX content_reports_target_type_target_id_idx ON public.content_reports USING btree (target_type, target_id)"
+        },
+        {
+          "tablename": "conversation_contexts",
+          "indexname": "conversation_contexts_pkey",
+          "indexdef": "CREATE UNIQUE INDEX conversation_contexts_pkey ON public.conversation_contexts USING btree (id)"
+        },
+        {
+          "tablename": "conversation_contexts",
+          "indexname": "conversation_contexts_user_a_id_idx",
+          "indexdef": "CREATE INDEX conversation_contexts_user_a_id_idx ON public.conversation_contexts USING btree (user_a_id)"
+        },
+        {
+          "tablename": "conversation_contexts",
+          "indexname": "conversation_contexts_user_a_id_user_b_id_key",
+          "indexdef": "CREATE UNIQUE INDEX conversation_contexts_user_a_id_user_b_id_key ON public.conversation_contexts USING btree (user_a_id, user_b_id)"
+        },
+        {
+          "tablename": "conversation_contexts",
+          "indexname": "conversation_contexts_user_b_id_idx",
+          "indexdef": "CREATE INDEX conversation_contexts_user_b_id_idx ON public.conversation_contexts USING btree (user_b_id)"
+        },
+        {
+          "tablename": "discoveries_bookmarks",
+          "indexname": "discoveries_bookmarks_pkey",
+          "indexdef": "CREATE UNIQUE INDEX discoveries_bookmarks_pkey ON public.discoveries_bookmarks USING btree (id)"
+        },
+        {
+          "tablename": "discoveries_bookmarks",
+          "indexname": "discoveries_bookmarks_post_id_user_id_key",
+          "indexdef": "CREATE UNIQUE INDEX discoveries_bookmarks_post_id_user_id_key ON public.discoveries_bookmarks USING btree (post_id, user_id)"
+        },
+        {
+          "tablename": "discoveries_comments",
+          "indexname": "discoveries_comments_pkey",
+          "indexdef": "CREATE UNIQUE INDEX discoveries_comments_pkey ON public.discoveries_comments USING btree (id)"
+        },
+        {
+          "tablename": "discoveries_comments",
+          "indexname": "discoveries_comments_post_id_created_at_idx",
+          "indexdef": "CREATE INDEX discoveries_comments_post_id_created_at_idx ON public.discoveries_comments USING btree (post_id, created_at)"
+        },
+        {
+          "tablename": "discoveries_likes",
+          "indexname": "discoveries_likes_pkey",
+          "indexdef": "CREATE UNIQUE INDEX discoveries_likes_pkey ON public.discoveries_likes USING btree (id)"
+        },
+        {
+          "tablename": "discoveries_likes",
+          "indexname": "discoveries_likes_post_id_user_id_key",
+          "indexdef": "CREATE UNIQUE INDEX discoveries_likes_post_id_user_id_key ON public.discoveries_likes USING btree (post_id, user_id)"
+        }
+      ],
+      "foreignKeysSample": [
+        {
+          "constraint_name": "admin_audit_logs_admin_id_fkey",
+          "table_name": "admin_audit_logs",
+          "column_name": "admin_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "analytics_events_user_id_fkey",
+          "table_name": "analytics_events",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "content_reports_reporter_id_fkey",
+          "table_name": "content_reports",
+          "column_name": "reporter_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "content_reports_reviewed_by_id_fkey",
+          "table_name": "content_reports",
+          "column_name": "reviewed_by_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "conversation_contexts_discoveries_post_reference_fkey",
+          "table_name": "conversation_contexts",
+          "column_name": "discoveries_post_reference",
+          "foreign_table_name": "discoveries_posts",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "conversation_contexts_story_reference_fkey",
+          "table_name": "conversation_contexts",
+          "column_name": "story_reference",
+          "foreign_table_name": "stories",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "conversation_contexts_user_a_id_fkey",
+          "table_name": "conversation_contexts",
+          "column_name": "user_a_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "conversation_contexts_user_b_id_fkey",
+          "table_name": "conversation_contexts",
+          "column_name": "user_b_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "discoveries_bookmarks_post_id_fkey",
+          "table_name": "discoveries_bookmarks",
+          "column_name": "post_id",
+          "foreign_table_name": "discoveries_posts",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "discoveries_bookmarks_user_id_fkey",
+          "table_name": "discoveries_bookmarks",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "discoveries_comments_post_id_fkey",
+          "table_name": "discoveries_comments",
+          "column_name": "post_id",
+          "foreign_table_name": "discoveries_posts",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "discoveries_comments_user_id_fkey",
+          "table_name": "discoveries_comments",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "discoveries_likes_post_id_fkey",
+          "table_name": "discoveries_likes",
+          "column_name": "post_id",
+          "foreign_table_name": "discoveries_posts",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "discoveries_likes_user_id_fkey",
+          "table_name": "discoveries_likes",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "discoveries_posts_introduction_category_id_fkey",
+          "table_name": "discoveries_posts",
+          "column_name": "introduction_category_id",
+          "foreign_table_name": "introduction_categories",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "discoveries_posts_user_id_fkey",
+          "table_name": "discoveries_posts",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "discoveries_shares_post_id_fkey",
+          "table_name": "discoveries_shares",
+          "column_name": "post_id",
+          "foreign_table_name": "discoveries_posts",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "discoveries_shares_user_id_fkey",
+          "table_name": "discoveries_shares",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "introduction_categories_created_by_user_id_fkey",
+          "table_name": "introduction_categories",
+          "column_name": "created_by_user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "invitations_invited_by_fkey",
+          "table_name": "invitations",
+          "column_name": "invited_by",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "messages_discoveries_post_reference_fkey",
+          "table_name": "messages",
+          "column_name": "discoveries_post_reference",
+          "foreign_table_name": "discoveries_posts",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "messages_receiver_id_fkey",
+          "table_name": "messages",
+          "column_name": "receiver_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "messages_sender_id_fkey",
+          "table_name": "messages",
+          "column_name": "sender_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "messages_story_reference_fkey",
+          "table_name": "messages",
+          "column_name": "story_reference",
+          "foreign_table_name": "stories",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "notification_preferences_user_id_fkey",
+          "table_name": "notification_preferences",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "notifications_actor_id_fkey",
+          "table_name": "notifications",
+          "column_name": "actor_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "notifications_user_id_fkey",
+          "table_name": "notifications",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "phone_verification_challenges_user_id_fkey",
+          "table_name": "phone_verification_challenges",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "posts_user_id_fkey",
+          "table_name": "posts",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "push_subscriptions_user_id_fkey",
+          "table_name": "push_subscriptions",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "role_permissions_permission_id_fkey",
+          "table_name": "role_permissions",
+          "column_name": "permission_id",
+          "foreign_table_name": "permissions",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "role_permissions_role_id_fkey",
+          "table_name": "role_permissions",
+          "column_name": "role_id",
+          "foreign_table_name": "roles",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "security_events_user_id_fkey",
+          "table_name": "security_events",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "shared_introducer_relationships_first_introduction_story_i_fkey",
+          "table_name": "shared_introducer_relationships",
+          "column_name": "first_introduction_story_id",
+          "foreign_table_name": "stories",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "shared_introducer_relationships_second_introduction_story__fkey",
+          "table_name": "shared_introducer_relationships",
+          "column_name": "second_introduction_story_id",
+          "foreign_table_name": "stories",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "shared_introducer_relationships_shared_introducer_id_fkey",
+          "table_name": "shared_introducer_relationships",
+          "column_name": "shared_introducer_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "shared_introducer_relationships_user_a_id_fkey",
+          "table_name": "shared_introducer_relationships",
+          "column_name": "user_a_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "shared_introducer_relationships_user_b_id_fkey",
+          "table_name": "shared_introducer_relationships",
+          "column_name": "user_b_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "stories_introduction_category_id_fkey",
+          "table_name": "stories",
+          "column_name": "introduction_category_id",
+          "foreign_table_name": "introduction_categories",
+          "foreign_column_name": "id"
+        },
+        {
+          "constraint_name": "stories_user_id_fkey",
+          "table_name": "stories",
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id"
+        }
+      ]
+    },
+    {
+      "label": "DIRECT_URL",
+      "error": "getaddrinfo ENOTFOUND db.drzpgydqpryrwobtqbkg.supabase.co",
+      "maskedUrl": "postgresql://postgres:***@2020@db.drzpgydqpryrwobtqbkg.supabase.co:5432/postgres"
+    },
+    {
+      "label": "LOCAL_DATABASE_URL",
+      "skipped": "not configured"
+    }
+  ],
+  "prismaMappedTables": [
+    "admin_audit_logs",
+    "admin_settings",
+    "analytics_events",
+    "background_jobs",
+    "content_reports",
+    "conversation_contexts",
+    "discoveries_bookmarks",
+    "discoveries_comments",
+    "discoveries_likes",
+    "discoveries_posts",
+    "discoveries_shares",
+    "introduction_categories",
+    "invitations",
+    "media_objects",
+    "messages",
+    "notification_preferences",
+    "notifications",
+    "permissions",
+    "phone_verification_challenges",
+    "posts",
+    "push_subscriptions",
+    "role_permissions",
+    "roles",
+    "security_events",
+    "shared_introducer_relationships",
+    "stories",
+    "story_tags",
+    "user_blocks",
+    "user_connections",
+    "user_consents",
+    "user_roles",
+    "users"
+  ]
+}

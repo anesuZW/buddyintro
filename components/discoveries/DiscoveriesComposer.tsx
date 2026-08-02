@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Clock } from "lucide-react";
@@ -18,14 +18,17 @@ export function DiscoveriesComposer({
   const [content, setContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [posting, setPosting] = useState(false);
-  const { upload, uploading } = useUpload();
+  const submitLock = useRef(false);
+  const { upload, uploading, progress, cancel } = useUpload();
   const router = useRouter();
 
   async function submit() {
+    if (submitLock.current) return;
     if (!content.trim() && !file) {
       toast.error("Add text or media");
       return;
     }
+    submitLock.current = true;
     setPosting(true);
     try {
       let mediaUrl: string | undefined;
@@ -45,15 +48,38 @@ export function DiscoveriesComposer({
           mediaType: mediaType ?? null,
         }),
       });
-      if (!res.ok) throw new Error((await res.json()).error || "Failed");
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          code?: string;
+          reason?: string;
+        };
+        if (body.code === "csrf_rejected") {
+          throw new Error(
+            "Could not post — refresh the page and try again (session origin mismatch)."
+          );
+        }
+        if (res.status === 503 || body.code === "service_unavailable") {
+          throw new Error(
+            body.reason ||
+              "BuddyIntro is temporarily unavailable. Please retry in a moment."
+          );
+        }
+        throw new Error(body.reason || body.error || "Failed");
+      }
       setContent("");
       setFile(null);
       toast.success("Posted to your trusted network!");
       router.refresh();
     } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        toast("Upload cancelled");
+        return;
+      }
       toast.error(err instanceof Error ? err.message : "Could not post");
     } finally {
       setPosting(false);
+      submitLock.current = false;
     }
   }
 
@@ -69,13 +95,22 @@ export function DiscoveriesComposer({
         value={content}
         onChange={(e) => setContent(e.target.value)}
       />
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <input
           type="file"
           accept="image/*,video/*"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           className="text-xs"
+          disabled={posting || uploading}
         />
+        {uploading ? (
+          <>
+            <span className="text-xs text-muted-foreground">Uploading… {progress}%</span>
+            <Button type="button" variant="ghost" className="h-10" onClick={cancel}>
+              Cancel
+            </Button>
+          </>
+        ) : null}
         <Button
           className="ml-auto h-10"
           disabled={posting || uploading}

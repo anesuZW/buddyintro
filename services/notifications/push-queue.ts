@@ -1,5 +1,6 @@
 import "server-only";
 
+import { appLogger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { enqueueOrRun } from "@/services/jobs/job-service";
 import { JOB_TYPES, QUEUES } from "@/services/jobs/types";
@@ -40,7 +41,7 @@ async function getBullQueue(): Promise<import("bullmq").Queue | null> {
     new Queue(PUSH_DLQ_NAME, { connection: { url: redisUrl } });
     return bullQueue;
   } catch (err) {
-    console.warn("[push-queue] BullMQ unavailable", err);
+    appLogger.warn("BullMQ unavailable for push queue", { err });
     bullQueue = null;
     return null;
   }
@@ -89,7 +90,7 @@ export async function startPushWorker() {
   );
 
   worker.on("failed", async (job, err) => {
-    console.error("[push-worker] job failed", job?.id, err);
+    appLogger.error("push worker job failed", { jobId: job?.id, err });
     if (job && job.attemptsMade >= (job.opts.attempts ?? 5)) {
       const dlq = await getBullQueue();
       if (dlq) {
@@ -98,7 +99,7 @@ export async function startPushWorker() {
     }
   });
 
-  console.log("[push-worker] started");
+  appLogger.info("push worker started");
   return worker;
 }
 

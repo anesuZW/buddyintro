@@ -12,6 +12,71 @@ import {
   measureGetUserWithFetchSplit,
 } from "@/lib/middleware-auth-timing";
 import { recordRuntimeAuthMiddleware } from "@/lib/perf/runtime-counters";
+import { authUploadRejectResponse } from "@/lib/upload-reject";
+
+type MiddlewareAuthIdentity = {
+  id: string;
+  email?: string | null;
+  email_confirmed_at?: string | null;
+};
+
+/**
+ * Resolve auth identity for middleware gating.
+ * Prefers getClaims() (local JWT verify / JWKS — Supabase current SSR guidance).
+ * Falls back to getUser() when claims are unavailable (e.g. symmetric JWT projects).
+ */
+async function resolveMiddlewareAuthIdentity(supabase: {
+  auth: {
+    getClaims: () => Promise<{
+      data: { claims?: Record<string, unknown> | null } | null;
+      error: { message?: string } | null;
+    }>;
+    getUser: () => Promise<{
+      data: { user: MiddlewareAuthIdentity | null };
+    }>;
+  };
+}): Promise<{ user: MiddlewareAuthIdentity | null; method: "getClaims" | "getUser" }> {
+  try {
+    const { data, error } = await supabase.auth.getClaims();
+    const claims = data?.claims ?? null;
+    const sub = claims && typeof claims.sub === "string" ? claims.sub : null;
+    if (!error && claims && sub) {
+      const email = typeof claims.email === "string" ? claims.email : null;
+      const meta = claims.user_metadata;
+      const emailVerifiedMeta =
+        meta &&
+        typeof meta === "object" &&
+        (meta as { email_verified?: unknown }).email_verified === true;
+      const emailConfirmedAt =
+        typeof claims.email_confirmed_at === "string"
+          ? claims.email_confirmed_at
+          : emailVerifiedMeta
+            ? new Date(0).toISOString()
+            : null;
+      return {
+        user: {
+          id: sub,
+          email,
+          email_confirmed_at: emailConfirmedAt,
+        },
+        method: "getClaims",
+      };
+    }
+  } catch {
+    // Fall through to getUser — preserves auth when getClaims is unsupported.
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return { user, method: "getUser" };
+}
+
+function copyCookies(from: NextResponse, to: NextResponse) {
+  for (const cookie of from.cookies.getAll()) {
+    to.cookies.set(cookie);
+  }
+}
 
 /**
  * Refreshes the user's auth session for every request.
@@ -54,14 +119,16 @@ export async function updateSession(request: NextRequest) {
   const authProfileId = timingEnabled ? crypto.randomUUID().slice(0, 8) : null;
   const getUserStart = timingEnabled ? performance.now() : 0;
 
-  const getUserCall = () => supabase.auth.getUser();
+  const resolveCall = () => resolveMiddlewareAuthIdentity(supabase);
   const measured = timingEnabled
-    ? await measureGetUserWithFetchSplit(getUserCall)
-    : { result: await getUserCall(), getUserNetworkMs: 0, refreshNetworkMs: 0 };
+    ? await measureGetUserWithFetchSplit(resolveCall)
+    : {
+        result: await resolveCall(),
+        getUserNetworkMs: 0,
+        refreshNetworkMs: 0,
+      };
 
-  const {
-    data: { user },
-  } = measured.result;
+  const { user, method: resolveMethod } = measured.result;
 
   const getUserTotalMs = timingEnabled ? Math.round(performance.now() - getUserStart) : 0;
   const getUserNetworkMs = measured.getUserNetworkMs;
@@ -84,7 +151,11 @@ export async function updateSession(request: NextRequest) {
     request.headers.set("x-auth-profile-id", authProfileId);
   }
 
+  // Rebuild response so RSC sees trusted auth headers, but keep session cookies
+  // written during getClaims/getUser refresh (overwriting response would drop them).
+  const previous = response;
   response = NextResponse.next({ request: { headers: request.headers } });
+  copyCookies(previous, response);
 
   const isAuthPage =
     pathname.startsWith("/login") || pathname.startsWith("/signup");
@@ -95,10 +166,24 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && !isAuthPage && !isPublic) {
     if (pathname.startsWith("/api/")) {
-      finalResponse = NextResponse.json(
-        { error: "Unauthorized", code: "unauthenticated" },
-        { status: 401 }
-      );
+      if (pathname === "/api/media/upload") {
+        console.warn(
+          JSON.stringify({
+            level: "warn",
+            msg: "upload rejected — authentication",
+            route: pathname,
+            userId: "anonymous",
+            contentLength: Number(request.headers.get("content-length") || 0) || undefined,
+            rejectSource: "auth",
+            rejectCode: "permission_denied",
+            reason: "User not authenticated",
+          })
+        );
+      }
+      finalResponse =
+        pathname === "/api/media/upload"
+          ? authUploadRejectResponse(401, "User not authenticated", "Unauthorized")
+          : NextResponse.json({ error: "Unauthorized", code: "unauthenticated" }, { status: 401 });
     } else {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = prefixPathWithLocale("/login", locale);
@@ -126,6 +211,7 @@ export async function updateSession(request: NextRequest) {
       refreshNetworkMs,
       responseBuildMs,
       totalMs,
+      resolveMethod,
     };
     logMiddlewareAuthSegments(authProfileId, pathname, timings);
     applyMiddlewareAuthTimingHeaders(finalResponse, timings, authProfileId);

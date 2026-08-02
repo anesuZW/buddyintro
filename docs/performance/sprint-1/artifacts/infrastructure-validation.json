@@ -1,0 +1,447 @@
+{
+  "sprint": "Sprint 1 — Infrastructure Validation",
+  "generatedAt": "2026-07-26T07:19:50.247Z",
+  "mode": "READ-ONLY — no optimizations applied",
+  "checkpoint": {
+    "branch": "checkpoint/sprint-1-infra-start",
+    "head": "ref: refs/heads/performance-recovery-sprint",
+    "capturedAt": "2026-07-26T07:19:50.243Z"
+  },
+  "runs": 10,
+  "phase1": {
+    "config": {
+      "databaseUrl": "postgresql://postgres.***:***@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+      "directUrl": "postgresql://postgres.***:***@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+      "urlsIdentical": true,
+      "databaseHost": {
+        "host": "aws-1-us-east-1.pooler.supabase.com",
+        "port": "5432",
+        "sameAsOther": false
+      },
+      "directHost": {
+        "host": "aws-1-us-east-1.pooler.supabase.com",
+        "port": "5432",
+        "sameAsOther": false
+      }
+    },
+    "pgDatabaseUrl": {
+      "label": "DATABASE_URL (pg)",
+      "available": true,
+      "connectionString": "postgresql://postgres.***:***@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+      "connect": {
+        "samples": [
+          2675
+        ],
+        "min": 2675,
+        "avg": 2675,
+        "p50": 2675,
+        "p95": 2675,
+        "p99": 2675,
+        "max": 2675
+      },
+      "queryExecution": {
+        "samples": [
+          278,
+          279,
+          280,
+          281,
+          288,
+          304,
+          307,
+          324,
+          362,
+          365
+        ],
+        "min": 278,
+        "avg": 307,
+        "p50": 288,
+        "p95": 365,
+        "p99": 365,
+        "max": 365
+      },
+      "totalRoundTrip": {
+        "samples": [
+          278,
+          279,
+          280,
+          281,
+          288,
+          307,
+          324,
+          362,
+          365,
+          2979
+        ],
+        "min": 278,
+        "avg": 574,
+        "p50": 288,
+        "p95": 2979,
+        "p99": 2979,
+        "max": 2979
+      },
+      "sqlExecutionMs": 0.037
+    },
+    "pgDirectUrl": {
+      "label": "DIRECT_URL (pg)",
+      "available": true,
+      "connectionString": "postgresql://postgres.***:***@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+      "connect": {
+        "samples": [
+          2563
+        ],
+        "min": 2563,
+        "avg": 2563,
+        "p50": 2563,
+        "p95": 2563,
+        "p99": 2563,
+        "max": 2563
+      },
+      "queryExecution": {
+        "samples": [
+          277,
+          279,
+          283,
+          306,
+          307,
+          307,
+          307,
+          330,
+          337,
+          380
+        ],
+        "min": 277,
+        "avg": 311,
+        "p50": 307,
+        "p95": 380,
+        "p99": 380,
+        "max": 380
+      },
+      "totalRoundTrip": {
+        "samples": [
+          277,
+          279,
+          283,
+          306,
+          307,
+          307,
+          307,
+          330,
+          337,
+          2943
+        ],
+        "min": 277,
+        "avg": 568,
+        "p50": 307,
+        "p95": 2943,
+        "p99": 2943,
+        "max": 2943
+      },
+      "sqlExecutionMs": 0.02
+    },
+    "prismaDatabaseUrl": {
+      "label": "DATABASE_URL (Prisma)",
+      "available": true,
+      "url": "postgresql://postgres.***:***@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+      "select1": {
+        "samples": [
+          283,
+          286,
+          299,
+          303,
+          305,
+          306,
+          306,
+          310,
+          341,
+          3385
+        ],
+        "min": 283,
+        "avg": 612,
+        "p50": 305,
+        "p95": 3385,
+        "p99": 3385,
+        "max": 3385
+      },
+      "adminSettingsFindUnique": {
+        "samples": [
+          293,
+          295,
+          305,
+          307,
+          308,
+          309,
+          310,
+          325,
+          346,
+          692
+        ],
+        "min": 293,
+        "avg": 349,
+        "p50": 308,
+        "p95": 692,
+        "p99": 692,
+        "max": 692
+      }
+    },
+    "prismaDirectUrl": {
+      "label": "DIRECT_URL (Prisma)",
+      "available": true,
+      "url": "postgresql://postgres.***:***@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+      "select1": {
+        "samples": [
+          279,
+          298,
+          304,
+          305,
+          306,
+          306,
+          314,
+          329,
+          334,
+          2851
+        ],
+        "min": 279,
+        "avg": 563,
+        "p50": 306,
+        "p95": 2851,
+        "p99": 2851,
+        "max": 2851
+      },
+      "adminSettingsFindUnique": {
+        "samples": [
+          289,
+          300,
+          308,
+          308,
+          309,
+          311,
+          327,
+          411,
+          419,
+          586
+        ],
+        "min": 289,
+        "avg": 357,
+        "p50": 309,
+        "p95": 586,
+        "p99": 586,
+        "max": 586
+      }
+    }
+  },
+  "phase2": {
+    "runs": 10,
+    "rawPg": {
+      "samples": [
+        290,
+        293,
+        293,
+        294,
+        297,
+        302,
+        306,
+        318,
+        320,
+        358
+      ],
+      "min": 290,
+      "avg": 307,
+      "p50": 297,
+      "p95": 358,
+      "p99": 358,
+      "max": 358
+    },
+    "prismaBase": {
+      "samples": [
+        286,
+        301,
+        306,
+        307,
+        307,
+        307,
+        307,
+        314,
+        329,
+        2768
+      ],
+      "min": 286,
+      "avg": 553,
+      "p50": 307,
+      "p95": 2768,
+      "p99": 2768,
+      "max": 2768
+    },
+    "prismaWithExtension": {
+      "samples": [
+        285,
+        287,
+        289,
+        297,
+        305,
+        316,
+        350,
+        371,
+        374,
+        2696
+      ],
+      "min": 285,
+      "avg": 557,
+      "p50": 305,
+      "p95": 2696,
+      "p99": 2696,
+      "max": 2696
+    },
+    "estimatedPrismaOverheadMs": 246,
+    "estimatedExtensionOverheadMs": 4,
+    "breakdown": {
+      "connectionAcquisition": "Included in round-trip (Prisma pool)",
+      "serialization": "<1ms typical for SELECT 1",
+      "middleware": "Query extension adds ~2× performance.now() per query",
+      "resultParsing": "Negligible for scalar results",
+      "network": "Dominant — ~307ms of 553ms total",
+      "sqlExecution": "<1ms per EXPLAIN ANALYZE"
+    }
+  },
+  "phase3": {
+    "localhost": {
+      "note": "App host",
+      "reachable": true
+    },
+    "directSameAsPooler": true,
+    "tcpProbes": [
+      {
+        "name": "DATABASE_URL (pooler)",
+        "host": "aws-1-us-east-1.pooler.supabase.com",
+        "port": 5432,
+        "latencyMs": 1043,
+        "ok": true
+      }
+    ],
+    "supabaseAuthHealth": {
+      "status": 401,
+      "latencyMs": 672
+    },
+    "localPostgres": {
+      "available": false,
+      "note": "LOCAL_DATABASE_URL not configured"
+    },
+    "vpsPostgres": {
+      "available": false,
+      "note": "VPS_DATABASE_URL not configured"
+    }
+  },
+  "phase4": {
+    "base": "http://localhost:3000",
+    "serverAvailable": false,
+    "pages": [
+      {
+        "page": "/",
+        "error": "fetch failed",
+        "base": "http://localhost:3000"
+      },
+      {
+        "page": "/home",
+        "error": "fetch failed",
+        "base": "http://localhost:3000"
+      },
+      {
+        "page": "/discoveries",
+        "error": "fetch failed",
+        "base": "http://localhost:3000"
+      },
+      {
+        "page": "/profile",
+        "error": "fetch failed",
+        "base": "http://localhost:3000"
+      },
+      {
+        "page": "/messages",
+        "error": "fetch failed",
+        "base": "http://localhost:3000"
+      },
+      {
+        "page": "/introductions",
+        "error": "fetch failed",
+        "base": "http://localhost:3000"
+      }
+    ]
+  },
+  "priorProfilingReference": {
+    "generatedAt": "2026-07-26T06:37:26.870Z",
+    "infraBaselineMs": 455,
+    "infraP95Ms": 603,
+    "homeQueries": 18,
+    "httpCapture": [
+      {
+        "page": "/home",
+        "status": 200,
+        "ttfbMs": 29890,
+        "totalMs": 34418,
+        "authMs": "662",
+        "prismaMs": null,
+        "requestId": "b7f4e9f8"
+      },
+      {
+        "page": "/discoveries",
+        "status": 200,
+        "ttfbMs": 16637,
+        "totalMs": 16670,
+        "authMs": "476",
+        "prismaMs": null,
+        "requestId": "7b647792"
+      },
+      {
+        "page": "/messages",
+        "status": 200,
+        "ttfbMs": 5664,
+        "totalMs": 6041,
+        "authMs": "682",
+        "prismaMs": null,
+        "requestId": "4e740f30"
+      },
+      {
+        "page": "/introductions",
+        "status": 200,
+        "ttfbMs": 12381,
+        "totalMs": 12409,
+        "authMs": "459",
+        "prismaMs": null,
+        "requestId": "4711ba41"
+      },
+      {
+        "page": "/profile",
+        "status": 200,
+        "ttfbMs": 16017,
+        "totalMs": 16029,
+        "authMs": "2303",
+        "prismaMs": null,
+        "requestId": "771234a2"
+      },
+      {
+        "page": "/create-story",
+        "status": 200,
+        "ttfbMs": 9350,
+        "totalMs": 9664,
+        "authMs": "463",
+        "prismaMs": null,
+        "requestId": "de07e6fa"
+      },
+      {
+        "page": "/maindash",
+        "status": 307,
+        "ttfbMs": 5906,
+        "totalMs": 5919,
+        "authMs": "448",
+        "prismaMs": null,
+        "requestId": "4a85c0d1"
+      }
+    ]
+  },
+  "queryCountsFromPlanning": {
+    "home": 18,
+    "discoveries": 12,
+    "profile": 10,
+    "introductions": 8,
+    "messages": 9
+  }
+}

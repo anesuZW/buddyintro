@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-07-27T07:39:39.845Z",
+  "sprint3Home": {
+    "StoryTag_findMany": 2,
+    "Story_findMany": 5,
+    "UserConnection_findMany": 2,
+    "SharedIntroducerRelationship_groupBy": 1,
+    "Post_findMany": 1,
+    "totalPrismaEstimate": 17
+  },
+  "sprint4HomeStatic": {
+    "StoryTag_findMany": 2,
+    "Story_findMany": 4,
+    "UserConnection_findMany": 1,
+    "UserConnection_findFirst": 1,
+    "SharedIntroducerRelationship_groupBy": 1,
+    "Post_findMany": 1,
+    "totalPrismaEstimate": 15
+  },
+  "unitTests": true,
+  "http": {
+    "error": "TypeError: fetch failed"
+  },
+  "codeChanges": [
+    "lib/home-graph-context.ts — request-scoped UserConnection load",
+    "lib/home-story-loader.ts — shared visible story pool",
+    "lib/home-projection.ts — pure projection helpers",
+    "lib/discoveries-graph-context.ts — discoveries UserConnection load",
+    "services/home-dashboard.ts — getHomeRequestBundle",
+    "services/trust-network.ts — graphCtx connection rows",
+    "services/trust-recommendations.ts — graphCtx + cached pair lookup",
+    "services/feed.ts — reuse story pool for co-tag feed",
+    "services/discoveries.ts + discoveries/page.tsx — shared connections"
+  ]
+}

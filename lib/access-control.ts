@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { getDiscoveriesNetworkAuthorIds } from "@/lib/discoveries-network";
 import { filterByCategoryVisibility } from "@/lib/category-visibility";
@@ -16,10 +17,10 @@ export function viewerMayQueryNetworkPair(
   return viewerId === userAId || viewerId === userBId;
 }
 
-export async function canViewDiscoveryPost(
+export const canViewDiscoveryPost = cache(async (
   viewerId: string,
   postId: string
-): Promise<boolean> {
+): Promise<boolean> => {
   const settings = await getAdminSettings();
   if (!settings.discoveriesEnabled) return false;
 
@@ -71,7 +72,7 @@ export async function canViewDiscoveryPost(
 
   const [filtered] = await filterByCategoryVisibility(viewerId, [post]);
   return filtered?.id === post.id;
-}
+});
 
 export async function canViewTrustProfile(
   viewerId: string,

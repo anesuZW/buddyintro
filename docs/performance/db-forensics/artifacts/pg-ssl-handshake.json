@@ -1,0 +1,56 @@
+{
+  "host": "aws-1-us-east-1.pooler.supabase.com",
+  "port": 5432,
+  "runs": [
+    {
+      "ok": false,
+      "dnsMs": 113.3273,
+      "tcpMs": 288.87,
+      "sslRequestMs": 284.6321,
+      "tlsMs": 333.7981,
+      "error": "SELF_SIGNED_CERT_IN_CHAIN",
+      "totalMs": 1020.7672
+    },
+    {
+      "ok": false,
+      "dnsMs": 1.3687,
+      "tcpMs": 306.9168,
+      "sslRequestMs": 276.5957,
+      "tlsMs": 354.1703,
+      "error": "SELF_SIGNED_CERT_IN_CHAIN",
+      "totalMs": 939.1065
+    },
+    {
+      "ok": false,
+      "dnsMs": 1.2553,
+      "tcpMs": 278.8462,
+      "sslRequestMs": 326.0864,
+      "tlsMs": 288.3179,
+      "error": "SELF_SIGNED_CERT_IN_CHAIN",
+      "totalMs": 894.55
+    },
+    {
+      "ok": false,
+      "dnsMs": 1.5125,
+      "tcpMs": 276.4606,
+      "sslRequestMs": 273.7794,
+      "tlsMs": 303.0359,
+      "error": "SELF_SIGNED_CERT_IN_CHAIN",
+      "totalMs": 854.8552
+    },
+    {
+      "ok": false,
+      "dnsMs": 1.7052,
+      "tcpMs": 282.1899,
+      "sslRequestMs": 293.7256,
+      "tlsMs": 303.6087,
+      "error": "SELF_SIGNED_CERT_IN_CHAIN",
+      "totalMs": 881.2838
+    }
+  ],
+  "dns": null,
+  "tcp": null,
+  "sslRequest": null,
+  "tls": null,
+  "totalHandshake": null
+}

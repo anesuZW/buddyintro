@@ -1,0 +1,22 @@
+{
+  "capturedAt": "2026-07-31T07:40:50.467Z",
+  "connectMs": 2693,
+  "select1": {
+    "samples": [
+      348,
+      311,
+      328,
+      354,
+      302,
+      416,
+      289
+    ],
+    "min": 289,
+    "avg": 335,
+    "p50": 328,
+    "p95": 416,
+    "max": 416
+  },
+  "preferredLanguageExists": false,
+  "host": "postgresql://postgres.drzpgydqpryrwobtqbkg:***@2020@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
+}

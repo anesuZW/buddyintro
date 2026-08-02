@@ -13,15 +13,16 @@ import { analyticsService } from "@/services/analytics/analytics-service";
 import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 import { enforceRateLimit } from "@/lib/api-rate-limit";
 import { clampLimit } from "@/lib/pagination";
+import { apiJson, withApiHandler } from "@/lib/api-error";
 
 const Schema = z.object({
   email: z.string().email().optional(),
   phone: z.string().optional(),
 }).refine((d) => d.email || d.phone, { message: "Provide email or phone" });
 
-export async function GET(request: Request) {
+export const GET = withApiHandler(async (request: Request) => {
   const meAuth = await requireUserApi();
-  if (meAuth instanceof NextResponse) return meAuth;
+  if (isApiAuthError(meAuth)) return meAuth;
   const me = meAuth;
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor");
@@ -43,18 +44,22 @@ export async function GET(request: Request) {
     invites: slice,
     nextCursor: hasMore ? slice[slice.length - 1].createdAt.toISOString() : null,
   });
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request: Request) => {
   const meAuth = await requireUserApi();
-  if (meAuth instanceof NextResponse) return meAuth;
+  if (isApiAuthError(meAuth)) return meAuth;
   const me = meAuth;
 
   const limited = await enforceRateLimit(me.id, "invites:post");
   if (limited) return limited;
   const parsed = Schema.safeParse(await request.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.message }, { status: 400 });
+    return apiJson(422, {
+      error: "Validation failed",
+      code: "validation_error",
+      reason: "Provide a valid email or phone number.",
+    });
   }
 
   try {
@@ -64,14 +69,29 @@ export async function POST(request: Request) {
         email: parsed.data.email,
         invitedById: me.id,
       });
-      try {
-        await sendInvitationEmail({
+      const sendResult = await sendInvitationEmail({
           invitation,
           inviterName: me.name,
           inviterAvatar: me.profilePicture,
         });
-      } catch (error) {
-        console.error("[api/invites] email failed", error);
+      if (!sendResult.ok) {
+        return NextResponse.json(
+          {
+            error: sendResult.error,
+            statusCode: sendResult.statusCode,
+            providerError: sendResult.providerError,
+            emailDelivery: [
+              {
+                email: parsed.data.email,
+                ok: false,
+                error: sendResult.error,
+                statusCode: sendResult.statusCode,
+                providerError: sendResult.providerError,
+              },
+            ],
+          },
+          { status: 502 }
+        );
       }
       void analyticsService.track({
         userId: me.id,
@@ -110,6 +130,10 @@ export async function POST(request: Request) {
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Could not create invite";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return apiJson(400, {
+      error: "Could not create invite",
+      code: "invite_failed",
+      reason: message,
+    });
   }
-}
+});

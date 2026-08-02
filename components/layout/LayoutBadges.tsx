@@ -7,7 +7,10 @@ import type { User } from "@prisma/client";
 type LayoutUser = Pick<User, "id" | "name" | "profilePicture" | "email" | "lastIntroductionsSeenAt">;
 
 export async function TopBarWithBadges({ user }: { user: LayoutUser }) {
-  const { unreadMessages, unreadNotifications } = await getLayoutBadges(user);
+  const { unreadMessages, unreadNotifications } = await getLayoutBadges(
+    user.id,
+    user.lastIntroductionsSeenAt
+  );
 
   return (
     <TopBar
@@ -24,7 +27,7 @@ export async function TopBarWithBadges({ user }: { user: LayoutUser }) {
 }
 
 export async function BottomNavWithBadge({ user }: { user: LayoutUser }) {
-  const { introBadge } = await getLayoutBadges(user);
+  const { introBadge } = await getLayoutBadges(user.id, user.lastIntroductionsSeenAt);
   return <BottomNav introBadge={introBadge} />;
 }
 

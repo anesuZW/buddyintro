@@ -183,11 +183,14 @@ export async function runHealthChecks(): Promise<HealthCheckResult> {
   }
 
   try {
-    const [pending, processing, dead] = await Promise.all([
-      prisma.backgroundJob.count({ where: { status: "pending" } }),
-      prisma.backgroundJob.count({ where: { status: "processing" } }),
-      prisma.backgroundJob.count({ where: { status: "dead" } }),
-    ]);
+    const grouped = await prisma.backgroundJob.groupBy({
+      by: ["status"],
+      _count: true,
+    });
+    const counts = Object.fromEntries(grouped.map((g) => [g.status, g._count]));
+    const pending = counts.pending ?? 0;
+    const processing = counts.processing ?? 0;
+    const dead = counts.dead ?? 0;
     details.queuePending = pending;
     details.queueProcessing = processing;
     details.queueDead = dead;
@@ -253,10 +256,46 @@ export async function runHealthChecks(): Promise<HealthCheckResult> {
   };
 }
 
+/** Fast load-balancer probe — single DB ping + process stats. */
+export async function getLiteHealthSummary(options?: {
+  requestId?: string;
+}): Promise<ProductionHealthSummary> {
+  const dbLatency = await measureDatabaseLatency();
+  const mem = process.memoryUsage();
+  const database: HealthStatus = dbLatency.status;
+
+  return {
+    status: database === "unhealthy" ? "unhealthy" : database,
+    database,
+    supabase: "healthy",
+    redis: isRedisConfigured() ? "healthy" : "degraded",
+    storage: "healthy",
+    queue: "healthy",
+    worker: "healthy",
+    memory: {
+      heapUsedMb: Math.round((mem.heapUsed / 1024 / 1024) * 10) / 10,
+      heapTotalMb: Math.round((mem.heapTotal / 1024 / 1024) * 10) / 10,
+      rssMb: Math.round((mem.rss / 1024 / 1024) * 10) / 10,
+      externalMb: Math.round((mem.external / 1024 / 1024) * 10) / 10,
+    },
+    uptime: Math.round(process.uptime()),
+    nodeVersion: process.version,
+    websocketConnections: 0,
+    checkedAt: new Date().toISOString(),
+    requestId: options?.requestId,
+    details: {
+      mode: "lite",
+      databaseLatencyMs: dbLatency.latencyMs ?? -1,
+      ...(dbLatency.error ? { databaseError: dbLatency.error } : {}),
+    },
+  };
+}
+
 /** Production probe shape for load balancers and uptime monitors. */
 export async function getProductionHealthSummary(options?: {
   verbose?: boolean;
   requestId?: string;
+  includeActiveUsers?: boolean;
 }): Promise<ProductionHealthSummary> {
   const [checks, supabaseAuth] = await Promise.all([runHealthChecks(), checkSupabaseAuth()]);
   const mem = process.memoryUsage();
@@ -287,16 +326,18 @@ export async function getProductionHealthSummary(options?: {
       : undefined;
 
   let activeUsers24h: number | undefined;
-  try {
-    activeUsers24h = await prisma.analyticsEvent.groupBy({
-      by: ["userId"],
-      where: {
-        createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-        userId: { not: null },
-      },
-    }).then((rows) => rows.length);
-  } catch {
-    /* optional */
+  if (options?.includeActiveUsers !== false) {
+    try {
+      activeUsers24h = await prisma.analyticsEvent.groupBy({
+        by: ["userId"],
+        where: {
+          createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          userId: { not: null },
+        },
+      }).then((rows) => rows.length);
+    } catch {
+      /* optional */
+    }
   }
 
   return {

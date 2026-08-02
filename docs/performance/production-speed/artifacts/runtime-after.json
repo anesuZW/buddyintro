@@ -1,0 +1,262 @@
+{
+  "label": "after",
+  "base": "http://127.0.0.1:3050",
+  "measuredAt": "2026-07-31T15:34:59.672Z",
+  "pages": {
+    "/login": {
+      "status": [
+        307,
+        307,
+        307
+      ],
+      "ttfbMs": [
+        1363,
+        19,
+        14
+      ],
+      "medianTtfbMs": 19,
+      "contentEncoding": null,
+      "xPoweredBy": null,
+      "samples": [
+        {
+          "url": "http://127.0.0.1:3050/login",
+          "status": 307,
+          "ttfbMs": 1363,
+          "bytes": 5,
+          "contentEncoding": null,
+          "cacheControl": null,
+          "xPoweredBy": null,
+          "location": "/home"
+        },
+        {
+          "url": "http://127.0.0.1:3050/login",
+          "status": 307,
+          "ttfbMs": 19,
+          "bytes": 5,
+          "contentEncoding": null,
+          "cacheControl": null,
+          "xPoweredBy": null,
+          "location": "/home"
+        },
+        {
+          "url": "http://127.0.0.1:3050/login",
+          "status": 307,
+          "ttfbMs": 14,
+          "bytes": 5,
+          "contentEncoding": null,
+          "cacheControl": null,
+          "xPoweredBy": null,
+          "location": "/home"
+        }
+      ]
+    },
+    "/home": {
+      "status": [
+        200,
+        200,
+        200
+      ],
+      "ttfbMs": [
+        3946,
+        825,
+        692
+      ],
+      "medianTtfbMs": 825,
+      "contentEncoding": "gzip",
+      "xPoweredBy": null,
+      "samples": [
+        {
+          "url": "http://127.0.0.1:3050/home",
+          "status": 200,
+          "ttfbMs": 3946,
+          "bytes": 42018,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        },
+        {
+          "url": "http://127.0.0.1:3050/home",
+          "status": 200,
+          "ttfbMs": 825,
+          "bytes": 42061,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        },
+        {
+          "url": "http://127.0.0.1:3050/home",
+          "status": 200,
+          "ttfbMs": 692,
+          "bytes": 42061,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        }
+      ]
+    },
+    "/discoveries": {
+      "status": [
+        200,
+        200,
+        200
+      ],
+      "ttfbMs": [
+        3965,
+        3355,
+        3170
+      ],
+      "medianTtfbMs": 3355,
+      "contentEncoding": "gzip",
+      "xPoweredBy": null,
+      "samples": [
+        {
+          "url": "http://127.0.0.1:3050/discoveries",
+          "status": 200,
+          "ttfbMs": 3965,
+          "bytes": 33637,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        },
+        {
+          "url": "http://127.0.0.1:3050/discoveries",
+          "status": 200,
+          "ttfbMs": 3355,
+          "bytes": 33637,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        },
+        {
+          "url": "http://127.0.0.1:3050/discoveries",
+          "status": 200,
+          "ttfbMs": 3170,
+          "bytes": 33637,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        }
+      ]
+    },
+    "/messages": {
+      "status": [
+        200,
+        200,
+        200
+      ],
+      "ttfbMs": [
+        1096,
+        555,
+        679
+      ],
+      "medianTtfbMs": 679,
+      "contentEncoding": "gzip",
+      "xPoweredBy": null,
+      "samples": [
+        {
+          "url": "http://127.0.0.1:3050/messages",
+          "status": 200,
+          "ttfbMs": 1096,
+          "bytes": 32695,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        },
+        {
+          "url": "http://127.0.0.1:3050/messages",
+          "status": 200,
+          "ttfbMs": 555,
+          "bytes": 32695,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        },
+        {
+          "url": "http://127.0.0.1:3050/messages",
+          "status": 200,
+          "ttfbMs": 679,
+          "bytes": 32695,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        }
+      ]
+    },
+    "/profile": {
+      "status": [
+        200,
+        200,
+        200
+      ],
+      "ttfbMs": [
+        4100,
+        4713,
+        5077
+      ],
+      "medianTtfbMs": 4713,
+      "contentEncoding": "gzip",
+      "xPoweredBy": null,
+      "samples": [
+        {
+          "url": "http://127.0.0.1:3050/profile",
+          "status": 200,
+          "ttfbMs": 4100,
+          "bytes": 44716,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        },
+        {
+          "url": "http://127.0.0.1:3050/profile",
+          "status": 200,
+          "ttfbMs": 4713,
+          "bytes": 43194,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        },
+        {
+          "url": "http://127.0.0.1:3050/profile",
+          "status": 200,
+          "ttfbMs": 5077,
+          "bytes": 43194,
+          "contentEncoding": "gzip",
+          "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+          "xPoweredBy": null,
+          "location": null
+        }
+      ]
+    }
+  },
+  "staticAsset": {
+    "url": "http://127.0.0.1:3050/_next/static/chunks/fd9d1056-f3c5f4be60681c42.js",
+    "status": 200,
+    "ttfbMs": 8,
+    "bytes": 172832,
+    "contentEncoding": "gzip",
+    "cacheControl": "public, max-age=31536000, immutable",
+    "xPoweredBy": null,
+    "location": null
+  },
+  "serviceWorker": {
+    "url": "http://127.0.0.1:3050/sw.js",
+    "status": 200,
+    "ttfbMs": 5,
+    "bytes": 19909,
+    "contentEncoding": "gzip",
+    "cacheControl": "no-cache, no-store, must-revalidate",
+    "xPoweredBy": null,
+    "location": null
+  }
+}

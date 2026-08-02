@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { getIntroductionSuggestions } from "@/services/introduction-suggestions";
+import { withApiHandler } from "@/lib/api-error";
 
-export async function GET() {
+export const GET = withApiHandler(async () => {
   const userAuth = await requireUserApi();
-  if (userAuth instanceof NextResponse) return userAuth;
-  const user = userAuth;
-  const suggestions = await getIntroductionSuggestions(user.id, 5);
+  if (isApiAuthError(userAuth)) return userAuth;
+  const suggestions = await getIntroductionSuggestions(userAuth.id, 5);
   return NextResponse.json({ suggestions });
-}
+});

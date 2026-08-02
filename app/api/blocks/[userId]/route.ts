@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { unblockUser } from "@/services/moderation";
+import { withApiHandler } from "@/lib/api-error";
 
-export async function DELETE(
+export const DELETE = withApiHandler(async (
   _request: Request,
   { params }: { params: { userId: string } }
-) {
+) => {
   const userAuth = await requireUserApi();
-  if (userAuth instanceof NextResponse) return userAuth;
-  const user = userAuth;
-  await unblockUser(user.id, params.userId);
+  if (isApiAuthError(userAuth)) return userAuth;
+  await unblockUser(userAuth.id, params.userId);
   return NextResponse.json({ ok: true });
-}
+});

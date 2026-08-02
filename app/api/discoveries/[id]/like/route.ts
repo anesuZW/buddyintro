@@ -1,34 +1,33 @@
 import { NextResponse } from "next/server";
 import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { toggleDiscoveriesLike } from "@/services/discoveries";
+import { apiJson, withApiHandler } from "@/lib/api-error";
 
 async function handleLike(postId: string, userId: string) {
   try {
     return NextResponse.json(await toggleDiscoveriesLike(postId, userId));
   } catch (err: unknown) {
     if (err instanceof Error && err.message === "Forbidden") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiJson(403, { error: "Forbidden", code: "permission_denied" });
     }
     throw err;
   }
 }
 
-export async function POST(
+export const POST = withApiHandler(async (
   _request: Request,
   { params }: { params: { id: string } }
-) {
+) => {
   const userAuth = await requireUserApi();
-  if (userAuth instanceof NextResponse) return userAuth;
-  const user = userAuth;
-  return handleLike(params.id, user.id);
-}
+  if (isApiAuthError(userAuth)) return userAuth;
+  return handleLike(params.id, userAuth.id);
+});
 
-export async function DELETE(
+export const DELETE = withApiHandler(async (
   _request: Request,
   { params }: { params: { id: string } }
-) {
+) => {
   const userAuth = await requireUserApi();
-  if (userAuth instanceof NextResponse) return userAuth;
-  const user = userAuth;
-  return handleLike(params.id, user.id);
-}
+  if (isApiAuthError(userAuth)) return userAuth;
+  return handleLike(params.id, userAuth.id);
+});

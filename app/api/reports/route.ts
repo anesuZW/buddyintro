@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { createReport } from "@/services/moderation";
+import { apiJson, withApiHandler } from "@/lib/api-error";
 
 const Schema = z.object({
   targetType: z.enum(["user", "story", "discoveries_post", "message"]),
@@ -10,17 +11,24 @@ const Schema = z.object({
   details: z.string().max(2000).optional(),
 });
 
-export async function POST(request: Request) {
+export const POST = withApiHandler(async (request: Request) => {
   const userAuth = await requireUserApi();
-  if (userAuth instanceof NextResponse) return userAuth;
-  const user = userAuth;
-  const body = Schema.parse(await request.json());
+  if (isApiAuthError(userAuth)) return userAuth;
+  const parsed = Schema.safeParse(await request.json());
+  if (!parsed.success) {
+    return apiJson(422, {
+      error: "Validation failed",
+      code: "validation_error",
+      reason: "Report details are invalid.",
+      details: parsed.error.flatten(),
+    });
+  }
   const report = await createReport({
-    reporterId: user.id,
-    targetType: body.targetType,
-    targetId: body.targetId,
-    reason: body.reason,
-    details: body.details,
+    reporterId: userAuth.id,
+    targetType: parsed.data.targetType,
+    targetId: parsed.data.targetId,
+    reason: parsed.data.reason,
+    details: parsed.data.details,
   });
   return NextResponse.json({ report }, { status: 201 });
-}
+});

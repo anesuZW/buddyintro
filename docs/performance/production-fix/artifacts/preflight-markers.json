@@ -1,0 +1,26 @@
+{
+  "capturedAt": "2026-07-31T14:19:44.697Z",
+  "checks": {
+    "users": true,
+    "discoveries_posts": true,
+    "user_connections": true,
+    "notifications": true,
+    "user_blocks": true,
+    "background_jobs": true,
+    "roles": true,
+    "media_objects": false,
+    "preferred_language": false,
+    "prisma_migrations": false
+  },
+  "resolveAppliedSafe": true,
+  "doNotResolveApplied": {
+    "0008_media_platform": true,
+    "0009_i18n": true
+  },
+  "mustDeploy": [
+    "0008_media_platform",
+    "0009_i18n",
+    "0010_pwa_push",
+    "0011_message_unread_index"
+  ]
+}

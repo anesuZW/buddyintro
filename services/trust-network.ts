@@ -2,16 +2,19 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { getMutualIntroducers, getIntroductionEvidence } from "@/lib/introduction-graph";
-import { isUserConnectionsMaterialized } from "@/services/introduction-graph-builder";
+import type { TrustNetworkStatsContext } from "@/lib/home-story-context";
+import type { HomeUserConnectionRow } from "@/lib/home-graph-context";
+import {
+  isUserConnectionsMaterializedCached,
+  sumMutualConnectionsForTargets,
+} from "@/lib/home-graph-context";
 
-export async function getTrustNetworkStats(userId: string) {
-  const [introducedByMe, introducedToMe, myStories, taggedMe] = await Promise.all([
-    prisma.storyTag.count({
-      where: { story: { userId, status: "published" } },
-    }),
-    prisma.storyTag.count({
-      where: { taggedUserId: userId, story: { status: "published" } },
-    }),
+export async function getTrustNetworkStats(
+  userId: string,
+  statsCtx?: TrustNetworkStatsContext,
+  graphCtx?: { connectionRows?: HomeUserConnectionRow[] }
+) {
+  const [myStories, taggedMe] = await Promise.all([
     prisma.story.findMany({
       where: { userId, status: "published" },
       orderBy: { createdAt: "desc" },
@@ -40,33 +43,58 @@ export async function getTrustNetworkStats(userId: string) {
     }),
   ]);
 
-  const introducerIds = await prisma.storyTag.findMany({
-    where: { taggedUserId: userId, story: { status: "published" } },
-    select: { story: { select: { userId: true } } },
-    distinct: ["storyId"],
-  });
-  const uniqueIntroducers = new Set(introducerIds.map((t) => t.story.userId));
+  let introducedByMe: number;
+  let introducedToMe: number;
+  let uniqueIntroducers: number;
+  let targetIds: string[];
+
+  if (statsCtx) {
+    introducedByMe = statsCtx.introducedByMeCount;
+    introducedToMe = statsCtx.introducedToMeCount;
+    uniqueIntroducers = statsCtx.uniqueIntroducerCount;
+    targetIds = statsCtx.introducedTargetIds;
+  } else {
+    const [introducedByMeCount, introducedToMeCount, introducerIds, introducedUserIds] =
+      await Promise.all([
+        prisma.storyTag.count({
+          where: { story: { userId, status: "published" } },
+        }),
+        prisma.storyTag.count({
+          where: { taggedUserId: userId, story: { status: "published" } },
+        }),
+        prisma.storyTag.findMany({
+          where: { taggedUserId: userId, story: { status: "published" } },
+          select: { story: { select: { userId: true } } },
+          distinct: ["storyId"],
+        }),
+        prisma.storyTag.findMany({
+          where: { story: { userId, status: "published" }, taggedUserId: { not: null } },
+          select: { taggedUserId: true },
+          distinct: ["taggedUserId"],
+        }),
+      ]);
+    introducedByMe = introducedByMeCount;
+    introducedToMe = introducedToMeCount;
+    uniqueIntroducers = new Set(introducerIds.map((t) => t.story.userId)).size;
+    targetIds = introducedUserIds
+      .map((t) => t.taggedUserId)
+      .filter((id): id is string => Boolean(id));
+  }
 
   let mutualCount = 0;
-  const introducedUserIds = await prisma.storyTag.findMany({
-    where: { story: { userId, status: "published" }, taggedUserId: { not: null } },
-    select: { taggedUserId: true },
-    distinct: ["taggedUserId"],
-  });
-  const targetIds = introducedUserIds
-    .map((t) => t.taggedUserId)
-    .filter((id): id is string => Boolean(id));
-
-  if (targetIds.length && (await isUserConnectionsMaterialized())) {
-    const rows = await prisma.userConnection.findMany({
-      where: { sourceUserId: userId, targetUserId: { in: targetIds } },
-      select: { sharedIntroducerCount: true },
-    });
-    mutualCount = rows.reduce((sum, row) => sum + row.sharedIntroducerCount, 0);
-  } else {
-    for (const t of introducedUserIds) {
-      if (!t.taggedUserId) continue;
-      mutualCount += (await getMutualIntroducers(userId, t.taggedUserId)).length;
+  if (targetIds.length && (await isUserConnectionsMaterializedCached())) {
+    if (graphCtx?.connectionRows) {
+      mutualCount = sumMutualConnectionsForTargets(graphCtx.connectionRows, targetIds);
+    } else {
+      const rows = await prisma.userConnection.findMany({
+        where: { sourceUserId: userId, targetUserId: { in: targetIds } },
+        select: { sharedIntroducerCount: true },
+      });
+      mutualCount = rows.reduce((sum, row) => sum + row.sharedIntroducerCount, 0);
+    }
+  } else if (targetIds.length) {
+    for (const targetId of targetIds) {
+      mutualCount += (await getMutualIntroducers(userId, targetId)).length;
     }
   }
 
@@ -75,7 +103,7 @@ export async function getTrustNetworkStats(userId: string) {
     peopleIntroducedToYou: introducedToMe,
     mutualConnections: mutualCount,
     trustedIntroductions: introducedByMe + introducedToMe,
-    uniqueIntroducers: uniqueIntroducers.size,
+    uniqueIntroducers,
     recentSent: myStories,
     recentReceived: taggedMe,
   };

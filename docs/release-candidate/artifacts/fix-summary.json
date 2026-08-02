@@ -1,0 +1,34 @@
+{
+  "fixes": [
+    {
+      "id": "RC3-001",
+      "sev": "High",
+      "title": "CSRF rejects localhost vs 127.0.0.1 under production NODE_ENV",
+      "status": "FIXED",
+      "files": [
+        "lib/security.ts"
+      ]
+    },
+    {
+      "id": "RC3-002",
+      "sev": "Critical",
+      "title": "Layout badge / requireUser DB blip crashes authenticated shell",
+      "status": "FIXED",
+      "files": [
+        "services/layout-badges.ts",
+        "app/[locale]/(main)/layout.tsx",
+        "components/layout/ServiceUnavailable.tsx"
+      ]
+    },
+    {
+      "id": "RC3-003",
+      "sev": "Medium",
+      "title": "Discovery post CSRF error message opaque",
+      "status": "FIXED",
+      "files": [
+        "components/discoveries/DiscoveriesComposer.tsx"
+      ]
+    }
+  ],
+  "at": "2026-07-31T16:34:26.288Z"
+}

@@ -153,9 +153,23 @@ export function ChatWindow({
           (storyContext ? "story" : discoveriesPostId ? "discoveries" : "direct")
         }
         onSent={(m) =>
-          setMessages((prev) =>
-            prev.find((x) => x.id === m.id) ? prev : [...prev, m as any]
-          )
+          setMessages((prev) => {
+            const incoming = m as DbMessage & {
+              replacesId?: string;
+              failed?: boolean;
+              pending?: boolean;
+            };
+            if (incoming.failed && incoming.id) {
+              return prev.filter((x) => x.id !== incoming.id);
+            }
+            if (incoming.replacesId) {
+              const withoutTemp = prev.filter((x) => x.id !== incoming.replacesId);
+              if (withoutTemp.some((x) => x.id === incoming.id)) return withoutTemp;
+              return [...withoutTemp, incoming as DbMessage];
+            }
+            if (prev.some((x) => x.id === incoming.id)) return prev;
+            return [...prev, incoming as DbMessage];
+          })
         }
       />
     </div>

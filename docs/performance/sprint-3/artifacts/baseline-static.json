@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-07-26T16:00:00.000Z",
+  "sprint": "Sprint 3 — pre-optimization /home baseline (static analysis)",
+  "checkpoint": "checkpoint/sprint-3-home-start @ 87edda0",
+  "page": "/home",
+  "queryCounts": {
+    "StoryTag_findMany": 10,
+    "StoryTag_count": 2,
+    "Story_findMany": 5,
+    "Story_count": 1,
+    "UserConnection_findMany": 1,
+    "SharedIntroducerRelationship_groupBy": 1,
+    "SharedIntroducerRelationship_findMany": 0,
+    "Post_findMany": 1,
+    "Notification_count": 1,
+    "Message_count": 1,
+    "User_findUnique": 1,
+    "AdminSettings_findUnique": 1,
+    "totalPrismaEstimate": 25
+  },
+  "sources": {
+    "getHomeStoryContext": { "StoryTag_findMany": 4 },
+    "getTrustNetworkStats": { "StoryTag_count": 2, "StoryTag_findMany": 2, "Story_findMany": 2 },
+    "filterStoriesByVisibilityGate": { "StoryTag_findMany": 2 },
+    "getMutualTagFeed": { "Story_findMany": 2, "Post_findMany": 1 },
+    "getVisibleStories": { "Story_findMany": 1 },
+    "getIntroductionSuggestions": { "SharedIntroducerRelationship_groupBy": 1 },
+    "getTrustRecommendations": { "UserConnection_findMany": 1 },
+    "getLayoutBadges": { "Story_count": 1, "Message_count": 1, "Notification_count": 1 },
+    "auth": { "User_findUnique": 1, "AdminSettings_findUnique": 1 }
+  },
+  "httpProfile": {
+    "note": "From Sprint 2 after capture (warm dev server)",
+    "page": "/home",
+    "ttfbMs": 6103,
+    "totalMs": 12591,
+    "middlewareAuthMs": 446
+  },
+  "poolerRttP50Ms": 305
+}

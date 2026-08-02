@@ -1,0 +1,29 @@
+{
+  "host": "db.drzpgydqpryrwobtqbkg.supabase.co",
+  "addresses": {
+    "v4": [],
+    "v6": [
+      "2600:1f18:6f7d:e805:fd48:d35c:2ecc:dd39"
+    ],
+    "v4Error": "ENOTFOUND",
+    "v6Error": "ENOENT",
+    "resolve4Error": "ENODATA"
+  },
+  "lookup4": null,
+  "lookup6": null,
+  "resolve4": null,
+  "resolve6": {
+    "n": 3,
+    "min": 12.182,
+    "median": 13.844,
+    "p95": 16.536,
+    "p99": 16.536,
+    "max": 16.536,
+    "mean": 14.187,
+    "samples": [
+      12.182,
+      13.844,
+      16.536
+    ]
+  }
+}

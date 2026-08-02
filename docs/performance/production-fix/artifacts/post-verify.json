@@ -1,0 +1,83 @@
+{
+  "capturedAt": "2026-07-31T14:27:17.639Z",
+  "schema": {
+    "preferredLanguage": {
+      "column_name": "preferred_language",
+      "data_type": "text",
+      "column_default": "'en'::text"
+    },
+    "mediaObjects": true,
+    "indexes": [
+      "media_objects_content_hash_key",
+      "messages_receiver_id_read_at_idx",
+      "push_subscriptions_user_id_enabled_idx",
+      "users_preferred_language_idx"
+    ],
+    "pushColumns": [
+      "id",
+      "user_id",
+      "endpoint",
+      "p256dh",
+      "auth",
+      "created_at",
+      "expiration_time",
+      "device_type",
+      "browser",
+      "platform",
+      "enabled",
+      "updated_at",
+      "last_used_at"
+    ],
+    "migrations": [
+      {
+        "migration_name": "0001_baseline",
+        "finished": true
+      },
+      {
+        "migration_name": "0002_discoveries",
+        "finished": true
+      },
+      {
+        "migration_name": "0003_trust_graph",
+        "finished": true
+      },
+      {
+        "migration_name": "0004_notifications",
+        "finished": true
+      },
+      {
+        "migration_name": "0005_moderation",
+        "finished": true
+      },
+      {
+        "migration_name": "0006_platform",
+        "finished": true
+      },
+      {
+        "migration_name": "0007_security_rbac",
+        "finished": true
+      },
+      {
+        "migration_name": "0008_media_platform",
+        "finished": true
+      },
+      {
+        "migration_name": "0009_i18n",
+        "finished": true
+      },
+      {
+        "migration_name": "0010_pwa_push",
+        "finished": true
+      },
+      {
+        "migration_name": "0011_message_unread_index",
+        "finished": true
+      }
+    ]
+  },
+  "migrateDiffEmpty": false,
+  "migrateDiffPreview": "-- AlterTable\nALTER TABLE \"push_subscriptions\" ALTER COLUMN \"updated_at\" DROP DEFAULT;",
+  "base": null,
+  "pages": null,
+  "pageError": "No local server responding on 3012/3010/3000"
+}

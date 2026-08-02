@@ -26,7 +26,7 @@ export function detectPlatform(): {
   isStandalone: boolean;
   isSamsung: boolean;
 } {
-  if (typeof navigator === "undefined") {
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
     return { isIos: false, isAndroid: false, isStandalone: false, isSamsung: false };
   }
   const ua = navigator.userAgent;
@@ -61,6 +61,7 @@ export async function setAppBadge(count: number) {
 }
 
 export function urlBase64ToUint8Array(base64: string) {
+  if (typeof window === "undefined") return new Uint8Array();
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
   const base64Safe = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
   const raw = window.atob(base64Safe);

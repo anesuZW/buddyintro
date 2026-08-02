@@ -1,8 +1,17 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { ServiceWorkerProvider } from "@/components/pwa/ServiceWorkerProvider";
-import { UpdateManager } from "@/components/pwa/UpdateManager";
-import { OfflineDetector } from "@/components/pwa/OfflineDetector";
+
+const UpdateManager = dynamic(
+  () => import("@/components/pwa/UpdateManager").then((m) => m.UpdateManager),
+  { ssr: false }
+);
+const OfflineDetector = dynamic(
+  () =>
+    import("@/components/pwa/OfflineDetector").then((m) => m.OfflineDetector),
+  { ssr: false }
+);
 
 /**
  * Single PWA shell: service worker lifecycle, update banner, offline indicator.

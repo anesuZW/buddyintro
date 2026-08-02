@@ -40,22 +40,26 @@ export function MessagesInboxClient() {
     load(false);
   }, [load]);
 
-  if (loading) return <ListLoading label="Loading conversations…" />;
-  if (error && !conversations.length) {
-    return <ListError message={error} onRetry={() => load(false)} />;
-  }
-
   return (
     <div>
-      {error && (
+      {error && !conversations.length ? (
+        <ListError message={error} onRetry={() => load(false)} />
+      ) : null}
+      {error && conversations.length > 0 ? (
         <p className="text-xs text-destructive mb-2">{error}</p>
-      )}
-      {!conversations.length ? (
-        <ListEmpty message="No conversations yet. Message someone from an introduction to start chatting." />
-      ) : (
+      ) : null}
+      {loading && !conversations.length ? (
+        <ListLoading variant="conversations" label="Loading conversations…" />
+      ) : !conversations.length && !error ? (
+        <ListEmpty
+          message="No conversations yet. Start by introducing friends or messaging someone from an introduction."
+          actionHref="/create-story"
+          actionLabel="Create an introduction"
+        />
+      ) : conversations.length ? (
         <ConversationList conversations={conversations} />
-      )}
-      {cursor && (
+      ) : null}
+      {cursor ? (
         <Button
           variant="outline"
           className="w-full mt-4"
@@ -64,7 +68,7 @@ export function MessagesInboxClient() {
         >
           {loadingMore ? "Loading…" : "Load more"}
         </Button>
-      )}
+      ) : null}
     </div>
   );
 }

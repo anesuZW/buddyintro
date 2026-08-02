@@ -1,0 +1,44 @@
+{
+  "at": "2026-08-01T21:20:26.066Z",
+  "host": "aws-1-us-east-1.pooler.supabase.com",
+  "probes": {
+    "ping": {
+      "cmd": "ping",
+      "args": [
+        "-n",
+        "10",
+        "aws-1-us-east-1.pooler.supabase.com"
+      ],
+      "code": 1,
+      "stdout": "\r\nPinging pool-tcp-use11-da9ecc1-987013f2061f655b.elb.us-east-1.amazonaws.com [18.213.155.45] with 32 bytes of data:\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\n\r\nPing statistics for 18.213.155.45:\r\n    Packets: Sent = 10, Received = 0, Lost = 10 (100% loss),\r\n",
+      "stderr": ""
+    },
+    "tracert": {
+      "cmd": "tracert",
+      "args": [
+        "-d",
+        "-h",
+        "20",
+        "-w",
+        "2000",
+        "aws-1-us-east-1.pooler.supabase.com"
+      ],
+      "code": 0,
+      "stdout": "\r\nTracing route to pool-tcp-use11-da9ecc1-987013f2061f655b.elb.us-east-1.amazonaws.com [18.213.155.45]\r\nover a maximum of 20 hops:\r\n\r\n  1     3 ms     3 ms     2 ms  10.112.168.168 \r\n  2    22 ms    18 ms    19 ms  172.17.39.1 \r\n  3    21 ms    22 ms    24 ms  172.26.197.82 \r\n  4    28 ms    28 ms    32 ms  172.19.230.108 \r\n  5    24 ms    20 ms    28 ms  172.19.224.69 \r\n  6    22 ms    17 ms    19 ms  172.19.224.53 \r\n  7    30 ms    31 ms    23 ms  41.175.145.178 \r\n  8   193 ms   197 ms   197 ms  41.173.56.97 \r\n  9   209 ms   197 ms   193 ms  46.17.232.64 \r\n 10   280 ms   265 ms   204 ms  46.17.232.56 \r\n 11    52 ms    37 ms    38 ms  41.175.222.219 \r\n 12   213 ms   199 ms   198 ms  5.11.12.113 \r\n 13   263 ms   204 ms   202 ms  5.11.13.80 \r\n 14   223 ms   304 ms   193 ms  195.219.186.182 \r\n 15     *        *        *     Request timed out.\r\n 16     *        *        *     Request timed out.\r\n 17   297 ms     *        *     63.243.137.148 \r\n 18     *        *        *     Request timed out.\r\n 19     *        *        *     Request timed out.\r\n 20     *        *        *     Request timed out.\r\n\r\nTrace complete.\r\n",
+      "stderr": ""
+    },
+    "nslookup": {
+      "cmd": "nslookup",
+      "args": [
+        "aws-1-us-east-1.pooler.supabase.com"
+      ],
+      "code": 0,
+      "stdout": "Server:  UnKnown\r\nAddress:  10.112.168.168\r\n\r\nName:    pool-tcp-use11-da9ecc1-987013f2061f655b.elb.us-east-1.amazonaws.com\r\nAddresses:  3.227.209.82\r\n\t  18.213.155.45\r\n\t  18.214.78.123\r\nAliases:  aws-1-us-east-1.pooler.supabase.com\r\n\r\n",
+      "stderr": "Non-authoritative answer:\r\r\n"
+    }
+  },
+  "pingParsed": {
+    "error": "no_rtt_parsed",
+    "stdoutTail": "\r\nPinging pool-tcp-use11-da9ecc1-987013f2061f655b.elb.us-east-1.amazonaws.com [18.213.155.45] with 32 bytes of data:\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\nRequest timed out.\r\n\r\nPing statistics for 18.213.155.45:\r\n    Packets: Sent = 10, Received = 0, Lost = 10 (100% loss),\r\n"
+  }
+}

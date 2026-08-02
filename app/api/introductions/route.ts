@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import {
   getIntroductionsForUser,
   markIntroductionsSeen,
@@ -8,17 +8,16 @@ import type { IntroductionGroup } from "@/types";
 import { clampLimit } from "@/lib/pagination";
 import { withPerfApi } from "@/lib/perf/with-perf";
 import { RouteProfiler } from "@/lib/profile/route-profiler";
+import { withApiHandler } from "@/lib/api-error";
 
 const GROUPS: IntroductionGroup[] = ["recent", "past", "pending"];
 
 async function handleGet(request: Request) {
   const p = new RouteProfiler("/api/introductions");
 
-  const user = await p.time("auth", async () => {
-    const u = await getCurrentUser();
-    if (!u) throw new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
-    return u;
-  });
+  const userAuth = await p.time("auth", () => requireUserApi());
+  if (isApiAuthError(userAuth)) return userAuth;
+  const user = userAuth;
 
   const { searchParams } = new URL(request.url);
   const groupParam = searchParams.get("group");
@@ -38,13 +37,11 @@ async function handleGet(request: Request) {
 }
 
 async function handlePost() {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  await markIntroductionsSeen(user.id);
+  const userAuth = await requireUserApi();
+  if (isApiAuthError(userAuth)) return userAuth;
+  await markIntroductionsSeen(userAuth.id);
   return NextResponse.json({ ok: true });
 }
 
-export const GET = withPerfApi("/api/introductions", handleGet);
-export const POST = withPerfApi("/api/introductions", handlePost);
+export const GET = withApiHandler(withPerfApi("/api/introductions", handleGet));
+export const POST = withApiHandler(withPerfApi("/api/introductions", handlePost));

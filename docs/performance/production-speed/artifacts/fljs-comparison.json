@@ -1,0 +1,28 @@
+{
+  "before": {
+    "source": "docs/PERFORMANCE_AUDIT.md + docs/RELEASE_MANAGER_REPORT.md",
+    "sharedFirstLoadJsKB": 87.4,
+    "middlewareKB": 82.1,
+    "routes": {
+      "/home": 110,
+      "/discoveries": 221,
+      "/create-story": 215,
+      "/introductions": 113,
+      "/messages/[userId]": 183
+    }
+  },
+  "after": {
+    "source": "next build 2026-07-31 (build-after-3.log)",
+    "sharedFirstLoadJsKB": 87.7,
+    "middlewareKB": 96.1,
+    "routes": {
+      "/home": 116,
+      "/discoveries": 165,
+      "/create-story": 102,
+      "/messages": 115,
+      "/profile": 120,
+      "/maindash": 89.3,
+      "/login": 190
+    }
+  }
+}

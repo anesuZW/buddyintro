@@ -3,10 +3,24 @@ import { trackPrismaQuery } from "@/lib/perf/context";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
+/** Skip per-query timing in production unless explicitly profiling — removes ~2× performance.now() per query. */
+function shouldTrackPrismaQueries(): boolean {
+  return (
+    process.env.NODE_ENV === "development" ||
+    process.env.PROFILE_PRODUCTION === "1" ||
+    process.env.PROFILE_API === "1" ||
+    process.env.PROFILE_PHASE2 === "1"
+  );
+}
+
 function createPrismaClient() {
   const base = new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
+
+  if (!shouldTrackPrismaQueries()) {
+    return base;
+  }
 
   // Query timing extension — feeds /maindash/performance and slow-query logs (>200ms).
   return base.$extends({

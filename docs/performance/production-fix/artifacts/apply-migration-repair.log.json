@@ -1,0 +1,60 @@
+{
+  "failed": false,
+  "completedAt": "2026-07-31T14:22:50.041Z",
+  "log": [
+    {
+      "cmd": "npx prisma migrate resolve --applied 0001_baseline",
+      "status": 0,
+      "stdout": "Environment variables loaded from .env\nPrisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-1-us-east-1.pooler.supabase.com:5432\"\n\nMigration 0001_baseline marked as applied.\n\n",
+      "stderr": "npm warn Unknown env config \"devdir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n"
+    },
+    {
+      "cmd": "npx prisma migrate resolve --applied 0002_discoveries",
+      "status": 0,
+      "stdout": "Environment variables loaded from .env\nPrisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-1-us-east-1.pooler.supabase.com:5432\"\n\nMigration 0002_discoveries marked as applied.\n\n",
+      "stderr": "npm warn Unknown env config \"devdir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n"
+    },
+    {
+      "cmd": "npx prisma migrate resolve --applied 0003_trust_graph",
+      "status": 0,
+      "stdout": "Environment variables loaded from .env\nPrisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-1-us-east-1.pooler.supabase.com:5432\"\n\nMigration 0003_trust_graph marked as applied.\n\n",
+      "stderr": "npm warn Unknown env config \"devdir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n"
+    },
+    {
+      "cmd": "npx prisma migrate resolve --applied 0004_notifications",
+      "status": 0,
+      "stdout": "Environment variables loaded from .env\nPrisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-1-us-east-1.pooler.supabase.com:5432\"\n\nMigration 0004_notifications marked as applied.\n\n",
+      "stderr": "npm warn Unknown env config \"devdir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n"
+    },
+    {
+      "cmd": "npx prisma migrate resolve --applied 0005_moderation",
+      "status": 0,
+      "stdout": "Environment variables loaded from .env\nPrisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-1-us-east-1.pooler.supabase.com:5432\"\n\nMigration 0005_moderation marked as applied.\n\n",
+      "stderr": "npm warn Unknown env config \"devdir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n"
+    },
+    {
+      "cmd": "npx prisma migrate resolve --applied 0006_platform",
+      "status": 0,
+      "stdout": "Environment variables loaded from .env\nPrisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-1-us-east-1.pooler.supabase.com:5432\"\n\nMigration 0006_platform marked as applied.\n\n",
+      "stderr": "npm warn Unknown env config \"devdir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n"
+    },
+    {
+      "cmd": "npx prisma migrate resolve --applied 0007_security_rbac",
+      "status": 0,
+      "stdout": "Environment variables loaded from .env\nPrisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-1-us-east-1.pooler.supabase.com:5432\"\n\nMigration 0007_security_rbac marked as applied.\n\n",
+      "stderr": "npm warn Unknown env config \"devdir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n"
+    },
+    {
+      "cmd": "npx prisma migrate deploy",
+      "status": 0,
+      "stdout": "Environment variables loaded from .env\nPrisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-1-us-east-1.pooler.supabase.com:5432\"\n\n11 migrations found in prisma/migrations\n\nApplying migration `0008_media_platform`\nApplying migration `0009_i18n`\nApplying migration `0010_pwa_push`\nApplying migration `0011_message_unread_index`\n\nThe following migration(s) have been applied:\n\nmigrations/\n  └─ 0008_media_platform/\n    └─ migration.sql\n  └─ 0009_i18n/\n    └─ migration.sql\n  └─ 0010_pwa_push/\n    └─ migration.sql\n  └─ 0011_message_unread_index/\n    └─ migration.sql\n      \nAll migrations have been successfully applied.\n",
+      "stderr": "npm warn Unknown env config \"devdir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n"
+    },
+    {
+      "cmd": "npx prisma migrate status",
+      "status": 0,
+      "stdout": "Environment variables loaded from .env\nPrisma schema loaded from prisma\\schema.prisma\nDatasource \"db\": PostgreSQL database \"postgres\", schema \"public\" at \"aws-1-us-east-1.pooler.supabase.com:5432\"\n\n11 migrations found in prisma/migrations\n\nDatabase schema is up to date!\n",
+      "stderr": "npm warn Unknown env config \"devdir\". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.\n"
+    }
+  ]
+}

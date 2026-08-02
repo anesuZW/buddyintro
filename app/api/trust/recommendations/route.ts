@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireUserApi, isApiAuthError } from "@/lib/auth";
 import { getTrustRecommendations } from "@/services/trust-recommendations";
-import { withPerfApi } from "@/lib/perf/with-perf";
 import { RouteProfiler } from "@/lib/profile/route-profiler";
+import { withApiHandler } from "@/lib/api-error";
 
-async function handleGet() {
+export const GET = withApiHandler(async () => {
   const p = new RouteProfiler("/api/trust/recommendations");
 
-  const user = await p.time("auth", async () => {
-    const u = await getCurrentUser();
-    if (!u) throw new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
-    return u;
-  });
+  const userAuth = await p.time("auth", () => requireUserApi());
+  if (isApiAuthError(userAuth)) return userAuth;
+  const user = userAuth;
 
   const recommendations = await p.time("trustCalculation", () =>
     getTrustRecommendations(user.id)
@@ -22,6 +20,4 @@ async function handleGet() {
 
   p.finish();
   return p.finishResponse(NextResponse.json(payload));
-}
-
-export const GET = withPerfApi("/api/trust/recommendations", handleGet);
+});

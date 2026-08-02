@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { computeTrustScore, userPair } from "@/lib/trust-score";
 import { calculateTrustRank } from "@/lib/trust-rank";
@@ -305,6 +306,16 @@ export async function refreshConnectionTrustScores(options?: TrustGraphOptions):
 }
 
 export async function getSharedIntroducersForPair(
+  viewerId: string,
+  otherUserId: string
+) {
+  return loadSharedIntroducersForPair(viewerId, otherUserId);
+}
+
+/** Request-scoped dedupe for repeated pair lookups on one page. */
+export const getSharedIntroducersForPairCached = cache(loadSharedIntroducersForPair);
+
+async function loadSharedIntroducersForPair(
   viewerId: string,
   otherUserId: string
 ) {

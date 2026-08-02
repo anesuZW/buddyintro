@@ -6,6 +6,37 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || process.env.NEXT_PUBLIC_
   .map((o) => o.trim())
   .filter(Boolean);
 
+const DEV_LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+function loopbackPort(url: URL): string {
+  if (url.port) return url.port;
+  return url.protocol === "https:" ? "443" : "80";
+}
+
+/**
+ * Same-origin check with loopback host aliasing (localhost ↔ 127.0.0.1 ↔ [::1]).
+ * Safe under CSRF: only equates loopback names on the same protocol + port.
+ * Required for `next start` / production NODE_ENV local validation where the
+ * browser Origin may use 127.0.0.1 while Host resolves as localhost (or vice versa).
+ */
+function originsEquivalent(origin: string, requestOrigin: string): boolean {
+  if (origin === requestOrigin || origin.startsWith(`${requestOrigin}/`)) {
+    return true;
+  }
+
+  try {
+    const a = new URL(origin);
+    const b = new URL(requestOrigin);
+    if (a.protocol !== b.protocol || loopbackPort(a) !== loopbackPort(b)) {
+      return false;
+    }
+    if (a.hostname === b.hostname) return true;
+    return DEV_LOOPBACK_HOSTS.has(a.hostname) && DEV_LOOPBACK_HOSTS.has(b.hostname);
+  } catch {
+    return false;
+  }
+}
+
 /** Validate Origin/Referer for mutating requests. */
 export function validateOrigin(request: NextRequest): boolean {
   if (request.method === "GET" || request.method === "HEAD" || request.method === "OPTIONS") {
@@ -15,6 +46,14 @@ export function validateOrigin(request: NextRequest): boolean {
   const origin = request.headers.get("origin");
   const referer = request.headers.get("referer");
   if (!origin && !referer) return true;
+
+  const requestOrigin = request.nextUrl.origin;
+  if (origin && originsEquivalent(origin, requestOrigin)) {
+    return true;
+  }
+  if (referer && (referer === requestOrigin || referer.startsWith(`${requestOrigin}/`))) {
+    return true;
+  }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
   const allowed = new Set([...(appUrl ? [appUrl] : []), ...ALLOWED_ORIGINS]);
@@ -48,7 +87,7 @@ export function securityHeaders(): Record<string, string> {
     "X-Frame-Options": "DENY",
     "X-XSS-Protection": "1; mode=block",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), notifications=(self)",
+    "Permissions-Policy": "camera=(self), microphone=(self), geolocation=(), notifications=(self)",
     "Content-Security-Policy": csp,
     ...(process.env.NODE_ENV === "production"
       ? { "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload" }
@@ -63,9 +102,17 @@ export function applySecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
+import { uploadRejectResponse } from "@/lib/upload-reject";
+
 export function originRejectedResponse(requestId?: string) {
-  return NextResponse.json(
-    { error: "Invalid origin", code: "csrf_rejected", requestId },
-    { status: 403 }
+  return uploadRejectResponse(
+    403,
+    {
+      error: "Invalid origin",
+      code: "csrf_rejected",
+      reason: "Request origin not allowed",
+      rejectSource: "csrf",
+      requestId,
+    }
   );
 }

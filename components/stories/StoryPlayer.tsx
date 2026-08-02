@@ -35,7 +35,11 @@ export function StoryPlayer({
 
   useEffect(() => {
     setProgress(0);
-  }, [index]);
+    const current = stories[index];
+    if (current) {
+      setMuted(current.mediaType === "video");
+    }
+  }, [index, stories]);
 
   useEffect(() => {
     if (!story) return;
@@ -109,6 +113,7 @@ export function StoryPlayer({
             <button
               onClick={() => setMuted((m) => !m)}
               className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/10"
+              aria-label={muted ? "Unmute" : "Mute"}
             >
               {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
             </button>

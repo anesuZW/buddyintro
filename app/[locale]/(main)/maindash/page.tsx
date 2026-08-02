@@ -1,13 +1,5 @@
 import { getAdminSettings } from "@/services/admin";
-import { AdminSettingsForm } from "@/components/admin/AdminSettingsForm";
-import { DiscoveryControlsAdmin } from "@/components/admin/DiscoveryControlsAdmin";
-import { StoryVisibilityAdmin } from "@/components/admin/StoryVisibilityAdmin";
-import { DiscoveriesUxAdmin } from "@/components/admin/DiscoveriesUxAdmin";
-import { IntroductionCategoriesAdmin } from "@/components/admin/IntroductionCategoriesAdmin";
-import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
-import { AdminAnnouncements } from "@/components/admin/AdminAnnouncements";
-import { AdminModerationPanel } from "@/components/admin/AdminModerationPanel";
-import { AdminTrustedUsersPanel } from "@/components/admin/AdminTrustedUsersPanel";
+import { MainDashPanels } from "@/components/admin/MainDashPanels";
 import { prisma } from "@/lib/prisma";
 
 export default async function MainDashPage() {
@@ -38,17 +30,7 @@ export default async function MainDashPage() {
         <Stat label="Messages" value={messages} />
       </div>
 
-      <div className="mt-6 space-y-0">
-        <AdminSettingsForm initial={settings} />
-        <StoryVisibilityAdmin initial={settings} />
-        <DiscoveriesUxAdmin initial={settings} />
-        <DiscoveryControlsAdmin initial={settings} />
-        <AdminTrustedUsersPanel />
-        <AnalyticsDashboard />
-        <AdminAnnouncements />
-        <AdminModerationPanel />
-        <IntroductionCategoriesAdmin />
-      </div>
+      <MainDashPanels settings={settings} />
     </div>
   );
 }

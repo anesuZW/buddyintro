@@ -3,6 +3,9 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { FeedItem } from "@/types";
 import { clampLimit } from "@/lib/pagination";
+import type { HomeVisibleStoryRow } from "@/lib/home-story-loader-types";
+import { pickCoTagFeedStories } from "@/lib/home-projection";
+import type { StoryWithRelations } from "@/types";
 
 export type MutualTagFeedContext = {
   myTaggedUserIds: string[];
@@ -18,7 +21,8 @@ export type MutualTagFeedContext = {
 export async function getMutualTagFeed(
   viewerId: string,
   limit?: number,
-  ctx?: MutualTagFeedContext
+  ctx?: MutualTagFeedContext,
+  homeOpts?: { homeVisibleStoryRows?: HomeVisibleStoryRow[] }
 ): Promise<FeedItem[]> {
   const pageSize = clampLimit(limit);
 
@@ -75,23 +79,31 @@ export async function getMutualTagFeed(
       take: pageSize,
       include: { user: { select: { id: true, name: true, profilePicture: true } } },
     }),
-    prisma.story.findMany({
-      where: {
-        userId: { in: coTagAuthorIds },
-        status: "published",
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: "desc" },
-      take: pageSize,
-      include: {
-        user: { select: { id: true, name: true, profilePicture: true } },
-        tags: {
-          include: {
-            taggedUser: { select: { id: true, name: true, profilePicture: true } },
+    homeOpts?.homeVisibleStoryRows
+      ? Promise.resolve(
+          pickCoTagFeedStories(
+            homeOpts.homeVisibleStoryRows,
+            coTagAuthorIds,
+            pageSize
+          ) as StoryWithRelations[]
+        )
+      : prisma.story.findMany({
+          where: {
+            userId: { in: coTagAuthorIds },
+            status: "published",
+            expiresAt: { gt: new Date() },
           },
-        },
-      },
-    }),
+          orderBy: { createdAt: "desc" },
+          take: pageSize,
+          include: {
+            user: { select: { id: true, name: true, profilePicture: true } },
+            tags: {
+              include: {
+                taggedUser: { select: { id: true, name: true, profilePicture: true } },
+              },
+            },
+          },
+        }),
   ]);
 
   const feed: FeedItem[] = [

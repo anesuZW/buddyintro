@@ -1,0 +1,25 @@
+RC1 API smoke — http://localhost:3000 as user1@friendintro.com
+
+Login OK
+
+✓ GET /api/health 200 690ms
+✓ GET /api/feed 200 4106ms
+✓ GET /api/discoveries 200 6552ms
+✓ GET /api/notifications?limit=5 200 3164ms
+✓ GET /api/introductions?group=recent 200 2851ms
+✓ GET /api/messages (list) 200 3394ms
+  → Jordan thread: /messages/f01876e3-93c0-4776-b6b7-4c4967a7c267 (unread: 0)
+✓ GET /api/messages/[userId]/context 200 9565ms
+✓ POST /api/messages 200 5186ms
+✓ GET /api/feed unauthenticated → 401
+✓ GET /api/discoveries unauthenticated → 401
+✓ GET /api/health public → 200
+✓ GET /api/discoveries (posts) 200 5362ms
+✓ POST like 200 7920ms
+✓ POST like again (toggle) 200 3438ms
+✓ POST bookmark 200 7508ms
+✓ POST share 200 6042ms
+✓ POST comment 201 9987ms
+✓ POST /api/media/upload 200 4502ms
+
+18/18 passed

@@ -1,10 +1,12 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
-import { getSharedIntroducersForPair } from "@/lib/shared-introducers";
+import { getSharedIntroducersForPairCached } from "@/lib/shared-introducers";
 import { getAdminSettings } from "@/services/admin";
 import { getCachedTrustRecommendations } from "@/lib/perf-cache";
 import { isProfileEnabled } from "@/lib/profile/route-profiler";
+import type { HomeUserConnectionRow } from "@/lib/home-graph-context";
+import { pickTrustRecommendationConnections } from "@/lib/home-graph-context";
 
 export type TrustRecommendation = {
   id: string;
@@ -14,11 +16,24 @@ export type TrustRecommendation = {
   priority: number;
 };
 
-export async function getTrustRecommendations(userId: string): Promise<TrustRecommendation[]> {
+export type TrustRecommendationsGraphContext = {
+  connectionRows?: HomeUserConnectionRow[];
+};
+
+export async function getTrustRecommendations(
+  userId: string,
+  graphCtx?: TrustRecommendationsGraphContext
+): Promise<TrustRecommendation[]> {
+  if (graphCtx?.connectionRows) {
+    return computeTrustRecommendations(userId, graphCtx);
+  }
   return getCachedTrustRecommendations(userId, () => computeTrustRecommendations(userId));
 }
 
-async function computeTrustRecommendations(userId: string): Promise<TrustRecommendation[]> {
+async function computeTrustRecommendations(
+  userId: string,
+  graphCtx?: TrustRecommendationsGraphContext
+): Promise<TrustRecommendation[]> {
   const profile = isProfileEnabled();
   const marks: Record<string, number> = {};
   let last = performance.now();
@@ -33,14 +48,16 @@ async function computeTrustRecommendations(userId: string): Promise<TrustRecomme
   mark("adminSettings");
   if (!settings.enableTrustRecommendations) return [];
 
-  const connections = await prisma.userConnection.findMany({
-    where: { sourceUserId: userId, degree: { lte: 2 } },
-    orderBy: [{ sharedIntroducerCount: "desc" }, { trustScore: "desc" }],
-    take: 12,
-    include: {
-      targetUser: { select: { id: true, name: true } },
-    },
-  });
+  const connections = graphCtx?.connectionRows
+    ? pickTrustRecommendationConnections(graphCtx.connectionRows)
+    : await prisma.userConnection.findMany({
+        where: { sourceUserId: userId, degree: { lte: 2 } },
+        orderBy: [{ sharedIntroducerCount: "desc" }, { trustScore: "desc" }],
+        take: 12,
+        include: {
+          targetUser: { select: { id: true, name: true } },
+        },
+      });
   mark("queryConnections");
 
   const recs: TrustRecommendation[] = [];
@@ -74,7 +91,7 @@ async function computeTrustRecommendations(userId: string): Promise<TrustRecomme
 
   const topPair = connections[0];
   if (topPair && topPair.sharedIntroducerCount >= 5) {
-    const introducers = await getSharedIntroducersForPair(userId, topPair.targetUserId);
+    const introducers = await getSharedIntroducersForPairCached(userId, topPair.targetUserId);
     mark("sharedIntroducersForPair");
     const names = introducers.slice(0, 2).map((i) => i.introducer.name);
     if (names.length) {

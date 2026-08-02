@@ -18,6 +18,8 @@ export {
   serializeStoryVisibilityConfig,
 } from "@/lib/story-visibility-shared";
 
+import type { HomeVisibilityPrefetch } from "@/lib/home-story-context";
+
 export type StoryVisibilitySubject = {
   id: string;
   userId: string;
@@ -29,41 +31,49 @@ export type StoryVisibilitySubject = {
 /** Batch visibility filter — replaces per-story N+1 storyPassesVisibilityGate calls. */
 export async function filterStoriesByVisibilityGate(
   viewerId: string,
-  stories: StoryVisibilitySubject[]
+  stories: StoryVisibilitySubject[],
+  prefetch?: HomeVisibilityPrefetch
 ): Promise<StoryVisibilitySubject[]> {
   if (!stories.length) return [];
 
-  const otherAuthorIds = Array.from(
-    new Set(stories.map((s) => s.userId).filter((id) => id !== viewerId))
-  );
+  let cotaggedAuthors: Set<string>;
+  let everIntroducedAuthors: Set<string>;
 
-  // Prefetch co-tag and ever-introduced relationships in two queries instead of O(n).
-  const [cotaggedRows, everIntroducedRows] = await Promise.all([
-    otherAuthorIds.length
-      ? prisma.storyTag.findMany({
-          where: {
-            taggedUserId: viewerId,
-            story: { userId: { in: otherAuthorIds } },
-          },
-          select: { story: { select: { userId: true } } },
-        })
-      : Promise.resolve([]),
-    otherAuthorIds.length
-      ? prisma.storyTag.findMany({
-          where: {
-            taggedUserId: viewerId,
-            story: {
-              userId: { in: otherAuthorIds },
-              status: { in: ["published", "expired"] },
+  if (prefetch) {
+    cotaggedAuthors = prefetch.coTagAuthorIds as Set<string>;
+    everIntroducedAuthors = prefetch.everIntroducedAuthorIds as Set<string>;
+  } else {
+    const otherAuthorIds = Array.from(
+      new Set(stories.map((s) => s.userId).filter((id) => id !== viewerId))
+    );
+
+    const [cotaggedRows, everIntroducedRows] = await Promise.all([
+      otherAuthorIds.length
+        ? prisma.storyTag.findMany({
+            where: {
+              taggedUserId: viewerId,
+              story: { userId: { in: otherAuthorIds } },
             },
-          },
-          select: { story: { select: { userId: true } } },
-        })
-      : Promise.resolve([]),
-  ]);
+            select: { story: { select: { userId: true } } },
+          })
+        : Promise.resolve([]),
+      otherAuthorIds.length
+        ? prisma.storyTag.findMany({
+            where: {
+              taggedUserId: viewerId,
+              story: {
+                userId: { in: otherAuthorIds },
+                status: { in: ["published", "expired"] },
+              },
+            },
+            select: { story: { select: { userId: true } } },
+          })
+        : Promise.resolve([]),
+    ]);
 
-  const cotaggedAuthors = new Set(cotaggedRows.map((r) => r.story.userId));
-  const everIntroducedAuthors = new Set(everIntroducedRows.map((r) => r.story.userId));
+    cotaggedAuthors = new Set(cotaggedRows.map((r) => r.story.userId));
+    everIntroducedAuthors = new Set(everIntroducedRows.map((r) => r.story.userId));
+  }
 
   return stories.filter((story) => {
     if (story.userId === viewerId) return true;

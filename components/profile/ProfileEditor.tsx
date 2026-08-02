@@ -18,16 +18,31 @@ export function ProfileEditor({
   const [name, setName] = useState(initial.name);
   const [profilePicture, setProfilePicture] = useState(initial.profilePicture);
   const [saving, setSaving] = useState(false);
-  const { upload, uploading } = useUpload();
+  const { upload, uploading, progress, cancel } = useUpload();
 
   async function onAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
+    if (!f.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      e.target.value = "";
+      return;
+    }
     try {
       const { url } = await upload(f, { userId, kind: "image" });
       setProfilePicture(url);
-    } catch (err: any) {
-      toast.error(err.message || "Upload failed");
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        toast("Upload cancelled");
+        return;
+      }
+      const message =
+        err instanceof Error && err.message && !/prisma|ECONN|P100/i.test(err.message)
+          ? err.message
+          : "Avatar upload failed. Please try again.";
+      toast.error(message);
+    } finally {
+      e.target.value = "";
     }
   }
 
@@ -39,11 +54,19 @@ export function ProfileEditor({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, profilePicture }),
       });
-      if (!res.ok) throw new Error("Failed to save");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(
+          typeof body?.reason === "string"
+            ? body.reason
+            : "Could not save profile. Please try again."
+        );
+        return;
+      }
       toast.success("Profile updated");
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch {
+      toast.error("Could not save profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -58,16 +81,23 @@ export function ProfileEditor({
         onChange={(e) => setName(e.target.value)}
       />
       <label className="block">
-        <span className="text-sm text-muted-foreground">
-          Profile picture
-        </span>
+        <span className="text-sm text-muted-foreground">Profile picture</span>
         <input
           type="file"
           accept="image/*"
           onChange={onAvatar}
+          disabled={uploading || saving}
           className="block mt-2 text-sm"
         />
       </label>
+      {uploading ? (
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span>Uploading avatar… {progress}%</span>
+          <Button type="button" variant="ghost" size="sm" onClick={cancel}>
+            Cancel
+          </Button>
+        </div>
+      ) : null}
       <Button onClick={save} disabled={saving || uploading} className="w-full">
         {saving ? "Saving…" : "Save changes"}
       </Button>

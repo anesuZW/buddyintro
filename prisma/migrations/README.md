@@ -22,6 +22,9 @@ Fresh migration history generated from `schema.prisma` using `prisma migrate dif
 0007_security_rbac     RBAC, audit logs, security events (+ role seed)
 0008_media_platform    Media registry, processing status, deduplication
 0009_i18n              User preferredLanguage column for i18n
+0010_pwa_push          Extended push subscription metadata
+0011_message_unread_index  Unread message badge index
+0012_push_updated_at_no_default  Align push updated_at with Prisma @updatedAt
 ```
 
 ## Production baseline (existing live database)

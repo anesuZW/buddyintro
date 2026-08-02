@@ -1,0 +1,20 @@
+{
+  "url": "http://127.0.0.1:3050/login",
+  "categories": {
+    "performance": 95,
+    "accessibility": 96,
+    "best-practices": 82,
+    "seo": 100
+  },
+  "metrics": {
+    "FCP": 1825.30125,
+    "LCP": 2725.3012500000004,
+    "TBT": 0,
+    "SI": 1825.30125,
+    "TTI": 2725.3012500000004,
+    "CLS": 0.03349389786870865,
+    "TTFB": 68.153,
+    "totalByteWeight": 327708,
+    "bootupTime": 851.5520000000026
+  }
+}

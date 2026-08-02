@@ -30,6 +30,7 @@ import { ListError, ListLoading } from "@/components/ui/ListState";
 import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 import { BRAND } from "@/lib/branding";
 import type { DiscoveriesUxSettings } from "@/lib/discoveries-ux-settings";
+import { friendlyApiMessage, readApiErrorBody } from "@/lib/client-api-error";
 
 function trackDiscoveryOpened(postId: string) {
   void fetch("/api/analytics/track", {
@@ -82,60 +83,113 @@ function DiscoveriesPostCard({
   }, [post.id]);
 
   async function toggleLike() {
+    if (liking) return;
+    const prev = post;
+    const nextLiked = !post.likedByMe;
+    onUpdate({
+      ...post,
+      likedByMe: nextLiked,
+      likeCount: Math.max(0, post.likeCount + (nextLiked ? 1 : -1)),
+    });
     setLiking(true);
     try {
       const res = await fetch(`/api/discoveries/${post.id}/like`, {
-        method: post.likedByMe ? "DELETE" : "POST",
+        method: prev.likedByMe ? "DELETE" : "POST",
       });
-      const data = await res.json();
+      const data = await readApiErrorBody(res);
+      if (!res.ok) {
+        onUpdate(prev);
+        toast.error(friendlyApiMessage(data, "Could not update like. Try again."));
+        return;
+      }
+      const liked = Boolean((data as { liked?: boolean }).liked);
       onUpdate({
-        ...post,
-        likedByMe: data.liked,
-        likeCount: post.likeCount + (data.liked ? 1 : -1),
+        ...prev,
+        likedByMe: liked,
+        likeCount: Math.max(0, prev.likeCount + (liked ? 1 : -1)),
       });
+    } catch {
+      onUpdate(prev);
+      toast.error("Could not update like. Try again.");
     } finally {
       setLiking(false);
     }
   }
 
   async function toggleBookmark() {
-    const res = await fetch(`/api/discoveries/${post.id}/bookmark`, { method: "POST" });
-    const data = await res.json();
-    onUpdate({ ...post, bookmarkedByMe: data.bookmarked });
+    const prev = post;
+    onUpdate({ ...post, bookmarkedByMe: !post.bookmarkedByMe });
+    try {
+      const res = await fetch(`/api/discoveries/${post.id}/bookmark`, { method: "POST" });
+      const data = await readApiErrorBody(res);
+      if (!res.ok) {
+        onUpdate(prev);
+        toast.error(friendlyApiMessage(data, "Could not update bookmark. Try again."));
+        return;
+      }
+      onUpdate({
+        ...prev,
+        bookmarkedByMe: Boolean((data as { bookmarked?: boolean }).bookmarked),
+      });
+    } catch {
+      onUpdate(prev);
+      toast.error("Could not update bookmark. Try again.");
+    }
   }
 
   async function sharePost() {
-    await fetch(`/api/discoveries/${post.id}/share`, { method: "POST" });
-    const url = `${window.location.origin}/discoveries?post=${post.id}`;
-    if (navigator.share) {
-      await navigator.share({ title: BRAND.name, url });
-    } else {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copied");
+    try {
+      const res = await fetch(`/api/discoveries/${post.id}/share`, { method: "POST" });
+      if (!res.ok) {
+        const data = await readApiErrorBody(res);
+        toast.error(friendlyApiMessage(data, "Could not record share. Try again."));
+        return;
+      }
+      const url = `${window.location.origin}/discoveries?post=${post.id}`;
+      if (navigator.share) {
+        await navigator.share({ title: BRAND.name, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Link copied");
+      }
+      onUpdate({ ...post, shareCount: post.shareCount + 1 });
+    } catch {
+      toast.error("Could not share right now. Try again.");
     }
-    onUpdate({ ...post, shareCount: post.shareCount + 1 });
   }
 
   async function loadComments() {
-    const res = await fetch(`/api/discoveries/${post.id}/comments`);
-    if (res.ok) {
-      const data = await res.json();
-      setComments(data.comments);
+    try {
+      const res = await fetch(`/api/discoveries/${post.id}/comments`);
+      if (!res.ok) return;
+      const data = (await res.json().catch(() => null)) as {
+        comments?: typeof comments;
+      } | null;
+      if (data?.comments) setComments(data.comments);
+    } catch {
+      /* keep prior comments */
     }
   }
 
   async function submitComment(e: React.FormEvent) {
     e.preventDefault();
     if (!commentText.trim()) return;
-    const res = await fetch(`/api/discoveries/${post.id}/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: commentText.trim() }),
-    });
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/discoveries/${post.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: commentText.trim() }),
+      });
+      if (!res.ok) {
+        const data = await readApiErrorBody(res);
+        toast.error(friendlyApiMessage(data, "Could not post comment. Try again."));
+        return;
+      }
       setCommentText("");
       await loadComments();
       onUpdate({ ...post, commentCount: post.commentCount + 1 });
+    } catch {
+      toast.error("Could not post comment. Try again.");
     }
   }
 
@@ -230,6 +284,8 @@ function DiscoveriesPostCard({
           type="button"
           disabled={liking}
           onClick={toggleLike}
+          aria-label={post.likedByMe ? "Unlike post" : "Like post"}
+          aria-pressed={post.likedByMe}
           className={cn(
             "flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition",
             post.likedByMe ? "text-primary" : "text-muted-foreground hover:bg-muted"
@@ -244,6 +300,8 @@ function DiscoveriesPostCard({
             setShowComments((s) => !s);
             if (!showComments) loadComments();
           }}
+          aria-label={showComments ? "Hide comments" : "Show comments"}
+          aria-expanded={showComments}
           className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm text-muted-foreground hover:bg-muted"
         >
           <MessageCircle size={18} />
@@ -252,6 +310,7 @@ function DiscoveriesPostCard({
         <button
           type="button"
           onClick={sharePost}
+          aria-label="Share post"
           className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm text-muted-foreground hover:bg-muted"
         >
           <Share2 size={18} />
@@ -260,6 +319,8 @@ function DiscoveriesPostCard({
         <button
           type="button"
           onClick={toggleBookmark}
+          aria-label={post.bookmarkedByMe ? "Remove bookmark" : "Bookmark post"}
+          aria-pressed={post.bookmarkedByMe}
           className={cn(
             "ml-auto flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition",
             post.bookmarkedByMe ? "text-primary" : "text-muted-foreground hover:bg-muted"
@@ -363,7 +424,7 @@ export function DiscoveriesFeed({
   if (loading) {
     return (
       <div className="px-4">
-        <ListLoading label="Loading discoveries…" />
+        <ListLoading variant="feed" label="Loading discoveries…" />
       </div>
     );
   }

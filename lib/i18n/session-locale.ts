@@ -1,23 +1,18 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { cache } from "react";
+import { getCurrentUser } from "@/lib/auth";
 import { isAppLocale } from "@/i18n/routing";
 
-/** Load authenticated user's preferred language for locale resolution. */
-export async function getSessionPreferredLanguage(): Promise<string | null> {
+/**
+ * Load authenticated user's preferred language for locale resolution.
+ * Uses request-scoped getCurrentUser() so middleware-validated identity is reused
+ * (no second supabase.auth.getUser() / User.findUnique on the same request).
+ */
+export const getSessionPreferredLanguage = cache(async (): Promise<string | null> => {
   try {
-    const supabase = createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return null;
-
-    const profile = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { preferredLanguage: true },
-    });
-
-    return isAppLocale(profile?.preferredLanguage) ? profile.preferredLanguage : null;
+    return isAppLocale(user.preferredLanguage) ? user.preferredLanguage : null;
   } catch {
     return null;
   }
-}
+});

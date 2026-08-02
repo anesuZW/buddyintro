@@ -1,0 +1,249 @@
+{
+  "timestamp": "2026-07-26T16:19:37.539Z",
+  "base": "http://localhost:3002",
+  "videoStoryId": "452d1e1c-ae33-42f4-8dcc-67341adda5c9",
+  "voiceStoryId": null,
+  "passed": 29,
+  "total": 38,
+  "results": [
+    {
+      "phase": "auth",
+      "name": "Login user1 + user2",
+      "ok": true
+    },
+    {
+      "phase": "phase2",
+      "name": "Resolve Jordan user id",
+      "ok": true,
+      "detail": "f01876e3-93c0-4776-b6b7-4c4967a7c267"
+    },
+    {
+      "phase": "phase1",
+      "name": "Upload image for story",
+      "ok": true,
+      "status": 200,
+      "ms": 3127
+    },
+    {
+      "phase": "phase1",
+      "name": "Upload video for story",
+      "ok": true,
+      "status": 200,
+      "ms": 1664
+    },
+    {
+      "phase": "phase1",
+      "name": "Upload voice note",
+      "ok": true,
+      "status": 200,
+      "ms": 1645
+    },
+    {
+      "phase": "phase1",
+      "name": "Publish video story",
+      "ok": true,
+      "status": 201,
+      "detail": "452d1e1c-ae33-42f4-8dcc-67341adda5c9"
+    },
+    {
+      "phase": "phase1",
+      "name": "Publish voice recommendation story",
+      "ok": false,
+      "status": 500,
+      "detail": "\"\""
+    },
+    {
+      "phase": "phase1",
+      "name": "Stories feed includes video",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "phase": "phase1",
+      "name": "Stories feed includes voice note",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "phase": "phase2",
+      "name": "BuddyIntro user introduction",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "phase": "phase2",
+      "name": "External email introduction API",
+      "ok": false,
+      "status": 500
+    },
+    {
+      "phase": "phase3",
+      "name": "emailDelivery object present",
+      "ok": false,
+      "detail": "missing"
+    },
+    {
+      "phase": "phase2",
+      "name": "External phone introduction API",
+      "ok": false,
+      "status": 400
+    },
+    {
+      "phase": "phase2",
+      "name": "phoneInvites returned",
+      "ok": false,
+      "detail": "failed"
+    },
+    {
+      "phase": "phase2",
+      "name": "Feed updates after intros",
+      "ok": true,
+      "status": 200,
+      "ms": 3275
+    },
+    {
+      "phase": "phase2",
+      "name": "Introductions list",
+      "ok": true,
+      "status": 200,
+      "ms": 1739
+    },
+    {
+      "phase": "phase4",
+      "name": "Create discovery text",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "phase": "phase4",
+      "name": "Like then unlike discovery",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "phase": "phase4",
+      "name": "Bookmark toggle (unbookmark)",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "phase": "phase4",
+      "name": "Comment on discovery",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "phase": "phase4",
+      "name": "Share discovery",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "phase": "phase4",
+      "name": "Discovery persists after refresh",
+      "ok": false
+    },
+    {
+      "phase": "phase4",
+      "name": "Edit discovery (intentionally missing)",
+      "ok": true,
+      "status": 404,
+      "detail": "QA-012 — not implemented"
+    },
+    {
+      "phase": "phase4",
+      "name": "Delete discovery (intentionally missing)",
+      "ok": true,
+      "status": 404,
+      "detail": "QA-012 — not implemented"
+    },
+    {
+      "phase": "phase5",
+      "name": "User1 sends message to Jordan",
+      "ok": true,
+      "status": 200,
+      "ms": 5535
+    },
+    {
+      "phase": "phase5",
+      "name": "User2 inbox shows conversation",
+      "ok": false,
+      "status": 500,
+      "detail": "no matching convo"
+    },
+    {
+      "phase": "phase5",
+      "name": "User2 sees RC2 message in inbox preview",
+      "ok": false,
+      "detail": "missing"
+    },
+    {
+      "phase": "phase5",
+      "name": "User2 message context panel API",
+      "ok": false
+    },
+    {
+      "phase": "phase5",
+      "name": "Typing indicator",
+      "ok": true,
+      "detail": "NOT IMPLEMENTED — documented product gap (not a regression)"
+    },
+    {
+      "phase": "phase6",
+      "name": "Jordan notifications list",
+      "ok": true,
+      "status": 200,
+      "ms": 2968
+    },
+    {
+      "phase": "phase7",
+      "name": "Profile name PATCH",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "phase": "phase7",
+      "name": "Profile avatar PATCH",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "phase": "phase7",
+      "name": "Profile avatar persisted in PATCH response",
+      "ok": true,
+      "detail": "/uploads/images/2026/07/9fd1cd19-bff7-47fe-af71-ef001816dc07/1785012776906-8ca7he.png"
+    },
+    {
+      "phase": "phase8",
+      "name": "Invalid file type upload",
+      "ok": true,
+      "status": 200,
+      "detail": "Observed behavior documented"
+    },
+    {
+      "phase": "phase8",
+      "name": "Oversized file → 413",
+      "ok": true,
+      "status": 413,
+      "detail": "app_body_limit"
+    },
+    {
+      "phase": "phase8",
+      "name": "Retry upload after rejection",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "phase": "phase11",
+      "name": "Unauthenticated feed → 401",
+      "ok": true,
+      "status": 401
+    },
+    {
+      "phase": "phase11",
+      "name": "Health public 200",
+      "ok": true,
+      "status": 200
+    }
+  ]
+}

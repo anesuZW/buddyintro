@@ -1,0 +1,27 @@
+{
+  "at": "2026-08-01T21:28:30.000Z",
+  "sources": [
+    "pg-ssl-handshake-ok.json",
+    "pg-connect-breakdown.json",
+    "tcp-hostname-penalty.json",
+    "test-db-equivalent.json"
+  ],
+  "handshake_by_hostname_median_ms": {
+    "dns": 3.243,
+    "tcp": 831.673,
+    "sslRequest": 297.164,
+    "tls": 307.24,
+    "totalToTlsReady": 1435.942
+  },
+  "tcp_hostname_penalty_median_ms": {
+    "hostname_default": 801.644,
+    "hostname_family4": 285.707,
+    "happy_eyeballs_penalty": 515.937
+  },
+  "pg_connect_median_ms": 1763.524,
+  "pg_warm_query_median_ms": 301.38,
+  "auth_and_startup_after_tls_ms": 327.582,
+  "test_db_equivalent_mean_ms": 2894.26,
+  "prisma_residual_vs_pg_connect_plus_query_ms": 829.356,
+  "note": "auth_and_startup_after_tls_ms = pg_connect_median − totalToTlsReady. prisma_residual = test_db_mean − pg_connect − warm_query. Happy Eyeballs penalty from separate tcp-hostname-penalty run (hostname_default − family4)."
+}

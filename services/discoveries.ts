@@ -18,6 +18,10 @@ import { clampLimit } from "@/lib/pagination";
 import { canViewDiscoveryPost } from "@/lib/access-control";
 import { resolveMediaUrlForClient } from "@/lib/storage-url";
 import { isProfileEnabled } from "@/lib/profile/route-profiler";
+import {
+  networkAuthorIdsFromConnectionRows,
+  type DiscoveriesViewerConnectionRow,
+} from "@/lib/discoveries-graph-context";
 
 const userSelect = { id: true, name: true, profilePicture: true } as const;
 
@@ -26,6 +30,7 @@ export async function getDiscoveriesFeed(args: {
   cursor?: string;
   limit?: number;
   settingsOverride?: AdminSettings;
+  connectionRows?: DiscoveriesViewerConnectionRow[];
 }): Promise<{ posts: DiscoveriesPostWithMeta[]; nextCursor: string | null }> {
   const profile = isProfileEnabled();
   const marks: Record<string, number> = {};
@@ -44,8 +49,12 @@ export async function getDiscoveriesFeed(args: {
   }
 
   const limit = clampLimit(args.limit);
+  const networkPromise = args.connectionRows
+    ? networkAuthorIdsFromConnectionRows(args.viewerId, args.connectionRows)
+    : getDiscoveriesNetworkAuthorIds(args.viewerId);
+
   const [networkIds, viewer, blockedIds] = await Promise.all([
-    getDiscoveriesNetworkAuthorIds(args.viewerId),
+    networkPromise,
     prisma.user.findUnique({
       where: { id: args.viewerId },
       select: {
@@ -126,10 +135,13 @@ export async function getDiscoveriesFeed(args: {
     }));
   } else {
     const authorIds = slice.map((p) => p.userId);
+    const connectionSubset = args.connectionRows?.filter((r) =>
+      authorIds.includes(r.targetUserId)
+    );
     const [reasonMap, trustMap] = await Promise.all([
       getConnectionReasonsBulk(args.viewerId, authorIds),
       settings.showSharedIntroducers
-        ? getTrustProfilesBulk(args.viewerId, authorIds)
+        ? getTrustProfilesBulk(args.viewerId, authorIds, connectionSubset)
         : Promise.resolve(new Map()),
     ]);
 
@@ -236,14 +248,18 @@ async function assertDiscoveryAccess(viewerId: string, postId: string) {
 }
 
 export async function toggleDiscoveriesLike(postId: string, userId: string) {
-  await assertDiscoveryAccess(userId, postId);
-  const post = await prisma.discoveriesPost.findUnique({
-    where: { id: postId },
-    select: { userId: true },
-  });
-  const existing = await prisma.discoveriesLike.findUnique({
-    where: { postId_userId: { postId, userId } },
-  });
+  const allowed = await canViewDiscoveryPost(userId, postId);
+  if (!allowed) throw new Error("Forbidden");
+
+  const [post, existing] = await Promise.all([
+    prisma.discoveriesPost.findUnique({
+      where: { id: postId },
+      select: { userId: true },
+    }),
+    prisma.discoveriesLike.findUnique({
+      where: { postId_userId: { postId, userId } },
+    }),
+  ]);
   if (existing) {
     await prisma.discoveriesLike.delete({ where: { id: existing.id } });
     return { liked: false };
@@ -314,7 +330,9 @@ export async function getDiscoveriesComments(postId: string, viewerId: string, l
 }
 
 export async function toggleDiscoveriesBookmark(postId: string, userId: string) {
-  await assertDiscoveryAccess(userId, postId);
+  const allowed = await canViewDiscoveryPost(userId, postId);
+  if (!allowed) throw new Error("Forbidden");
+
   const existing = await prisma.discoveriesBookmark.findUnique({
     where: { postId_userId: { postId, userId } },
   });
@@ -327,17 +345,21 @@ export async function toggleDiscoveriesBookmark(postId: string, userId: string) 
 }
 
 export async function recordDiscoveriesShare(postId: string, userId: string) {
-  await assertDiscoveryAccess(userId, postId);
-  await prisma.discoveriesShare.create({ data: { postId, userId } });
+  const allowed = await canViewDiscoveryPost(userId, postId);
+  if (!allowed) throw new Error("Forbidden");
+
+  const [post] = await Promise.all([
+    prisma.discoveriesPost.findUnique({
+      where: { id: postId },
+      select: { userId: true },
+    }),
+    prisma.discoveriesShare.create({ data: { postId, userId } }),
+  ]);
   void analyticsService.track({
     userId,
     eventType: ANALYTICS_EVENTS.DISCOVERY_SHARED,
     entityType: "discoveries_post",
     entityId: postId,
-  });
-  const post = await prisma.discoveriesPost.findUnique({
-    where: { id: postId },
-    select: { userId: true },
   });
   if (post && post.userId !== userId) {
     const actor = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });

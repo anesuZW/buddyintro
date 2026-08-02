@@ -1,0 +1,24 @@
+{
+  "at": "2026-08-01T21:12:47.186Z",
+  "base": "http://127.0.0.1:3070",
+  "results": [
+    {
+      "path": "/api/discoveries",
+      "status": 201,
+      "ms": 5068,
+      "body": "{\"post\":{\"id\":\"188926eb-c508-46f4-bb39-47e0e3061d49\",\"userId\":\"9fd1cd19-bff7-47fe-af71-ef001816dc07\",\"content\":\"RC mutate smoke 2026-08-01T21:12:34.442Z\",\"mediaUrl\":null,\"mediaType\":null,\"visibility\":\"network\",\"introductionCategoryId\":null,"
+    },
+    {
+      "path": "/api/discoveries",
+      "status": 201,
+      "ms": 4302,
+      "body": "{\"post\":{\"id\":\"d4ba3af7-b31f-4091-a410-d0f6907dc09c\",\"userId\":\"9fd1cd19-bff7-47fe-af71-ef001816dc07\",\"content\":\"RC alias origin smoke 1785618759511\",\"mediaUrl\":null,\"mediaType\":null,\"visibility\":\"network\",\"introductionCategoryId\":null,\"visi"
+    },
+    {
+      "path": "/api/media/upload",
+      "status": 200,
+      "ms": 3369,
+      "body": "{\"url\":\"/uploads/images/2026/08/9fd1cd19-bff7-47fe-af71-ef001816dc07/1785618764266-20gnox.png\",\"path\":\"images/2026/08/9fd1cd19-bff7-47fe-af71-ef001816dc07/1785618764266-20gnox.png\",\"variants\":{\"original\":\"/uploads/images/2026/08/9fd1cd19-bf"
+    }
+  ]
+}

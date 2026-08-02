@@ -1,0 +1,27 @@
+{
+  "capturedAt": "2026-07-31T07:42:00.000Z",
+  "url": "http://localhost:3010/",
+  "mode": "next dev",
+  "navigation": {
+    "ttfbMs": 2570,
+    "domContentLoadedMs": 2688,
+    "loadEventMs": 2916,
+    "dnsMs": 0,
+    "tcpMs": 1,
+    "tlsMs": 0,
+    "transferSize": 8493,
+    "decodedBodySize": 22964
+  },
+  "paints": {
+    "firstPaintMs": 2712,
+    "firstContentfulPaintMs": 2712,
+    "largestContentfulPaintMs": null
+  },
+  "largestResources": [
+    { "name": "chunks/main-app.js", "transferKB": 1312, "decodedKB": 5883, "durationMs": 190 },
+    { "name": "[locale]/layout.js", "transferKB": 352, "decodedKB": 1470, "durationMs": 72 },
+    { "name": "Inter woff2 (partial)", "transferKB": 48, "decodedKB": 47, "durationMs": 80 },
+    { "name": "[locale]/page.js", "transferKB": 43, "decodedKB": 206, "durationMs": 35 }
+  ],
+  "note": "Authenticated /home browser metrics blocked by schema drift (HTTP 500)."
+}

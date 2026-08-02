@@ -71,6 +71,11 @@ export function PushEnableButton() {
       });
 
       if (!res.ok) throw new Error("Subscribe failed");
+      void fetch("/api/notifications/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enablePushNotifications: true }),
+      }).catch(() => {});
       setEnabled(true);
       void trackPwaEvent(PWA_ANALYTICS.NOTIFICATION_ENABLED);
       toast.success("Push notifications enabled");

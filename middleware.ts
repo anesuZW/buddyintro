@@ -6,6 +6,27 @@ import { applySecurityHeaders, validateOrigin, originRejectedResponse } from "@/
 import { recordHttpRequest } from "@/lib/metrics";
 import { updateSession } from "@/lib/supabase/middleware";
 
+const UPLOAD_ROUTE = "/api/media/upload";
+
+function logMiddlewareUploadRejection(request: NextRequest, requestId: string) {
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  console.warn(
+    JSON.stringify({
+      level: "warn",
+      msg: "upload rejected — CSRF origin check",
+      route: UPLOAD_ROUTE,
+      requestId,
+      userId: "anonymous",
+      contentLength: contentLength || undefined,
+      origin: request.headers.get("origin") || undefined,
+      referer: request.headers.get("referer")?.slice(0, 120) || undefined,
+      rejectSource: "csrf",
+      rejectCode: "csrf_rejected",
+      reason: "Request origin not allowed",
+    })
+  );
+}
+
 const intlMiddleware = createIntlMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
@@ -15,6 +36,9 @@ export async function middleware(request: NextRequest) {
   const isApiRoute = pathname.startsWith("/api/");
 
   if (!validateOrigin(request)) {
+    if (pathname === UPLOAD_ROUTE) {
+      logMiddlewareUploadRejection(request, requestId);
+    }
     const rejected = originRejectedResponse(requestId);
     rejected.headers.set(REQUEST_ID_HEADER, requestId);
     return applySecurityHeaders(rejected);

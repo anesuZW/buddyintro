@@ -37,8 +37,9 @@ npm run load:concurrency
 
 ## Health endpoints
 
-- `GET /api/health` — load balancer probe
+- `GET /api/health` — load balancer probe (lite: DB ping + memory)
 - `GET /api/health?verbose=1` — full subsystem diagnostics
+- `GET /api/health?deep=1` — production summary + active users + deployment block
 - `GET /api/metrics` — Prometheus scrape target
 
 ## Recording results

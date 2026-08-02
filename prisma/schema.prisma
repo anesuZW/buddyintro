@@ -277,6 +277,7 @@ model Message {
   @@map("messages")
   @@index([senderId, receiverId, createdAt])
   @@index([receiverId, senderId, createdAt])
+  @@index([receiverId, readAt])
   @@index([storyReference])
   @@index([discoveriesPostReference])
 }

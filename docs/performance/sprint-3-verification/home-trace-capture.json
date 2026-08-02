@@ -1,0 +1,51 @@
+{
+  "capturedAt": "2026-07-26T18:02:13.692Z",
+  "gitCommit": "87edda065bda93cf7c7dba6f74e2c263a133cb29",
+  "base": "http://localhost:3010",
+  "page": "/home",
+  "profileFlags": {
+    "PROFILE_PRODUCTION": "1",
+    "AUTH_PROFILE": "1",
+    "PROFILE_PHASE2": "1"
+  },
+  "http": {
+    "status": 200,
+    "ttfbMs": 43395,
+    "totalMs": 52696,
+    "headers": {
+      "benchAuthMs": "795",
+      "requestId": "2afc354d"
+    }
+  },
+  "authProfile": {
+    "duplicateAuth": "no",
+    "getUserCalls": 1,
+    "middlewareGetUserMs": 795,
+    "prismaMs": 6653
+  },
+  "prismaSlowLogCount": 18,
+  "aggregateByModelOp": {
+    "StoryTag.findMany": 2,
+    "StoryTag.count": 0,
+    "Story.findMany": 5,
+    "Story.count": 1,
+    "UserConnection.findMany": 2,
+    "UserConnection.findFirst": 1,
+    "SharedIntroducerRelationship.groupBy": 1,
+    "Post.findMany": 1,
+    "Notification.count": 1,
+    "Message.count": 1,
+    "AdminSettings.findUnique": 1,
+    "User.findUnique": 2
+  },
+  "priorFailedCapture": {
+    "capturedAt": "2026-07-26T16:33:55.277Z",
+    "status": 500,
+    "reason": "pooler unreachable"
+  },
+  "evidenceLabels": {
+    "queryCounts": "RUNTIME VERIFIED",
+    "sqlText": "UNVERIFIED",
+    "rowCounts": "UNVERIFIED"
+  }
+}
