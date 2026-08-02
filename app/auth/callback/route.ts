@@ -4,9 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { acceptInvitation } from "@/services/invites";
 
 /**
- * OAuth / magic-link / invite callback.
+ * OAuth / magic-link / invite / password-recovery callback.
  * Exchanges the auth code for a session, ensures a public.users row,
  * and applies any invite token in the URL.
+ * Password recovery uses `next=/reset-password` from the reset email link.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);

@@ -42,6 +42,8 @@ export const AUTH_PUBLIC_PATH_PREFIXES = [
   "/",
   "/login",
   "/signup",
+  "/forgot-password",
+  "/reset-password",
   "/invite/",
   "/invite-preview/",
   "/privacy",

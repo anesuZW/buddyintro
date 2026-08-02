@@ -20,24 +20,35 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   async function loginWithPassword(e: React.FormEvent) {
     e.preventDefault();
+    setFormError(null);
     setLoading(true);
     try {
       const supabase = createSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       router.replace(next);
-    } catch (err: any) {
-      toast.error(err.message || t("loginFailed"));
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error && err.message ? err.message : t("loginFailed");
+      setFormError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   }
 
   async function loginWithMagicLink() {
-    if (!email) return toast.error(t("enterEmailFirst"));
+    if (!email) {
+      const message = t("enterEmailFirst");
+      setFormError(message);
+      toast.error(message);
+      return;
+    }
+    setFormError(null);
     setLoading(true);
     try {
       const supabase = createSupabaseBrowserClient();
@@ -47,8 +58,11 @@ function LoginForm() {
       });
       if (error) throw error;
       toast.success(t("magicLinkSent"));
-    } catch (err: any) {
-      toast.error(err.message || t("magicLinkFailed"));
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error && err.message ? err.message : t("magicLinkFailed");
+      setFormError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -60,6 +74,14 @@ function LoginForm() {
       <p className="text-muted-foreground mt-1">{t("discoverThroughIntros")}</p>
 
       <form onSubmit={loginWithPassword} className="mt-6 space-y-4">
+        {formError ? (
+          <div
+            role="alert"
+            className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            {formError}
+          </div>
+        ) : null}
         <Input
           type="email"
           placeholder={t("email")}
@@ -74,6 +96,14 @@ function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        <div className="flex justify-end">
+          <Link
+            href="/forgot-password"
+            className="text-sm text-primary font-medium"
+          >
+            {t("forgotPassword")}
+          </Link>
+        </div>
         <Button className="w-full h-12" disabled={loading}>
           {loading ? t("signingIn") : t("signIn")}
         </Button>

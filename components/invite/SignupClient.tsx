@@ -41,6 +41,7 @@ export function SignupClient({
   const [emailLocked, setEmailLocked] = useState(Boolean(initialEmail));
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [ready, setReady] = useState(!inviteToken);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (invitedEmail) {
@@ -61,8 +62,11 @@ export function SignupClient({
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
+    setFormError(null);
     if (!acceptedTerms) {
-      toast.error("Please accept the Terms and Privacy Policy.");
+      const message = "Please accept the Terms and Privacy Policy.";
+      setFormError(message);
+      toast.error(message);
       return;
     }
     if (
@@ -70,7 +74,9 @@ export function SignupClient({
       invitedEmail &&
       email.toLowerCase() !== invitedEmail.toLowerCase()
     ) {
-      toast.error("Please sign up with the invited email address.");
+      const message = "Please sign up with the invited email address.";
+      setFormError(message);
+      toast.error(message);
       return;
     }
 
@@ -88,6 +94,14 @@ export function SignupClient({
         },
       });
       if (error) throw error;
+
+      // Supabase often returns 200 with an empty identities array when the email
+      // already exists (anti-enumeration). Surface that as a durable error.
+      if (data.user && (data.user.identities?.length ?? 0) === 0) {
+        throw new Error(
+          "An account with this email already exists. Sign in or reset your password."
+        );
+      }
 
       if (data.session) {
         const res = await fetch("/api/auth/bootstrap", {
@@ -112,6 +126,7 @@ export function SignupClient({
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Sign up failed";
+      setFormError(message);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -165,6 +180,14 @@ export function SignupClient({
         </p>
 
         <form onSubmit={handleSignup} className="mt-6 space-y-4">
+          {formError ? (
+            <div
+              role="alert"
+              className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            >
+              {formError}
+            </div>
+          ) : null}
           <Input
             placeholder="Display name"
             required

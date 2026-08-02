@@ -125,7 +125,9 @@ export async function runHealthChecks(): Promise<HealthCheckResult> {
   let queue: HealthStatus = "healthy";
   let analytics: HealthStatus = "healthy";
   let graph: HealthStatus = "healthy";
-  let redis: HealthStatus = isRedisConfigured() ? "healthy" : "degraded";
+  // Redis is optional. Missing REDIS_URL uses documented in-process/DB fallbacks and
+  // must not mark the platform degraded. Only a configured-but-failing Redis is unhealthy.
+  let redis: HealthStatus = "healthy";
   let worker: HealthStatus = "healthy";
 
   const dbLatency = await measureDatabaseLatency();
@@ -145,7 +147,8 @@ export async function runHealthChecks(): Promise<HealthCheckResult> {
     if (!redisLatency.ok) {
       redis = "unhealthy";
       details.redisError = redisLatency.error ?? "unknown";
-    } else if ((redisLatency.latencyMs ?? 0) > 100) {
+    } else if ((redisLatency.latencyMs ?? 0) > 1500) {
+      // Cross-region ping commonly exceeds 100ms; only flag extreme slowness.
       redis = "degraded";
     }
   } else {
@@ -264,11 +267,13 @@ export async function getLiteHealthSummary(options?: {
   const mem = process.memoryUsage();
   const database: HealthStatus = dbLatency.status;
 
+  const redisConfigured = isRedisConfigured();
   return {
     status: database === "unhealthy" ? "unhealthy" : database,
     database,
     supabase: "healthy",
-    redis: isRedisConfigured() ? "healthy" : "degraded",
+    // Optional Redis: absence uses fallbacks and is not a degraded platform state.
+    redis: "healthy",
     storage: "healthy",
     queue: "healthy",
     worker: "healthy",
@@ -286,6 +291,10 @@ export async function getLiteHealthSummary(options?: {
     details: {
       mode: "lite",
       databaseLatencyMs: dbLatency.latencyMs ?? -1,
+      redisConfigured,
+      ...(redisConfigured
+        ? {}
+        : { redisNote: "REDIS_URL not set — in-process fallbacks active" }),
       ...(dbLatency.error ? { databaseError: dbLatency.error } : {}),
     },
   };

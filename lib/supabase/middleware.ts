@@ -158,7 +158,9 @@ export async function updateSession(request: NextRequest) {
   copyCookies(previous, response);
 
   const isAuthPage =
-    pathname.startsWith("/login") || pathname.startsWith("/signup");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/forgot-password");
 
   const isPublic = isAuthPublicPath(pathname);
 
