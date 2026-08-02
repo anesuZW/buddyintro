@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, MessageCircle, Volume2, VolumeX, X } from "lucide-react";
+import { ChevronLeft, MessageCircle, Trash2, Volume2, VolumeX, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
 import { Avatar } from "@/components/ui/Avatar";
 import { timeAgo, cn } from "@/lib/utils";
 import { STORY_DEFAULTS } from "@/lib/constants";
@@ -22,24 +23,32 @@ export function StoryPlayer({
   closeHref?: string;
 }) {
   const router = useRouter();
+  const [items, setItems] = useState(stories);
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const story = stories[index];
+  const story = items[index];
+  const isOwner = Boolean(story && story.userId === currentUserId);
   const totalSeconds =
     story?.mediaType === "video" ? STORY_DEFAULTS.segmentSeconds * 2 : STORY_DEFAULTS.segmentSeconds;
 
   useEffect(() => {
+    setItems(stories);
+    setIndex(0);
+  }, [stories]);
+
+  useEffect(() => {
     setProgress(0);
-    const current = stories[index];
+    const current = items[index];
     if (current) {
       setMuted(current.mediaType === "video");
     }
-  }, [index, stories]);
+  }, [index, items]);
 
   useEffect(() => {
     if (!story) return;
@@ -51,7 +60,7 @@ export function StoryPlayer({
       setProgress(pct);
       if (pct >= 100) {
         window.clearInterval(id);
-        if (index < stories.length - 1) setIndex((i) => i + 1);
+        if (index < items.length - 1) setIndex((i) => i + 1);
         else handleClose();
       }
     }, 80);
@@ -70,8 +79,42 @@ export function StoryPlayer({
     if (x < width / 3) {
       setIndex((i) => Math.max(0, i - 1));
     } else {
-      if (index < stories.length - 1) setIndex((i) => i + 1);
+      if (index < items.length - 1) setIndex((i) => i + 1);
       else handleClose();
+    }
+  }
+
+  async function deleteCurrentStory(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!story || !isOwner || deleting) return;
+    setPaused(true);
+    const ok = window.confirm("Delete this story? This cannot be undone.");
+    if (!ok) {
+      setPaused(false);
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/stories/${story.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Could not delete story");
+      }
+      const remaining = items.filter((s) => s.id !== story.id);
+      if (remaining.length === 0) {
+        handleClose();
+        router.refresh();
+        return;
+      }
+      setItems(remaining);
+      setIndex((i) => Math.min(i, remaining.length - 1));
+      setProgress(0);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not delete story");
+    } finally {
+      setDeleting(false);
+      setPaused(false);
     }
   }
 
@@ -81,7 +124,7 @@ export function StoryPlayer({
     <div className="fixed inset-0 z-50 bg-black text-white">
       {/* Progress bars */}
       <div className="absolute top-2 left-2 right-2 flex gap-1 z-10">
-        {stories.map((s, i) => (
+        {items.map((s, i) => (
           <div key={s.id} className="flex-1 h-[3px] bg-white/30 rounded-full overflow-hidden">
             <div
               className="h-full bg-white transition-[width] duration-75"
@@ -109,6 +152,17 @@ export function StoryPlayer({
         </div>
 
         <div className="flex items-center gap-1">
+          {isOwner ? (
+            <button
+              type="button"
+              onClick={deleteCurrentStory}
+              disabled={deleting}
+              className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/10 disabled:opacity-50"
+              aria-label="Delete story"
+            >
+              <Trash2 size={18} />
+            </button>
+          ) : null}
           {story.voiceNoteUrl || story.mediaType === "video" ? (
             <button
               onClick={() => setMuted((m) => !m)}
