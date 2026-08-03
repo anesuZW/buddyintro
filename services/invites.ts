@@ -79,7 +79,9 @@ export async function createInvitation(
       invitedById: args.invitedById,
       inviteToken,
       expiresAt,
-      inviteMethod: "email",
+      // Phone invites are delivered via SMS/WhatsApp share sheet; method is
+      // refined when the inviter taps a share channel.
+      inviteMethod: "sms",
     },
   });
 }
@@ -89,12 +91,15 @@ export function inviteLink(token: string) {
 }
 
 export function toPhoneInviteShare(
-  invitation: { inviteToken: string; phoneNumber: string | null }
+  invitation: { inviteToken: string; phoneNumber: string | null },
+  copy?: { inviterName?: string | null; relationshipLabel?: string | null }
 ): PhoneInviteShare | null {
   if (!invitation.phoneNumber) return null;
   const links = buildInviteShareLinks({
     token: invitation.inviteToken,
     phoneNumber: invitation.phoneNumber,
+    inviterName: copy?.inviterName,
+    relationshipLabel: copy?.relationshipLabel,
   });
   return {
     inviteToken: invitation.inviteToken,
@@ -212,13 +217,53 @@ export async function acceptInvitation(args: {
     }
   }
 
-  const updated = await prisma.invitation.update({
-    where: { id: invitation.id },
-    data: {
-      registered: true,
-      registeredUserId: args.userId,
-      acceptedAt: new Date(),
-    },
+  const updated = await prisma.$transaction(async (tx) => {
+    const row = await tx.invitation.update({
+      where: { id: invitation.id },
+      data: {
+        registered: true,
+        registeredUserId: args.userId,
+        acceptedAt: new Date(),
+      },
+    });
+
+    // Attach the new user to any story tags linked to this invitation so the
+    // introduction becomes visible after signup (draft → tagged user).
+    const tags = await tx.storyTag.findMany({
+      where: { invitationId: invitation.id },
+      select: { id: true, storyId: true },
+    });
+
+    for (const tag of tags) {
+      await tx.storyTag.update({
+        where: { id: tag.id },
+        data: {
+          taggedUserId: args.userId,
+          taggedExternalEmail: null,
+          taggedExternalPhone: null,
+        },
+      });
+
+      const unresolved = await tx.storyTag.count({
+        where: {
+          storyId: tag.storyId,
+          taggedUserId: null,
+          OR: [
+            { taggedExternalEmail: { not: null } },
+            { taggedExternalPhone: { not: null } },
+          ],
+        },
+      });
+
+      if (unresolved === 0) {
+        await tx.story.updateMany({
+          where: { id: tag.storyId, status: "draft" },
+          data: { status: "published", publishedAt: new Date() },
+        });
+      }
+    }
+
+    return row;
   });
 
   void scheduleTrustGraphRefresh([invitation.invitedById, args.userId]).catch((err) =>

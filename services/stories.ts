@@ -221,8 +221,22 @@ export async function createStoryWithTags(args: {
     }
   }
 
+  let relationshipLabel: string | null = null;
+  if (result.saved.introductionCategoryId) {
+    const category = await prisma.introductionCategory.findUnique({
+      where: { id: result.saved.introductionCategoryId },
+      select: { name: true },
+    });
+    relationshipLabel = category?.name ?? null;
+  }
+
   const phoneInvites = result.pendingPhones
-    .map(({ invitation }) => toPhoneInviteShare(invitation))
+    .map(({ invitation }) =>
+      toPhoneInviteShare(invitation, {
+        inviterName: result.author.name,
+        relationshipLabel,
+      })
+    )
     .filter((s): s is PhoneInviteShare => s !== null);
 
   if (result.saved.status === "published") {

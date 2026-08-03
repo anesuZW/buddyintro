@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getInvitePreviewByToken, invitePreviewUrl } from "@/lib/invite-preview";
+import {
+  buildInviteOpenGraph,
+  getInvitePreviewByToken,
+  invitePreviewUrl,
+} from "@/lib/invite-preview";
 import { recordInvitationOpened } from "@/services/invites";
 import { InviteLandingClient } from "@/components/invite/InviteLandingClient";
 import {
@@ -8,12 +13,27 @@ import {
   INVITE_SESSION_COOKIE,
 } from "@/lib/invite-session";
 import { cookies } from "next/headers";
+import { BRAND } from "@/lib/branding";
 
-export default async function InvitePage({
-  params,
-}: {
-  params: { token: string };
-}) {
+type Props = { params: { token: string } };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const preview = await getInvitePreviewByToken(params.token);
+  if (preview.status !== "ok") {
+    return {
+      title: `${BRAND.name} invite`,
+      description: `Join ${BRAND.name} with your invitation.`,
+    };
+  }
+  return buildInviteOpenGraph({
+    token: params.token,
+    inviterName: preview.inviter.name,
+    relationshipLabel: preview.relationshipLabel,
+    storyText: preview.story.text,
+  });
+}
+
+export default async function InvitePage({ params }: Props) {
   const preview = await getInvitePreviewByToken(params.token);
 
   if (preview.status === "not_found") {

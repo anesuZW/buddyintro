@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { BRAND } from "@/lib/branding";
-import { getInvitePreviewByToken, invitePreviewUrl } from "@/lib/invite-preview";
+import {
+  buildInviteOpenGraph,
+  getInvitePreviewByToken,
+} from "@/lib/invite-preview";
 import { recordInvitationOpened } from "@/services/invites";
 import { InvitePreviewViewer } from "@/components/invite/InvitePreviewViewer";
 import {
@@ -22,30 +25,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const title = `${preview.inviter.name} shared a story with you`;
-  const description =
-    preview.story.text ||
-    `${preview.inviter.name} invited you to ${BRAND.name}. Preview the story before you join.`;
-  const url = invitePreviewUrl(params.token);
-  const image = preview.story.mediaUrl;
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      url,
-      type: "website",
-      images: [{ url: image, width: 1200, height: 630, alt: title }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [image],
-    },
-  };
+  return buildInviteOpenGraph({
+    token: params.token,
+    inviterName: preview.inviter.name,
+    relationshipLabel: preview.relationshipLabel,
+    storyText: preview.story.text,
+  });
 }
 
 function setInviteCookies(token: string, email?: string | null) {
