@@ -90,8 +90,13 @@ export async function confirmPhoneVerification(userId: string, rawPhone: string,
   }
 
   const betaCode = process.env.PHONE_VERIFICATION_BETA_CODE;
+  const allowBetaCode =
+    Boolean(betaCode) &&
+    (process.env.NODE_ENV !== "production" ||
+      process.env.ALLOW_PHONE_BETA_CODE === "1");
   const valid =
-    hashCode(code) === challenge.codeHash || (betaCode && code === betaCode);
+    hashCode(code) === challenge.codeHash ||
+    (allowBetaCode && code === betaCode);
 
   if (!valid) {
     await prisma.phoneVerificationChallenge.update({

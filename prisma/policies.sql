@@ -751,7 +751,10 @@ begin
   from public.story_tags
   where story_id = p_story_id
     and tagged_user_id is null
-    and tagged_external_email is not null;
+    and (
+      tagged_external_email is not null
+      or tagged_external_phone is not null
+    );
 
   if pending = 0 then
     update public.stories
@@ -772,7 +775,8 @@ begin
   if new.registered = true and (old.registered is distinct from true) then
     update public.story_tags
        set tagged_user_id = new.registered_user_id,
-           tagged_external_email = null
+           tagged_external_email = null,
+           tagged_external_phone = null
      where invitation_id = new.id;
 
     for r in
