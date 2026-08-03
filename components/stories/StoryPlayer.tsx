@@ -11,6 +11,12 @@ import { timeAgo, cn } from "@/lib/utils";
 import { STORY_DEFAULTS } from "@/lib/constants";
 import type { StoryWithRelations } from "@/types";
 
+/**
+ * Instagram-style story player:
+ * - Silent images use the default segment timer.
+ * - Video / voice notes pause the segment timer while media plays;
+ *   auto-advance waits for media `ended` (with a safety cap).
+ */
 export function StoryPlayer({
   stories,
   currentUserId,
@@ -29,13 +35,19 @@ export function StoryPlayer({
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [mediaDriven, setMediaDriven] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const advanceLock = useRef(false);
 
   const story = items[index];
   const isOwner = Boolean(story && story.userId === currentUserId);
-  const totalSeconds =
-    story?.mediaType === "video" ? STORY_DEFAULTS.segmentSeconds * 2 : STORY_DEFAULTS.segmentSeconds;
+  const hasVoice = Boolean(story?.voiceNoteUrl);
+  const isVideo = story?.mediaType === "video";
+  const usesMediaClock = Boolean(story && (isVideo || hasVoice));
+  const fallbackSeconds = isVideo
+    ? STORY_DEFAULTS.segmentSeconds * 2
+    : STORY_DEFAULTS.segmentSeconds;
 
   useEffect(() => {
     setItems(stories);
@@ -44,44 +56,142 @@ export function StoryPlayer({
 
   useEffect(() => {
     setProgress(0);
+    setMediaDriven(false);
+    advanceLock.current = false;
     const current = items[index];
     if (current) {
-      setMuted(current.mediaType === "video");
+      // Voice on image starts unmuted so the note is heard; pure video starts muted.
+      setMuted(current.mediaType === "video" && !current.voiceNoteUrl);
     }
   }, [index, items]);
-
-  useEffect(() => {
-    if (!story) return;
-    if (paused) return;
-    const start = Date.now() - (progress / 100) * totalSeconds * 1000;
-    const id = window.setInterval(() => {
-      const elapsed = Date.now() - start;
-      const pct = Math.min(100, (elapsed / (totalSeconds * 1000)) * 100);
-      setProgress(pct);
-      if (pct >= 100) {
-        window.clearInterval(id);
-        if (index < items.length - 1) setIndex((i) => i + 1);
-        else handleClose();
-      }
-    }, 80);
-    return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, paused, story?.id]);
 
   function handleClose() {
     if (onClose) onClose();
     else router.push(closeHref ?? "/home");
   }
 
+  function goNext() {
+    if (advanceLock.current) return;
+    advanceLock.current = true;
+    if (index < items.length - 1) setIndex((i) => i + 1);
+    else handleClose();
+  }
+
+  function goPrev() {
+    advanceLock.current = false;
+    setIndex((i) => Math.max(0, i - 1));
+  }
+
+  // Sync pause/resume with underlying media elements.
+  useEffect(() => {
+    const video = videoRef.current;
+    const audio = audioRef.current;
+    if (paused) {
+      video?.pause();
+      audio?.pause();
+    } else {
+      void video?.play().catch(() => undefined);
+      void audio?.play().catch(() => undefined);
+    }
+  }, [paused, index, story?.id]);
+
+  // Pause on tab hide / background interruptions (calls, app switch).
+  useEffect(() => {
+    function onVisibility() {
+      if (document.hidden) setPaused(true);
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+  // Media-driven progress (video / voice). Advance only when ALL active
+  // media tracks have ended — never cut a longer voice note short.
+  useEffect(() => {
+    if (!story || !usesMediaClock) return;
+
+    let raf = 0;
+    let safetyTimer: number | undefined;
+    let videoDone = !isVideo;
+    let audioDone = !hasVoice;
+
+    const maybeAdvance = () => {
+      if (!paused && videoDone && audioDone) goNext();
+    };
+
+    const tick = () => {
+      const video = videoRef.current;
+      const audio = audioRef.current;
+      const vDur = video?.duration;
+      const aDur = audio?.duration;
+      const durations = [vDur, aDur].filter(
+        (d): d is number => typeof d === "number" && Number.isFinite(d) && d > 0
+      );
+
+      if (durations.length > 0) {
+        setMediaDriven(true);
+        const total = Math.max(...durations);
+        // Drive the bar from the longer track so progress matches full playback.
+        const primary =
+          (vDur ?? 0) >= (aDur ?? 0) && video ? video : audio ?? video;
+        const current = primary?.currentTime ?? 0;
+        const pct = Math.min(100, (current / total) * 100);
+        setProgress(pct);
+      }
+      raf = window.requestAnimationFrame(tick);
+    };
+
+    raf = window.requestAnimationFrame(tick);
+
+    safetyTimer = window.setTimeout(() => {
+      if (!advanceLock.current) goNext();
+    }, Math.max(fallbackSeconds, 120) * 1000);
+
+    const onVideoEnded = () => {
+      videoDone = true;
+      maybeAdvance();
+    };
+    const onAudioEnded = () => {
+      audioDone = true;
+      maybeAdvance();
+    };
+
+    const video = videoRef.current;
+    const audio = audioRef.current;
+    video?.addEventListener("ended", onVideoEnded);
+    audio?.addEventListener("ended", onAudioEnded);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      if (safetyTimer) window.clearTimeout(safetyTimer);
+      video?.removeEventListener("ended", onVideoEnded);
+      audio?.removeEventListener("ended", onAudioEnded);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, paused, story?.id, usesMediaClock, isVideo, hasVoice]);
+
+  // Classic segment timer for silent images (no voice).
+  useEffect(() => {
+    if (!story || usesMediaClock || mediaDriven) return;
+    if (paused) return;
+    const start = Date.now() - (progress / 100) * fallbackSeconds * 1000;
+    const id = window.setInterval(() => {
+      const elapsed = Date.now() - start;
+      const pct = Math.min(100, (elapsed / (fallbackSeconds * 1000)) * 100);
+      setProgress(pct);
+      if (pct >= 100) {
+        window.clearInterval(id);
+        goNext();
+      }
+    }, 80);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, paused, story?.id, usesMediaClock, mediaDriven]);
+
   function tap(e: React.MouseEvent<HTMLDivElement>) {
     const { left, width } = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - left;
-    if (x < width / 3) {
-      setIndex((i) => Math.max(0, i - 1));
-    } else {
-      if (index < items.length - 1) setIndex((i) => i + 1);
-      else handleClose();
-    }
+    if (x < width / 3) goPrev();
+    else goNext();
   }
 
   async function deleteCurrentStory(e: React.MouseEvent) {
@@ -122,7 +232,6 @@ export function StoryPlayer({
 
   return (
     <div className="fixed inset-0 z-50 bg-black text-white">
-      {/* Progress bars */}
       <div className="absolute top-2 left-2 right-2 flex gap-1 z-10">
         {items.map((s, i) => (
           <div key={s.id} className="flex-1 h-[3px] bg-white/30 rounded-full overflow-hidden">
@@ -134,7 +243,6 @@ export function StoryPlayer({
         ))}
       </div>
 
-      {/* Header */}
       <div className="absolute top-6 left-3 right-3 flex items-center justify-between z-10 mt-2">
         <div className="flex items-center gap-2">
           <button
@@ -165,7 +273,10 @@ export function StoryPlayer({
           ) : null}
           {story.voiceNoteUrl || story.mediaType === "video" ? (
             <button
-              onClick={() => setMuted((m) => !m)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setMuted((m) => !m);
+              }}
               className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/10"
               aria-label={muted ? "Unmute" : "Mute"}
             >
@@ -182,12 +293,12 @@ export function StoryPlayer({
         </div>
       </div>
 
-      {/* Media */}
       <div
         className="h-full w-full relative select-none"
         onClick={tap}
         onMouseDown={() => setPaused(true)}
         onMouseUp={() => setPaused(false)}
+        onMouseLeave={() => setPaused(false)}
         onTouchStart={() => setPaused(true)}
         onTouchEnd={() => setPaused(false)}
       >
@@ -230,7 +341,6 @@ export function StoryPlayer({
           />
         )}
 
-        {/* Caption */}
         {story.text && (
           <div className="absolute bottom-28 left-0 right-0 px-6 text-center">
             <p className="inline-block bg-black/40 px-4 py-2 rounded-2xl text-base">
@@ -239,7 +349,6 @@ export function StoryPlayer({
           </div>
         )}
 
-        {/* Tags */}
         <div className="absolute bottom-16 left-0 right-0 px-4">
           <div className="flex flex-wrap gap-2 justify-center">
             {story.tags.map((tag) => {
@@ -250,7 +359,7 @@ export function StoryPlayer({
                     key={tag.id}
                     className="bg-white/15 backdrop-blur px-3 py-1.5 rounded-full text-xs"
                   >
-    @{tag.taggedExternalEmail ?? tag.taggedExternalPhone ?? "invited"}
+                    @{tag.taggedExternalEmail ?? tag.taggedExternalPhone ?? "invited"}
                   </span>
                 );
               }
