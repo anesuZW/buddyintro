@@ -25,7 +25,13 @@ const STEPS = [
   { title: COPY.step4Title, hint: COPY.step4Hint },
 ];
 
-export function IntroductionCreator({ currentUserId }: { currentUserId: string }) {
+export function IntroductionCreator({
+  currentUserId,
+  currentUserName,
+}: {
+  currentUserId: string;
+  currentUserName?: string;
+}) {
   const [step, setStep] = useState(0);
 
   return (
@@ -51,6 +57,7 @@ export function IntroductionCreator({ currentUserId }: { currentUserId: string }
 
       <StoryUploader
         currentUserId={currentUserId}
+        currentUserName={currentUserName}
         activeStep={step}
         onStepChange={setStep}
       />

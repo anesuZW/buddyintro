@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { ServiceWorkerProvider } from "@/components/pwa/ServiceWorkerProvider";
+import { UploadManagerProvider } from "@/components/uploads/UploadManagerProvider";
 
 const UpdateManager = dynamic(
   () => import("@/components/pwa/UpdateManager").then((m) => m.UpdateManager),
@@ -14,15 +15,18 @@ const OfflineDetector = dynamic(
 );
 
 /**
- * Single PWA shell: service worker lifecycle, update banner, offline indicator.
+ * Single PWA shell: service worker lifecycle, update banner, offline indicator,
+ * and background upload manager (survives authenticated navigation).
  * Install prompt lives in (main)/layout for authenticated routes only.
  */
 export function PwaProviders({ children }: { children: React.ReactNode }) {
   return (
     <ServiceWorkerProvider>
-      {children}
-      <UpdateManager />
-      <OfflineDetector />
+      <UploadManagerProvider>
+        {children}
+        <UpdateManager />
+        <OfflineDetector />
+      </UploadManagerProvider>
     </ServiceWorkerProvider>
   );
 }

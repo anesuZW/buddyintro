@@ -10,7 +10,7 @@ const nextConfig = {
     instrumentationHook: true,
     optimizePackageImports: ["lucide-react", "date-fns", "framer-motion"],
     serverActions: {
-      bodySizeLimit: "25mb",
+      bodySizeLimit: "100mb",
     },
     outputFileTracingIncludes: {
       "/*": ["./node_modules/.prisma/client/**/*"],

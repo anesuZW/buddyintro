@@ -46,9 +46,11 @@ import { Button } from "@/components/ui/Button";
 
 import { Input, Textarea } from "@/components/ui/Input";
 
-import { useUpload } from "@/hooks/useUpload";
-
 import { useMediaRecorder } from "@/hooks/useMediaRecorder";
+
+import { useUploadManager } from "@/components/uploads/UploadManagerProvider";
+
+import { validateMediaFile } from "@/lib/media-client-validate";
 
 import { isEmail, cn } from "@/lib/utils";
 
@@ -58,9 +60,7 @@ import { COPY } from "@/lib/copy";
 import { BRAND } from "@/lib/branding";
 import type { StoryVisibilityModeValue } from "@/lib/story-visibility-shared";
 
-import type { TagInput, PhoneInviteShare } from "@/types";
-
-import { InviteShareSheet } from "@/components/invite/InviteShareSheet";
+import type { TagInput } from "@/types";
 
 import { ContactTagButton, type PickedContact } from "@/components/contacts/ContactPicker";
 
@@ -99,6 +99,8 @@ export function StoryUploader({
 
   currentUserId,
 
+  currentUserName,
+
   activeStep = 0,
 
   onStepChange,
@@ -106,6 +108,8 @@ export function StoryUploader({
 }: {
 
   currentUserId: string;
+
+  currentUserName?: string;
 
   activeStep?: number;
 
@@ -153,7 +157,7 @@ export function StoryUploader({
 
 
 
-  const { upload, uploading, progress, cancel } = useUpload();
+  const uploadManager = useUploadManager();
   const submitLockRef = useRef(false);
 
   const recorder = useMediaRecorder();
@@ -162,9 +166,7 @@ export function StoryUploader({
 
   const [submitting, setSubmitting] = useState(false);
 
-  const [phoneInvites, setPhoneInvites] = useState<PhoneInviteShare[]>([]);
-
-  const [shareOpen, setShareOpen] = useState(false);
+  const [validatingFile, setValidatingFile] = useState(false);
 
 
 
@@ -279,17 +281,24 @@ export function StoryUploader({
 
 
 
-  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-
+  async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
-
+    e.target.value = "";
     if (!f) return;
 
-    setFile(f);
-
-    if (f.type.startsWith("video/")) setMediaType("video");
-    else if (f.type.startsWith("image/")) setMediaType("image");
-
+    const preferred = mediaType ?? undefined;
+    setValidatingFile(true);
+    try {
+      const result = await validateMediaFile(f, preferred);
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      setMediaType(result.kind === "audio" ? mediaType : result.kind);
+      setFile(f);
+    } finally {
+      setValidatingFile(false);
+    }
   }
 
 
@@ -411,156 +420,68 @@ export function StoryUploader({
 
 
   async function submit() {
-
     if (submitLockRef.current) return;
 
     if (!file || !mediaType) {
-
       toast.error("Pick a photo or video first");
-
       onStepChange?.(2);
-
       return;
-
     }
 
     if (tags.length === 0) {
-
       toast.error("Tag at least one person");
-
       onStepChange?.(0);
-
       return;
+    }
 
+    // Re-validate immediately before enqueue (no upload until this passes).
+    const validation = await validateMediaFile(file, mediaType);
+    if (!validation.ok) {
+      toast.error(validation.message);
+      onStepChange?.(2);
+      return;
     }
 
     submitLockRef.current = true;
-
     setSubmitting(true);
 
     try {
-
-      const { url: mediaUrl } = await upload(file, {
-
-        userId: currentUserId,
-
-        kind: mediaType,
-
-      });
-
-
-
-      let voiceNoteUrl: string | undefined;
-
-      if (recorder.blob) {
-        const audioExt = recorder.format?.ext || "webm";
-        const { url } = await upload(recorder.blob, {
-          userId: currentUserId,
-          kind: "audio",
-          ext: audioExt,
-        });
-        voiceNoteUrl = url;
-      }
-
-
-
       const apiTags: TagInput[] = tags.map((t) => {
-
         if (t.kind === "user") return { kind: "user", userId: t.user.id };
-
         if (t.kind === "phone") return { kind: "phone", phone: t.phone };
-
         return { kind: "external", email: t.email };
-
       });
 
+      const relationshipLabel =
+        categories.find((c) => c.id === introductionCategoryId)?.name ?? null;
 
-
-      const res = await fetch("/api/stories", {
-
-        method: "POST",
-
-        headers: { "Content-Type": "application/json" },
-
-        body: JSON.stringify({
-
-          mediaUrl,
-
+      uploadManager.enqueue({
+        file,
+        mediaKind: mediaType,
+        payload: {
+          kind: "introduction",
+          userId: currentUserId,
           mediaType,
-
-          voiceNoteUrl,
-
           text: text.trim() || null,
-
           tags: apiTags,
-
           introductionCategoryId,
-
+          relationshipLabel,
           visibilityMode,
-
-        }),
-
+          voiceBlob: recorder.blob ?? null,
+          voiceExt: recorder.format?.ext || "webm",
+          inviterName: currentUserName ?? null,
+        },
       });
 
-      if (!res.ok) {
-
-        const err = await res.json().catch(() => ({}));
-
-        throw new Error(err.error || "Failed to create introduction");
-
-      }
-
-      const data = await res.json();
-
-      const failedEmails = (data.emailDelivery ?? []).filter(
-        (d: { ok?: boolean }) => d.ok === false
-      );
-      if (failedEmails.length) {
-        toast.error(
-          `Introduction saved, but invitation email could not be sent to ${failedEmails.map((d: { email: string }) => d.email).join(", ")}. Check server email configuration.`
-        );
-      }
-
-      if (data.phoneInvites?.length) {
-
-        setPhoneInvites(data.phoneInvites);
-
-        setShareOpen(true);
-
-        onStepChange?.(3);
-
-        toast.success("Introduction published! Send invitations now.");
-
-      } else {
-
-        toast.success("Introduction published!");
-
-        router.push("/home");
-
-        router.refresh();
-
-      }
-
+      // Free the user immediately — upload + Ready-to-Share continue in the manager.
+      router.push("/home");
+      router.refresh();
     } catch (err: unknown) {
-
-      if (err instanceof DOMException && err.name === "AbortError") {
-
-        toast("Upload cancelled");
-
-      } else {
-
-        toast.error(err instanceof Error ? err.message : "Couldn't create introduction");
-
-      }
-
+      toast.error(err instanceof Error ? err.message : "Couldn't start upload");
     } finally {
-
       setSubmitting(false);
-
       submitLockRef.current = false;
-
     }
-
   }
 
 
@@ -1106,16 +1027,13 @@ export function StoryUploader({
                   {recorder.error && (
                     <p className="text-xs text-destructive">{recorder.error}</p>
                   )}
-                  {uploading && (
-                    <div className="flex items-center gap-3">
-                      <p className="text-xs text-muted-foreground">
-                        Uploading… {progress}%
-                      </p>
-                      <Button type="button" variant="ghost" size="sm" onClick={cancel}>
-                        Cancel
-                      </Button>
-                    </div>
+                  {validatingFile && (
+                    <p className="text-xs text-muted-foreground">Checking file…</p>
                   )}
+                  <p className="text-xs text-muted-foreground">
+                    After you publish, the upload continues in the background so you can keep
+                    browsing. You’ll get a Ready to Share screen when it’s done.
+                  </p>
                 </div>
 
               </div>
@@ -1198,25 +1116,21 @@ export function StoryUploader({
 
 
 
-          {!shareOpen && (
+          <Button
 
-            <Button
+            className="w-full h-14"
 
-              className="w-full h-14"
+            disabled={submitting || validatingFile || !file || tags.length === 0}
 
-              disabled={submitting || uploading || !file || tags.length === 0}
+            onClick={submit}
 
-              onClick={submit}
+          >
 
-            >
+            <Send size={16} />
 
-              <Send size={16} />
+            {submitting || validatingFile ? "Starting…" : COPY.postIntroduction}
 
-              {submitting || uploading ? "Publishing…" : COPY.postIntroduction}
-
-            </Button>
-
-          )}
+          </Button>
 
         </div>
 
@@ -1258,7 +1172,7 @@ export function StoryUploader({
 
               className="flex-1 h-12"
 
-              disabled={submitting || uploading || !file || tags.length === 0}
+              disabled={submitting || validatingFile || !file || tags.length === 0}
 
               onClick={submit}
 
@@ -1266,7 +1180,7 @@ export function StoryUploader({
 
               <Send size={16} />
 
-              {submitting || uploading ? "Publishing…" : COPY.postIntroduction}
+              {submitting || validatingFile ? "Starting…" : COPY.postIntroduction}
 
             </Button>
 
@@ -1277,24 +1191,6 @@ export function StoryUploader({
       )}
 
 
-
-      <InviteShareSheet
-
-        invites={phoneInvites}
-
-        open={shareOpen}
-
-        onClose={() => {
-
-          setShareOpen(false);
-
-          router.push("/home");
-
-          router.refresh();
-
-        }}
-
-      />
 
     </div>
 
