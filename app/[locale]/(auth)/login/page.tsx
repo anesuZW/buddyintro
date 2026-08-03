@@ -9,13 +9,15 @@ import { Input } from "@/components/ui/Input";
 import { Link, useRouter } from "@/lib/i18n/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { appUrl } from "@/lib/utils";
+import { safeInternalPath } from "@/lib/safe-path";
 
 function LoginForm() {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/home";
+  const next = safeInternalPath(params.get("next"), "/home");
+  const authError = params.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -74,6 +76,14 @@ function LoginForm() {
       <p className="text-muted-foreground mt-1">{t("discoverThroughIntros")}</p>
 
       <form onSubmit={loginWithPassword} className="mt-6 space-y-4">
+        {authError === "auth" ? (
+          <div
+            role="alert"
+            className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            Sign-in link expired or invalid. Please try again.
+          </div>
+        ) : null}
         {formError ? (
           <div
             role="alert"

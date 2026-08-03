@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { acceptInvitation } from "@/services/invites";
+import { safeInternalPath } from "@/lib/safe-path";
+import { appLogger } from "@/lib/logger";
 
 /**
  * OAuth / magic-link / invite / password-recovery callback.
@@ -12,14 +14,23 @@ import { acceptInvitation } from "@/services/invites";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  let next = url.searchParams.get("next") || "/home";
+  let next = safeInternalPath(url.searchParams.get("next"), "/home");
   const inviteToken =
     url.searchParams.get("invite") || url.searchParams.get("invite_token") || undefined;
 
   const supabase = createSupabaseServerClient();
 
   if (code) {
-    await supabase.auth.exchangeCodeForSession(code);
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    if (exchangeError) {
+      appLogger.error("auth callback code exchange failed", {
+        route: "auth/callback",
+        error: exchangeError.message,
+      });
+      const login = new URL("/login", request.url);
+      login.searchParams.set("error", "auth");
+      return NextResponse.redirect(login);
+    }
   }
 
   const {
@@ -53,10 +64,27 @@ export async function GET(request: Request) {
           userEmail: user.email!,
         });
         if (result.ok && result.storyId && result.authorId) {
-          next = `/stories/${result.authorId}`;
+          next = safeInternalPath(`/stories/${result.authorId}`, "/home");
+        } else if (!result.ok) {
+          appLogger.error("auth callback invite accept failed", {
+            route: "auth/callback",
+            reason: result.reason,
+            userId: user.id,
+          });
+          // Stay signed in; surface invite failure on the destination.
+          const dest = new URL(next, request.url);
+          dest.searchParams.set("invite_error", result.reason);
+          return NextResponse.redirect(dest);
         }
       } catch (err) {
-        console.error("[auth/callback] acceptInvitation failed", err);
+        appLogger.error("auth callback acceptInvitation threw", {
+          route: "auth/callback",
+          error: err instanceof Error ? err.message : String(err),
+          userId: user.id,
+        });
+        const dest = new URL(next, request.url);
+        dest.searchParams.set("invite_error", "failed");
+        return NextResponse.redirect(dest);
       }
     }
   }

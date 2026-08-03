@@ -102,6 +102,8 @@ export function applySecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
+export { safeInternalPath } from "@/lib/safe-path";
+
 import { uploadRejectResponse } from "@/lib/upload-reject";
 
 export function originRejectedResponse(requestId?: string) {
