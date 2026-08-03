@@ -19,7 +19,7 @@ export function TopBar({
   unreadNotifications?: number;
 }) {
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 glass">
+    <header className="fixed top-0 left-0 right-0 z-30 glass pt-[env(safe-area-inset-top)]">
       <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/home" className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-xl bg-story-ring p-[2px]">
@@ -29,12 +29,12 @@ export function TopBar({
           </div>
           <span className="font-bold">{BRAND.name}</span>
         </Link>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <NotificationBell userId={user.id} initialUnread={unreadNotifications} />
           <Link href="/messages" className="btn-ghost h-10 w-10 p-0 relative" aria-label="Messages">
             <MessageCircle size={18} />
             {unreadMessages > 0 && (
-              <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+              <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
                 {unreadMessages > 9 ? "9+" : unreadMessages}
               </span>
             )}

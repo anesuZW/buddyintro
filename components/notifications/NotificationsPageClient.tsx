@@ -90,13 +90,13 @@ export function NotificationsPageClient() {
         </Button>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-0.5">
         {FILTERS.map((f) => (
           <button
             key={f.id || "all"}
             type="button"
             onClick={() => setFilter(f.id)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+            className={`px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap transition ${
               filter === f.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             }`}
           >
@@ -115,28 +115,63 @@ export function NotificationsPageClient() {
         <p className="text-xs text-destructive mb-2">{error}</p>
       )}
 
+      {!loading && !error && items.length === 0 && (
+        <div className="card p-8 text-center">
+          <div className="text-sm font-semibold">No notifications yet</div>
+          <p className="text-xs text-muted-foreground mt-1">
+            When friends introduce you or message you, it will show up here.
+          </p>
+        </div>
+      )}
+
       <ul className="space-y-2">
         {items.map((n) => (
-          <li key={n.id} className="card p-3 flex gap-3">
-            {n.actor && <Avatar src={n.actor.profilePicture} name={n.actor.name} size="md" />}
+          <li key={n.id} className="card px-3.5 py-3.5 flex items-start gap-3">
+            <div className="shrink-0 pt-0.5">
+              {n.actor ? (
+                <Avatar src={n.actor.profilePicture} name={n.actor.name} size="md" />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-muted" />
+              )}
+            </div>
             <div className="flex-1 min-w-0">
-              <Link href={n.href} className="block hover:opacity-80" onClick={() => !n.isRead && markRead(n.id)}>
-                <div className="font-medium text-sm">{n.title}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{n.message}</div>
-                <div className="text-[10px] text-muted-foreground mt-1">{timeAgo(n.createdAt)}</div>
+              <Link
+                href={n.href}
+                className="block hover:opacity-80"
+                onClick={() => !n.isRead && markRead(n.id)}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-medium text-sm leading-snug">{n.title}</div>
+                  {!n.isRead ? (
+                    <span className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
+                  ) : null}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  {n.message}
+                </div>
+                <div className="text-[11px] text-muted-foreground mt-1.5">
+                  {timeAgo(n.createdAt)}
+                </div>
               </Link>
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-3 mt-2.5">
                 {!n.isRead && (
-                  <button type="button" className="text-[10px] text-primary" onClick={() => markRead(n.id)}>
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-primary"
+                    onClick={() => markRead(n.id)}
+                  >
                     Mark read
                   </button>
                 )}
-                <button type="button" className="text-[10px] text-muted-foreground" onClick={() => remove(n.id)}>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-muted-foreground"
+                  onClick={() => remove(n.id)}
+                >
                   Delete
                 </button>
               </div>
             </div>
-            {!n.isRead && <span className="h-2 w-2 rounded-full bg-primary shrink-0" />}
           </li>
         ))}
       </ul>

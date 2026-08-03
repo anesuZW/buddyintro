@@ -40,7 +40,8 @@ export function NotificationBell({
   }
 
   useEffect(() => {
-    if (open) loadPreview();
+    if (open) void loadPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
@@ -77,52 +78,69 @@ export function NotificationBell({
       >
         <Bell size={18} />
         {unread > 0 && (
-          <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+          <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 w-80 max-h-[70vh] overflow-auto rounded-2xl border border-border bg-card shadow-xl z-50">
-          <div className="p-3 border-b border-border flex items-center justify-between">
+        <div className="absolute right-0 top-full mt-2 w-80 max-w-[min(20rem,calc(100vw-1.5rem))] max-h-[min(70vh,28rem)] overflow-auto rounded-2xl border border-border bg-card shadow-xl z-50">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-3">
             <span className="font-semibold text-sm">Notifications</span>
             <Link
               href="/notifications"
-              className="text-xs text-primary hover:underline"
+              className="text-xs font-medium text-primary hover:underline shrink-0"
               onClick={() => setOpen(false)}
             >
               View all
             </Link>
           </div>
-          {loading && <div className="p-4 text-sm text-muted-foreground">Loading…</div>}
+          {loading && (
+            <div className="px-4 py-5 text-sm text-muted-foreground">Loading…</div>
+          )}
           {!loading && items.length === 0 && (
-            <div className="p-4 text-sm text-muted-foreground">No notifications yet.</div>
+            <div className="px-4 py-8 text-center">
+              <div className="text-sm font-medium">You’re all caught up</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                New introductions and messages will show up here.
+              </p>
+            </div>
           )}
           <ul>
             {items.map((n) => (
               <li key={n.id}>
                 <Link
                   href={n.href}
-                  className="flex gap-3 p-3 hover:bg-muted transition border-b border-border last:border-0"
+                  className="flex items-start gap-3 px-4 py-3 hover:bg-muted/70 transition border-b border-border last:border-0"
                   onClick={() => {
                     setOpen(false);
                     void refreshUnread();
                   }}
                 >
-                  {n.actor && (
-                    <Avatar src={n.actor.profilePicture} name={n.actor.name} size="sm" />
-                  )}
+                  <div className="shrink-0 pt-0.5">
+                    {n.actor ? (
+                      <Avatar src={n.actor.profilePicture} name={n.actor.name} size="sm" />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-muted" />
+                    )}
+                  </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium truncate">{n.title}</div>
-                    <div className="text-xs text-muted-foreground line-clamp-2">{n.message}</div>
-                    <div className="text-[10px] text-muted-foreground mt-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-sm font-medium leading-snug line-clamp-2">
+                        {n.title}
+                      </div>
+                      {!n.isRead ? (
+                        <span className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
+                      ) : null}
+                    </div>
+                    <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                      {n.message}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-1.5">
                       {timeAgo(n.createdAt)}
                     </div>
                   </div>
-                  {!n.isRead && (
-                    <span className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1" />
-                  )}
                 </Link>
               </li>
             ))}
