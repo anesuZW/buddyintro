@@ -69,8 +69,9 @@ export async function signStoredMediaUrl(stored: string | null | undefined): Pro
   }
   if (stored.startsWith("http://") || stored.startsWith("https://")) {
     const path = extractStoragePath(stored);
+    // Never return an arbitrary external URL — only re-sign known storage paths.
     if (path) return signStoragePath(path);
-    return stored;
+    return null;
   }
   return signStoragePath(stored);
 }
