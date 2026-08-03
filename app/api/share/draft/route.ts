@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { requireUserApi, isApiAuthError } from "@/lib/auth";
+import { requireUserApi } from "@/lib/auth";
+import type { ShareDraftCookie } from "@/app/api/share/target/route";
 
 /** Returns Web Share Target draft stored in httpOnly cookie. */
 export async function GET() {
@@ -12,7 +13,7 @@ export async function GET() {
     return NextResponse.json({ draft: null });
   }
   try {
-    const draft = JSON.parse(raw) as { content: string; at: number };
+    const draft = JSON.parse(raw) as ShareDraftCookie;
     cookies().delete("fi-share-draft");
     return NextResponse.json({ draft });
   } catch {

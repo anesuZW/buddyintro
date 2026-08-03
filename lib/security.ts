@@ -65,6 +65,10 @@ export function validateOrigin(request: NextRequest): boolean {
     return true;
   }
 
+  // Fail closed in production when no allowlist is configured.
+  if (process.env.NODE_ENV === "production") {
+    return false;
+  }
   return allowed.size === 0;
 }
 
