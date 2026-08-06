@@ -8,6 +8,7 @@ import {
   TopBarShell,
   TopBarWithBadges,
 } from "@/components/layout/LayoutBadges";
+import { MultiInviteWelcomeGate } from "@/components/invite/MultiInviteWelcomeGate";
 
 function isNextRedirectError(err: unknown): boolean {
   return (
@@ -36,6 +37,11 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       </Suspense>
       <div className="flex-1 pb-nav pt-16 max-w-2xl w-full mx-auto">{children}</div>
       <LazyInstallPrompt />
+      {user.multiInviteWelcomePending ? (
+        <Suspense fallback={null}>
+          <MultiInviteWelcomeGate userId={user.id} />
+        </Suspense>
+      ) : null}
       <Suspense fallback={<BottomNav introBadge={0} />}>
         <BottomNavWithBadge user={user} />
       </Suspense>

@@ -22,6 +22,10 @@ import {
   notifyInviteOpened,
   notifyInviteRegistered,
 } from "@/services/notifications/emitters";
+import {
+  buildWelcomeCardDisplay,
+  type WelcomeCardDisplay,
+} from "@/lib/multi-invite-welcome";
 
 const tokenAlphabet =
   "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -373,6 +377,12 @@ export async function acceptInvitation(args: {
 
   const now = new Date();
   const result = await prisma.$transaction(async (tx) => {
+    // First-time association only — late invites for existing users must never
+    // re-arm the welcome card.
+    const priorAssociated = await tx.invitation.count({
+      where: { registeredUserId: args.userId, registered: true },
+    });
+
     const row = await tx.invitation.update({
       where: { id: invitation.id },
       data: {
@@ -393,6 +403,14 @@ export async function acceptInvitation(args: {
       phone: userPhone ?? invitation.phoneNumber,
       excludeInvitationId: invitation.id,
     });
+
+    const totalAssociated = 1 + siblingInviters.length;
+    if (priorAssociated === 0 && totalAssociated >= 2) {
+      await tx.user.update({
+        where: { id: args.userId },
+        data: { multiInviteWelcomePending: true },
+      });
+    }
 
     return { row, siblingInviters };
   });
@@ -444,6 +462,57 @@ export async function acceptInvitation(args: {
     authorId: invitation.invitedById,
     associatedCount: result.siblingInviters.length,
   };
+}
+
+/**
+ * Payload for the one-time multi-invite welcome card.
+ * Presentation only — clears the pending flag if data is no longer eligible.
+ */
+export async function getMultiInviteWelcomePayload(
+  userId: string
+): Promise<WelcomeCardDisplay | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { multiInviteWelcomePending: true },
+  });
+  if (!user?.multiInviteWelcomePending) return null;
+
+  const invites = await prisma.invitation.findMany({
+    where: { registeredUserId: userId, registered: true },
+    select: {
+      id: true,
+      activatedAt: true,
+      acceptedAt: true,
+      invitedBy: { select: { name: true } },
+    },
+  });
+
+  const display = buildWelcomeCardDisplay(
+    invites.map((inv) => ({
+      invitationId: inv.id,
+      name: inv.invitedBy?.name?.trim() || "A friend",
+      activatedAt: inv.activatedAt,
+      acceptedAt: inv.acceptedAt,
+    }))
+  );
+
+  if (!display) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { multiInviteWelcomePending: false },
+    });
+    return null;
+  }
+
+  return display;
+}
+
+/** Dismiss forever — late invitations must never re-show the card. */
+export async function dismissMultiInviteWelcome(userId: string) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { multiInviteWelcomePending: false },
+  });
 }
 
 export async function getInvitationForOnboarding(token: string) {

@@ -134,6 +134,8 @@ model User {
   trustRiskReviewedAt     DateTime? @map("trust_risk_reviewed_at")
   trustRiskFalsePositive  Boolean   @default(false) @map("trust_risk_false_positive")
   preferredLanguage       String    @default("en") @map("preferred_language")
+  /// One-time multi-invite social-proof welcome card (presentation only).
+  multiInviteWelcomePending Boolean @default(false) @map("multi_invite_welcome_pending")
   createdAt               DateTime  @default(now()) @map("created_at")
 
   stories              Story[]               @relation("AuthorStories")
