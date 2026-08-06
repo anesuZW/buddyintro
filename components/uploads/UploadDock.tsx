@@ -25,11 +25,15 @@ export function UploadDock() {
         j.status === "finalizing"
     ) ?? visible[0];
 
-  if (!primary && !panelOpen) return null;
-  if (!primary && visible.length === 0) return null;
+  // Show dock whenever there is visible work, or the panel is open, or uploads
+  // are actively running (even if a row was hidden).
+  if (!primary && !panelOpen && activeCount === 0) return null;
+  if (!primary && visible.length === 0 && activeCount === 0 && !panelOpen) {
+    return null;
+  }
 
   return (
-    <div className="fixed bottom-[calc(var(--nav-height,4.5rem)+0.75rem)] left-0 right-0 z-[60] px-3 pointer-events-none">
+    <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px)+0.75rem)] left-0 right-0 z-[60] px-3 pointer-events-none">
       <div className="max-w-2xl mx-auto pointer-events-auto">
         {!panelOpen && primary ? (
           <button

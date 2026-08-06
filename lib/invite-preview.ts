@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { StoryWithRelations } from "@/types";
 import { signStoredMediaUrl } from "@/lib/storage-signed";
 import { appUrl } from "@/lib/utils";
+// appUrl is the single source for absolute invite URLs (env-derived).
 
 const storyInclude = {
   user: { select: { id: true, name: true, profilePicture: true } },
@@ -82,13 +83,11 @@ export async function getInvitePreviewByToken(
 }
 
 export function invitePreviewUrl(token: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  return `${base.replace(/\/$/, "")}/invite-preview/${token}`;
+  return appUrl(`/invite-preview/${token}`);
 }
 
 export function inviteSignupUrl(token: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  return `${base.replace(/\/$/, "")}/signup?invite=${token}`;
+  return appUrl(`/signup?invite=${token}`);
 }
 
 export function inviteOgImageUrl(token: string) {

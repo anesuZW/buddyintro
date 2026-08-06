@@ -26,6 +26,51 @@ import type { HomeVisibleStoryRow } from "@/lib/home-story-loader";
 import { projectHomeStoryBarStories } from "@/lib/home-story-loader";
 import { withProxiedMedia } from "@/lib/storage-url";
 import { appLogger } from "@/lib/logger";
+import { isPrismaUniqueViolation } from "@/lib/prisma-errors";
+
+/**
+ * Idempotent StoryTag attach for an invitation.
+ * Survives retries / double-submit without removing invitation_id uniqueness.
+ */
+async function ensureInvitationStoryTag(
+  tx: Prisma.TransactionClient,
+  data: {
+    storyId: string;
+    invitationId: string;
+    taggedExternalEmail: string | null;
+    taggedExternalPhone: string | null;
+  }
+) {
+  const existingByInvite = await tx.storyTag.findUnique({
+    where: { invitationId: data.invitationId },
+  });
+  if (existingByInvite) {
+    // Same story retry — treat as success. Different story means createInvitation
+    // should have minted a new invite (untagged-only reuse).
+    if (existingByInvite.storyId === data.storyId) return existingByInvite;
+    throw new Error(
+      "Invitation is already linked to another introduction. Retry the publish."
+    );
+  }
+
+  try {
+    return await tx.storyTag.create({
+      data: {
+        storyId: data.storyId,
+        invitationId: data.invitationId,
+        taggedExternalEmail: data.taggedExternalEmail,
+        taggedExternalPhone: data.taggedExternalPhone,
+      },
+    });
+  } catch (err) {
+    if (!isPrismaUniqueViolation(err)) throw err;
+    const raced = await tx.storyTag.findUnique({
+      where: { invitationId: data.invitationId },
+    });
+    if (raced && raced.storyId === data.storyId) return raced;
+    throw err;
+  }
+}
 
 const storyInclude = {
   user: { select: { id: true, name: true, profilePicture: true } },
@@ -127,12 +172,11 @@ export async function createStoryWithTags(args: {
             { kind: "email", email: tag.email, invitedById: args.authorId, expiresAt },
             tx
           );
-          await tx.storyTag.create({
-            data: {
-              storyId: story.id,
-              taggedExternalEmail: tag.email.toLowerCase(),
-              invitationId: invitation.id,
-            },
+          await ensureInvitationStoryTag(tx, {
+            storyId: story.id,
+            invitationId: invitation.id,
+            taggedExternalEmail: tag.email.toLowerCase(),
+            taggedExternalPhone: null,
           });
           pendingEmails.push({ invitation });
         }
@@ -142,12 +186,11 @@ export async function createStoryWithTags(args: {
           { kind: "phone", phone: tag.phone, invitedById: args.authorId, expiresAt },
           tx
         );
-        await tx.storyTag.create({
-          data: {
-            storyId: story.id,
-            taggedExternalPhone: invitation.phoneNumber,
-            invitationId: invitation.id,
-          },
+        await ensureInvitationStoryTag(tx, {
+          storyId: story.id,
+          invitationId: invitation.id,
+          taggedExternalEmail: null,
+          taggedExternalPhone: invitation.phoneNumber,
         });
         pendingPhones.push({ invitation });
       }

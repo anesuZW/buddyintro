@@ -100,6 +100,27 @@ export function UploadManagerProvider({ children }: { children: ReactNode }) {
     async (job: UploadJob, mediaUrl: string, voiceNoteUrl?: string) => {
       if (job.payload.kind !== "introduction") return;
       const p = job.payload;
+
+      // Idempotent: a successful prior finalize must not create a second story.
+      if (job.storyId && job.phoneInvites?.length) {
+        setReadyToShare({
+          jobId: job.id,
+          phoneInvites: job.phoneInvites,
+          previewUrl: job.mediaUrl ?? mediaUrl,
+          mediaType: p.mediaType,
+          relationshipLabel: p.relationshipLabel,
+          inviterName: p.inviterName ?? null,
+          recipientLabel: recipientLabelFromPayload(p),
+        });
+        updateJob(job.id, { status: "ready", progress: 100, hidden: false });
+        return;
+      }
+      if (job.storyId) {
+        updateJob(job.id, { status: "ready", progress: 100, hidden: false });
+        toast.success("Introduction already published!");
+        return;
+      }
+
       updateJob(job.id, { status: "finalizing", progress: 100 });
 
       const res = await fetch("/api/stories", {
@@ -139,13 +160,15 @@ export function UploadManagerProvider({ children }: { children: ReactNode }) {
       }
 
       const phoneInvites = data.phoneInvites ?? [];
+      // Keep the job visible in the upload dock so progress remains discoverable
+      // after Ready-to-Share closes (do not auto-hide).
       updateJob(job.id, {
         status: "ready",
         progress: 100,
         phoneInvites,
         storyId: data.story?.id,
         mediaUrl,
-        hidden: phoneInvites.length > 0,
+        hidden: false,
       });
 
       await clearOfflineStoryDraft(`${DRAFT_KEY_PREFIX}${job.id}`).catch(() => undefined);

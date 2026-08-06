@@ -37,9 +37,29 @@ function originsEquivalent(origin: string, requestOrigin: string): boolean {
   }
 }
 
+/**
+ * Web Share Target POSTs from Android/iOS often send opaque or app origins
+ * that are not our site. Exempt only this navigational multipart endpoint —
+ * uploads still require an authenticated session inside the route handler.
+ */
+export function isShareTargetRequest(request: NextRequest): boolean {
+  if (request.method !== "POST") return false;
+  const path = request.nextUrl.pathname;
+  if (path !== "/api/share/target" && !path.endsWith("/api/share/target")) {
+    return false;
+  }
+  const contentType = (request.headers.get("content-type") || "").toLowerCase();
+  return contentType.includes("multipart/form-data");
+}
+
 /** Validate Origin/Referer for mutating requests. */
 export function validateOrigin(request: NextRequest): boolean {
   if (request.method === "GET" || request.method === "HEAD" || request.method === "OPTIONS") {
+    return true;
+  }
+
+  // Narrow exception: OS Web Share Target → /api/share/target (multipart only).
+  if (isShareTargetRequest(request)) {
     return true;
   }
 

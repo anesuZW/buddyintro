@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { formatDistanceToNowStrict } from "date-fns";
+import { BRAND } from "@/lib/branding";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -26,9 +27,17 @@ export function getInitials(name?: string | null) {
 }
 
 export function appUrl(path = "") {
+  const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const fromWindow =
+    typeof window !== "undefined" ? window.location.origin : undefined;
+  // Prefer env → browser origin → localhost (dev). Production should always
+  // set NEXT_PUBLIC_APP_URL; brand domain is the last-resort SSR fallback.
   const base =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+    fromEnv ||
+    fromWindow ||
+    (process.env.NODE_ENV !== "production"
+      ? "http://localhost:3000"
+      : `https://${BRAND.domain}`);
   return `${base.replace(/\/$/, "")}${path}`;
 }
 

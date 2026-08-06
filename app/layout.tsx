@@ -5,7 +5,9 @@ import "@/styles/globals.css";
 const THEME_COLOR = "#2563EB";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://buddyintro.app"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || `https://${BRAND.domain}`
+  ),
   title: {
     default: BRAND.name,
     template: `%s · ${BRAND.shortName}`,

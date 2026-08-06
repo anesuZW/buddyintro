@@ -17,7 +17,11 @@ import type { PhoneInviteShare } from "@/types";
 import { scheduleTrustGraphRefresh } from "@/services/trust-graph-jobs";
 import { analyticsService } from "@/services/analytics/analytics-service";
 import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
-import { notifyInviteAccepted, notifyInviteOpened, notifyInviteRegistered } from "@/services/notifications/emitters";
+import {
+  notifyInviteAccepted,
+  notifyInviteOpened,
+  notifyInviteRegistered,
+} from "@/services/notifications/emitters";
 
 const tokenAlphabet =
   "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -37,6 +41,13 @@ export type CreateInvitationArgs =
   | { kind: "email"; email: string; invitedById: string; expiresAt?: Date }
   | { kind: "phone"; phone: string; invitedById: string; expiresAt?: Date };
 
+/**
+ * Create (or reuse) a pending invitation for story tagging / manual invites.
+ *
+ * Reuse is allowed ONLY when the pending invite has no StoryTag yet — this
+ * preserves StoryTag.invitationId @unique while allowing many invitations to
+ * the same contact (each introduction story gets its own invitation).
+ */
 export async function createInvitation(
   args: CreateInvitationArgs,
   tx: Prisma.TransactionClient | typeof prisma = prisma
@@ -48,7 +59,12 @@ export async function createInvitation(
   if (args.kind === "email") {
     const email = args.email.toLowerCase().trim();
     const existing = await tx.invitation.findFirst({
-      where: { email, invitedById: args.invitedById, registered: false },
+      where: {
+        email,
+        invitedById: args.invitedById,
+        registered: false,
+        storyTags: { none: {} },
+      },
     });
     if (existing) return existing;
 
@@ -65,10 +81,19 @@ export async function createInvitation(
   }
 
   const phoneNumber = normalizePhone(args.phone);
-  if (!phoneNumber) throw new Error("Invalid phone number. Use international format e.g. +263774123456");
+  if (!phoneNumber) {
+    throw new Error(
+      "Invalid phone number. Use international format e.g. +263774123456"
+    );
+  }
 
   const existing = await tx.invitation.findFirst({
-    where: { phoneNumber, invitedById: args.invitedById, registered: false },
+    where: {
+      phoneNumber,
+      invitedById: args.invitedById,
+      registered: false,
+      storyTags: { none: {} },
+    },
   });
   if (existing) return existing;
 
@@ -79,8 +104,6 @@ export async function createInvitation(
       invitedById: args.invitedById,
       inviteToken,
       expiresAt,
-      // Phone invites are delivered via SMS/WhatsApp share sheet; method is
-      // refined when the inviter taps a share channel.
       inviteMethod: "sms",
     },
   });
@@ -154,23 +177,35 @@ export async function sendInvitationEmail(args: {
   });
 }
 
+/** First touch + last touch; never clears invitationOpenedAt. */
 export async function recordInvitationOpened(token: string) {
-  const invitation = await prisma.invitation.findUnique({ where: { inviteToken: token } });
-  if (!invitation || invitation.invitationOpenedAt) return invitation;
+  const invitation = await prisma.invitation.findUnique({
+    where: { inviteToken: token },
+  });
+  if (!invitation) return invitation;
+
+  const now = new Date();
   const updated = await prisma.invitation.update({
     where: { id: invitation.id },
-    data: { invitationOpenedAt: new Date() },
+    data: {
+      invitationOpenedAt: invitation.invitationOpenedAt ?? now,
+      lastOpenedAt: now,
+    },
   });
-  void analyticsService.track({
-    eventType: ANALYTICS_EVENTS.INVITE_OPENED,
-    entityType: "invitation",
-    entityId: invitation.id,
-    metadata: { invitedById: invitation.invitedById },
-  });
-  void notifyInviteOpened({
-    inviterId: invitation.invitedById,
-    invitationId: invitation.id,
-  }).catch((err) => console.error("[invites] notify opened failed", err));
+
+  if (!invitation.invitationOpenedAt) {
+    void analyticsService.track({
+      eventType: ANALYTICS_EVENTS.INVITE_OPENED,
+      entityType: "invitation",
+      entityId: invitation.id,
+      metadata: { invitedById: invitation.invitedById },
+    });
+    void notifyInviteOpened({
+      inviterId: invitation.invitedById,
+      invitationId: invitation.id,
+    }).catch((err) => console.error("[invites] notify opened failed", err));
+  }
+
   return updated;
 }
 
@@ -179,6 +214,111 @@ export async function setInvitationShareMethod(token: string, method: InviteMeth
     where: { inviteToken: token },
     data: { inviteMethod: method },
   });
+}
+
+async function attachStoryTagsForInvitation(
+  tx: Prisma.TransactionClient,
+  invitationId: string,
+  userId: string
+) {
+  const tags = await tx.storyTag.findMany({
+    where: { invitationId },
+    select: { id: true, storyId: true },
+  });
+
+  const storyIds: string[] = [];
+
+  for (const tag of tags) {
+    await tx.storyTag.update({
+      where: { id: tag.id },
+      data: {
+        taggedUserId: userId,
+        taggedExternalEmail: null,
+        taggedExternalPhone: null,
+      },
+    });
+    storyIds.push(tag.storyId);
+
+    const unresolved = await tx.storyTag.count({
+      where: {
+        storyId: tag.storyId,
+        taggedUserId: null,
+        OR: [
+          { taggedExternalEmail: { not: null } },
+          { taggedExternalPhone: { not: null } },
+        ],
+      },
+    });
+
+    if (unresolved === 0) {
+      await tx.story.updateMany({
+        where: { id: tag.storyId, status: "draft" },
+        data: { status: "published", publishedAt: new Date() },
+      });
+    }
+  }
+
+  return storyIds;
+}
+
+/**
+ * Associate every pending invitation matching the user's email and/or phone.
+ * Does not overwrite history on already-registered invites.
+ */
+async function associateMatchingPendingInvitations(
+  tx: Prisma.TransactionClient,
+  args: {
+    userId: string;
+    email?: string | null;
+    phone?: string | null;
+    excludeInvitationId: string;
+  }
+) {
+  const or: Prisma.InvitationWhereInput[] = [];
+  if (args.email) {
+    or.push({ email: args.email.toLowerCase() });
+  }
+  if (args.phone) {
+    or.push({ phoneNumber: args.phone });
+  }
+  if (!or.length) return [] as string[];
+
+  const matches = await tx.invitation.findMany({
+    where: {
+      registered: false,
+      expiresAt: { gt: new Date() },
+      id: { not: args.excludeInvitationId },
+      OR: or,
+    },
+    select: { id: true, invitedById: true },
+  });
+
+  const inviterIds: string[] = [];
+  const now = new Date();
+
+  for (const match of matches) {
+    await tx.invitation.update({
+      where: { id: match.id },
+      data: {
+        registered: true,
+        registeredUserId: args.userId,
+        acceptedAt: now,
+        // activatedAt stays null — only the opened token is the activation source
+      },
+    });
+    await attachStoryTagsForInvitation(tx, match.id, args.userId);
+    inviterIds.push(match.invitedById);
+
+    void analyticsService.track({
+      userId: args.userId,
+      eventType: ANALYTICS_EVENTS.INVITE_ACCEPTED,
+      entityType: "invitation",
+      entityId: match.id,
+      metadata: { associatedVia: "identity_match", activation: false },
+    });
+  }
+
+  return inviterIds;
 }
 
 export async function acceptInvitation(args: {
@@ -194,79 +334,75 @@ export async function acceptInvitation(args: {
   if (invitation.expiresAt < new Date()) {
     return { ok: false as const, reason: "expired" as const };
   }
+
+  // Already associated — return activation story; refresh lastOpenedAt.
   if (invitation.registered) {
+    if (
+      invitation.registeredUserId &&
+      invitation.registeredUserId !== args.userId
+    ) {
+      return { ok: false as const, reason: "already_registered" as const };
+    }
+    void prisma.invitation
+      .update({
+        where: { id: invitation.id },
+        data: { lastOpenedAt: new Date() },
+      })
+      .catch(() => undefined);
     return {
       ok: true as const,
       invitation,
       storyId: invitation.storyTags[0]?.storyId ?? null,
       authorId: invitation.invitedById,
+      associatedCount: 0,
     };
   }
 
-  if (invitation.email) {
-    const user =
-      args.userEmail != null
-        ? { email: args.userEmail }
-        : await prisma.user.findUnique({
-            where: { id: args.userId },
-            select: { email: true },
-          });
+  const user = await prisma.user.findUnique({
+    where: { id: args.userId },
+    select: { email: true, phone: true, name: true },
+  });
+  const userEmail = (args.userEmail ?? user?.email)?.toLowerCase() ?? null;
+  const userPhone = user?.phone ? normalizePhone(user.phone) : null;
 
-    if (!user?.email || user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+  if (invitation.email) {
+    if (!userEmail || userEmail !== invitation.email.toLowerCase()) {
       return { ok: false as const, reason: "email_mismatch" as const };
     }
   }
 
-  const updated = await prisma.$transaction(async (tx) => {
+  const now = new Date();
+  const result = await prisma.$transaction(async (tx) => {
     const row = await tx.invitation.update({
       where: { id: invitation.id },
       data: {
         registered: true,
         registeredUserId: args.userId,
-        acceptedAt: new Date(),
+        acceptedAt: now,
+        activatedAt: now,
+        lastOpenedAt: now,
+        invitationOpenedAt: invitation.invitationOpenedAt ?? now,
       },
     });
 
-    // Attach the new user to any story tags linked to this invitation so the
-    // introduction becomes visible after signup (draft → tagged user).
-    const tags = await tx.storyTag.findMany({
-      where: { invitationId: invitation.id },
-      select: { id: true, storyId: true },
+    await attachStoryTagsForInvitation(tx, invitation.id, args.userId);
+
+    const siblingInviters = await associateMatchingPendingInvitations(tx, {
+      userId: args.userId,
+      email: userEmail ?? invitation.email,
+      phone: userPhone ?? invitation.phoneNumber,
+      excludeInvitationId: invitation.id,
     });
 
-    for (const tag of tags) {
-      await tx.storyTag.update({
-        where: { id: tag.id },
-        data: {
-          taggedUserId: args.userId,
-          taggedExternalEmail: null,
-          taggedExternalPhone: null,
-        },
-      });
-
-      const unresolved = await tx.storyTag.count({
-        where: {
-          storyId: tag.storyId,
-          taggedUserId: null,
-          OR: [
-            { taggedExternalEmail: { not: null } },
-            { taggedExternalPhone: { not: null } },
-          ],
-        },
-      });
-
-      if (unresolved === 0) {
-        await tx.story.updateMany({
-          where: { id: tag.storyId, status: "draft" },
-          data: { status: "published", publishedAt: new Date() },
-        });
-      }
-    }
-
-    return row;
+    return { row, siblingInviters };
   });
 
-  void scheduleTrustGraphRefresh([invitation.invitedById, args.userId]).catch((err) =>
+  const refreshIds = [
+    invitation.invitedById,
+    args.userId,
+    ...result.siblingInviters,
+  ];
+  void scheduleTrustGraphRefresh([...new Set(refreshIds)]).catch((err) =>
     console.error("[invites] user_connections refresh failed", err)
   );
 
@@ -275,6 +411,10 @@ export async function acceptInvitation(args: {
     eventType: ANALYTICS_EVENTS.INVITE_ACCEPTED,
     entityType: "invitation",
     entityId: invitation.id,
+    metadata: {
+      activation: true,
+      associatedCount: result.siblingInviters.length,
+    },
   });
 
   void analyticsService.track({
@@ -284,27 +424,25 @@ export async function acceptInvitation(args: {
     entityId: invitation.id,
   });
 
-  const invitee = await prisma.user.findUnique({
-    where: { id: args.userId },
-    select: { name: true },
-  });
+  const inviteeName = user?.name ?? "Someone";
   void notifyInviteAccepted({
     inviterId: invitation.invitedById,
-    inviteeName: invitee?.name ?? "Someone",
+    inviteeName,
     invitationId: invitation.id,
   }).catch((err) => console.error("[invites] notify failed", err));
 
   void notifyInviteRegistered({
     inviterId: invitation.invitedById,
-    inviteeName: invitee?.name ?? "Someone",
+    inviteeName,
     invitationId: invitation.id,
   }).catch((err) => console.error("[invites] notify registered failed", err));
 
   return {
     ok: true as const,
-    invitation: updated,
+    invitation: result.row,
     storyId: invitation.storyTags[0]?.storyId ?? null,
     authorId: invitation.invitedById,
+    associatedCount: result.siblingInviters.length,
   };
 }
 
@@ -332,7 +470,9 @@ export async function getInvitationForOnboarding(token: string) {
 
   if (!invitation) return null;
   if (invitation.registered) return { ...invitation, state: "registered" as const };
-  if (invitation.expiresAt < new Date()) return { ...invitation, state: "expired" as const };
+  if (invitation.expiresAt < new Date()) {
+    return { ...invitation, state: "expired" as const };
+  }
 
   const story = invitation.storyTags[0]?.story ?? null;
   return { ...invitation, state: "pending" as const, story };
